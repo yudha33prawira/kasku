@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Keuangan Keluarga</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #f1f5f9;
+            margin: 0;
+            padding: 16px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        /* kartu saldo */
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .saldo-wrap {
+            text-align: center;
+        }
+        .label-saldo {
+            font-size: 14px;
+            color: #475569;
+            letter-spacing: 0.5px;
+        }
+        .saldo {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 8px 0;
+            color: #0f172a;
+        }
+        .saldo span {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .ringkasan {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            gap: 12px;
+        }
+        .box {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+        }
+        .box .label {
+            font-size: 13px;
+            color: #334155;
+        }
+        .pemasukan {
+            color: #10b981;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        .pengeluaran {
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        /* form tambah */
+        .form-tambah {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .form-tambah input, .form-tambah select, .form-tambah button {
+            padding: 12px 14px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            font-size: 14px;
+            background: white;
+        }
+        .form-tambah input, .form-tambah select {
+            flex: 1;
+            min-width: 100px;
+        }
+        .form-tambah button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .form-tambah button:active {
+            background: #2563eb;
+        }
+        /* filter */
+        .filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .filter-btn {
+            background: #e2e8f0;
+            border: none;
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .filter-btn.aktif {
+            background: #0f172a;
+            color: white;
+        }
+        /* daftar transaksi */
+        .transaksi-item {
+            background: white;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .info-transaksi {
+            display: flex;
+            flex-direction: column;
+        }
+        .kategori {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .tanggal {
+            font-size: 11px;
+            color: #64748b;
+        }
+        .jumlah {
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .jumlah.plus {
+            color: #10b981;
+        }
+        .jumlah.minus {
+            color: #ef4444;
+        }
+        .hapus-btn {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 0 8px;
+        }
+        .kosong {
+            text-align: center;
+            color: #64748b;
+            padding: 32px;
+            background: white;
+            border-radius: 28px;
+        }
+        footer {
+            font-size: 12px;
+            text-align: center;
+            color: #94a3b8;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Kartu saldo -->
+    <div class="card">
+        <div class="saldo-wrap">
+            <div class="label-saldo">Total Saldo</div>
+            <div class="saldo">Rp <span id="totalSaldo">0</span></div>
+        </div>
+        <div class="ringkasan">
+            <div class="box">
+                <div class="label">💚 Pemasukan</div>
+                <div class="pemasukan">Rp <span id="totalPemasukan">0</span></div>
+            </div>
+            <div class="box">
+                <div class="label">❤️ Pengeluaran</div>
+                <div class="pengeluaran">Rp <span id="totalPengeluaran">0</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form tambah transaksi -->
+    <div class="form-tambah">
+        <input type="text" id="deskripsi" placeholder="Contoh: Belanja bulanan" required>
+        <input type="number" id="jumlah" placeholder="Jumlah (Rp)" value="0">
+        <select id="tipe">
+            <option value="pemasukan">💵 Pemasukan</option>
+            <option value="pengeluaran">💸 Pengeluaran</option>
+        </select>
+        <button id="btnTambah">+ Tambah</button>
+    </div>
+
+    <!-- Filter transaksi -->
+    <div class="filter">
+        <button class="filter-btn aktif" data-filter="semua">Semua</button>
+        <button class="filter-btn" data-filter="pemasukan">Pemasukan</button>
+        <button class="filter-btn" data-filter="pengeluaran">Pengeluaran</button>
+    </div>
+
+    <!-- Daftar transaksi -->
+    <div id="daftarTransaksi">
+        <div class="kosong">Belum ada transaksi, tambahkan dulu ya</div>
+    </div>
+    <footer>Data tersimpan otomatis di HP Anda</footer>
+</div>
+
+<script>
+    // Data transaksi akan disimpan di localStorage
+    let transaksi = [];
+    let filterAktif = "semua";
+
+    // Load data dari localStorage
+    function loadData() {
+        const dataSimpan = localStorage.getItem("keuanganKeluarga");
+        if (dataSimpan) {
+            transaksi = JSON.parse(dataSimpan);
+        } else {
+            // Data contoh awal
+            transaksi = [
+                { id: Date.now()+1, deskripsi: "Gaji suami", jumlah: 5000000, tipe: "pemasukan", tanggal: new Date().toISOString() },
+                { id: Date.now()+2, deskripsi: "Belanja mingguan", jumlah: 750000, tipe: "pengeluaran", tanggal: new Date().toISOString() },
+                { id: Date.now()+3, deskripsi: "Listrik & air", jumlah: 350000, tipe: "pengeluaran", tanggal: new Date().toISOString() }
+            ];
+        }
+        renderSemua();
+    }
+
+    function simpanData() {
+        localStorage.setItem("keuanganKeluarga", JSON.stringify(transaksi));
+    }
+
+    // format Rupiah (tanpa desimal)
+    function formatRupiah(angka) {
+        return new Intl.NumberFormat("id-ID").format(angka);
+    }
+
+    // hitung ringkasan
+    function hitungRingkasan() {
+        let pemasukan = 0, pengeluaran = 0;
+        transaksi.forEach(t => {
+            if (t.tipe === "pemasukan") pemasukan += t.jumlah;
+            else pengeluaran += t.jumlah;
+        });
+        const saldo = pemasukan - pengeluaran;
+        document.getElementById("totalSaldo").innerText = formatRupiah(saldo);
+        document.getElementById("totalPemasukan").innerText = formatRupiah(pemasukan);
+        document.getElementById("totalPengeluaran").innerText = formatRupiah(pengeluaran);
+    }
+
+    // render daftar berdasarkan filter
+    function renderDaftar() {
+        const container = document.getElementById("daftarTransaksi");
+        let dataFilter = transaksi;
+        if (filterAktif === "pemasukan") {
+            dataFilter = transaksi.filter(t => t.tipe === "pemasukan");
+        } else if (filterAktif === "pengeluaran") {
+            dataFilter = transaksi.filter(t => t.tipe === "pengeluaran");
+        }
+
+        if (dataFilter.length === 0) {
+            container.innerHTML = `<div class="kosong">Tidak ada transaksi ${filterAktif === "semua" ? "" : filterAktif}</div>`;
+            return;
+        }
+
+        // urutkan dari terbaru
+        dataFilter.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+        let html = "";
+        dataFilter.forEach(t => {
+            const tanggalFormatted = new Date(t.tanggal).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' });
+            const jumlahFormatted = formatRupiah(t.jumlah);
+            const kelasJumlah = t.tipe === "pemasukan" ? "plus" : "minus";
+            const prefix = t.tipe === "pemasukan" ? "+" : "-";
+            html += `
+                <div class="transaksi-item" data-id="${t.id}">
+                    <div class="info-transaksi">
+                        <div class="kategori">${escapeHtml(t.deskripsi)}</div>
+                        <div class="tanggal">${tanggalFormatted}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="jumlah ${kelasJumlah}">${prefix} Rp ${jumlahFormatted}</div>
+                        <button class="hapus-btn" data-id="${t.id}">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        // event hapus (delegasi)
+        document.querySelectorAll(".hapus-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const id = parseInt(btn.getAttribute("data-id"));
+                hapusTransaksi(id);
+            });
+        });
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function hapusTransaksi(id) {
+        if (confirm("Hapus transaksi ini?")) {
+            transaksi = transaksi.filter(t => t.id !== id);
+            simpanData();
+            renderSemua();
+        }
+    }
+
+    function tambahTransaksi() {
+        const deskripsi = document.getElementById("deskripsi").value.trim();
+        let jumlah = parseInt(document.getElementById("jumlah").value);
+        const tipe = document.getElementById("tipe").value;
+
+        if (deskripsi === "") {
+            alert("Deskripsi tidak boleh kosong");
+            return;
+        }
+        if (isNaN(jumlah) || jumlah <= 0) {
+            alert("Jumlah harus lebih dari 0");
+            return;
+        }
+
+        const newTransaksi = {
+            id: Date.now(),
+            deskripsi: deskripsi,
+            jumlah: jumlah,
+            tipe: tipe,
+            tanggal: new Date().toISOString()
+        };
+        transaksi.push(newTransaksi);
+        simpanData();
+        renderSemua();
+
+        // reset form
+        document.getElementById("deskripsi").value = "";
+        document.getElementById("jumlah").value = "";
+        document.getElementById("tipe").value = "pemasukan";
+        document.getElementById("deskripsi").focus();
+    }
+
+    function renderSemua() {
+        hitungRingkasan();
+        renderDaftar();
+    }
+
+    // set filter & aktifkan tombol
+    function setFilter(filter) {
+        filterAktif = filter;
+        document.querySelectorAll(".filter-btn").forEach(btn => {
+            if (btn.getAttribute("data-filter") === filter) {
+                btn.classList.add("aktif");
+            } else {
+                btn.classList.remove("aktif");
+            }
+        });
+        renderDaftar();
+    }
+
+    // event listener
+    document.getElementById("btnTambah").addEventListener("click", tambahTransaksi);
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const filter = btn.getAttribute("data-filter");
+            setFilter(filter);
+        });
+    });
+
+    // load awal
+    loadData();
+</script>
+</body>
+</html>
