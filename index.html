@@ -3,46 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Keuangan Keluarga - Cloud</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <title>Keuangan Keluarga • Supabase</title>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Sama seperti sebelumnya, bisa disesuaikan */
-        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         body { background: #f1f5f9; margin: 0; padding: 16px; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; border-radius: 28px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .saldo-wrap { text-align: center; }
         .label-saldo { font-size: 14px; color: #475569; }
-        .saldo { font-size: 36px; font-weight: 800; margin: 8px 0; color: #0f172a; }
+        .saldo { font-size: 36px; font-weight: 800; margin: 8px 0; }
         .ringkasan { display: flex; gap: 12px; margin-top: 16px; }
         .box { flex: 1; background: #f8fafc; border-radius: 20px; padding: 12px; text-align: center; }
         .pemasukan { color: #10b981; font-weight: 700; font-size: 20px; }
         .pengeluaran { color: #ef4444; font-weight: 700; font-size: 20px; }
         .form-tambah { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
-        .form-tambah input, .form-tambah select, .form-tambah button { padding: 12px 14px; border-radius: 40px; border: 1px solid #e2e8f0; font-size: 14px; }
+        .form-tambah input, .form-tambah select, .form-tambah button { padding: 12px 14px; border-radius: 40px; border: 1px solid #e2e8f0; font-size: 14px; background: white; }
         .form-tambah button { background: #3b82f6; color: white; border: none; font-weight: 600; cursor: pointer; }
         .filter { display: flex; gap: 8px; margin-bottom: 16px; }
-        .filter-btn { background: #e2e8f0; border: none; border-radius: 40px; padding: 8px 16px; cursor: pointer; }
+        .filter-btn { background: #e2e8f0; border: none; border-radius: 40px; padding: 8px 16px; cursor: pointer; font-size: 13px; }
         .filter-btn.aktif { background: #0f172a; color: white; }
         .transaksi-item { background: white; border-radius: 20px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .jumlah.plus { color: #10b981; }
         .jumlah.minus { color: #ef4444; }
-        .hapus-btn { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .hapus-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
         .kosong { text-align: center; color: #64748b; padding: 32px; background: white; border-radius: 28px; }
-        .loading { text-align: center; padding: 20px; }
+        .loading { text-align: center; padding: 20px; color: #475569; }
         footer { font-size: 12px; text-align: center; margin-top: 24px; color: #94a3b8; }
-        #userInfo { font-size: 12px; background: #e6f0ff; border-radius: 20px; padding: 6px 12px; display: inline-block; margin-bottom: 10px; }
+        #userInfo { background: #e6f0ff; border-radius: 30px; padding: 6px 12px; font-size: 12px; display: inline-block; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="margin:0">💰 Keluarga Keuangan</h3>
-        <div id="userInfo">Memuat...</div>
+        <h3 style="margin:0">💰 Keuangan Keluarga</h3>
+        <div id="userInfo">⏳ Memuat...</div>
     </div>
+
     <div class="card">
         <div class="saldo-wrap">
             <div class="label-saldo">Total Saldo</div>
@@ -55,7 +53,7 @@
     </div>
 
     <div class="form-tambah">
-        <input type="text" id="deskripsi" placeholder="Contoh: Belanja" style="flex:2">
+        <input type="text" id="deskripsi" placeholder="Contoh: Belanja bulanan" style="flex:2">
         <input type="number" id="jumlah" placeholder="Jumlah (Rp)" style="flex:1">
         <select id="tipe" style="flex:1">
             <option value="pemasukan">💵 Pemasukan</option>
@@ -70,43 +68,33 @@
         <button class="filter-btn" data-filter="pengeluaran">Pengeluaran</button>
     </div>
 
-    <div id="daftarTransaksi" class="loading">Memuat data...</div>
-    <footer>Data tersimpan di cloud 🔁 bisa diakses semua perangkat dengan akun yang sama</footer>
+    <div id="daftarTransaksi" class="loading">Menghubungkan ke database...</div>
+    <footer>✅ Data tersimpan di cloud & sinkron realtime antar perangkat</footer>
 </div>
 
 <script>
-    // **************************
-    // 🔧 GANTI DENGAN KONFIGURASI FIREBASE ANDA
-    // **************************
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
-    };
+    // *********************************************************
+    // 🔧 GANTI DENGAN KONFIGURASI SUPABASE ANDA
+    // *********************************************************
+    const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co/rest/v1/";     // Ganti!
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";    // Ganti!
 
-    // Inisialisasi Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let currentUser = null;
     let filterAktif = "semua";
-    let transaksiListener = null; // untuk unsubscribe realtime
+    let subscription = null;
 
-    // Fungsi format rupiah
+    // Format Rupiah
     function formatRupiah(angka) {
         return new Intl.NumberFormat("id-ID").format(angka);
     }
 
-    // Render ringkasan dari array transaksi
+    // Hitung ringkasan dari array transaksi
     function hitungRingkasan(transaksiArr) {
         let pemasukan = 0, pengeluaran = 0;
         transaksiArr.forEach(t => {
-            if (t.tipe === "pemasukan") pemasukan += t.jumlah;
-            else pengeluaran += t.jumlah;
+            if (t.type === "pemasukan") pemasukan += t.amount;
+            else pengeluaran += t.amount;
         });
         const saldo = pemasukan - pengeluaran;
         document.getElementById("totalSaldo").innerText = formatRupiah(saldo);
@@ -118,25 +106,27 @@
     function renderDaftar(transaksiArr) {
         const container = document.getElementById("daftarTransaksi");
         let dataFilter = transaksiArr;
-        if (filterAktif === "pemasukan") dataFilter = transaksiArr.filter(t => t.tipe === "pemasukan");
-        if (filterAktif === "pengeluaran") dataFilter = transaksiArr.filter(t => t.tipe === "pengeluaran");
+        if (filterAktif === "pemasukan") dataFilter = transaksiArr.filter(t => t.type === "pemasukan");
+        if (filterAktif === "pengeluaran") dataFilter = transaksiArr.filter(t => t.type === "pengeluaran");
 
         if (dataFilter.length === 0) {
             container.innerHTML = `<div class="kosong">Tidak ada transaksi ${filterAktif === "semua" ? "" : filterAktif}</div>`;
             return;
         }
 
-        // urutkan dari terbaru
-        dataFilter.sort((a,b) => b.tanggal.toDate() - a.tanggal.toDate());
+        dataFilter.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
         let html = "";
         dataFilter.forEach(t => {
-            const tanggalFormatted = t.tanggal.toDate().toLocaleDateString("id-ID");
-            const jumlahFormatted = formatRupiah(t.jumlah);
-            const kelas = t.tipe === "pemasukan" ? "plus" : "minus";
-            const prefix = t.tipe === "pemasukan" ? "+" : "-";
+            const tanggal = new Date(t.created_at).toLocaleDateString("id-ID");
+            const jumlahFormatted = formatRupiah(t.amount);
+            const kelas = t.type === "pemasukan" ? "plus" : "minus";
+            const prefix = t.type === "pemasukan" ? "+" : "-";
             html += `
                 <div class="transaksi-item" data-id="${t.id}">
-                    <div><div class="kategori" style="font-weight:600">${escapeHtml(t.deskripsi)}</div><div class="tanggal" style="font-size:11px; color:#64748b">${tanggalFormatted}</div></div>
+                    <div>
+                        <div style="font-weight:600">${escapeHtml(t.description)}</div>
+                        <div style="font-size:11px; color:#64748b">${tanggal}</div>
+                    </div>
                     <div style="display:flex; align-items:center; gap:8px">
                         <div class="jumlah ${kelas}">${prefix} Rp ${jumlahFormatted}</div>
                         <button class="hapus-btn" data-id="${t.id}">🗑️</button>
@@ -146,14 +136,14 @@
         });
         container.innerHTML = html;
 
-        // Event hapus
+        // Event hapus (delegasi)
         document.querySelectorAll(".hapus-btn").forEach(btn => {
             btn.addEventListener("click", async (e) => {
-                e.stopPropagation();
                 const id = btn.getAttribute("data-id");
                 if (confirm("Hapus transaksi ini?")) {
                     if (currentUser) {
-                        await db.collection("users").doc(currentUser.uid).collection("transaksi").doc(id).delete();
+                        const { error } = await supabase.from("transactions").delete().eq("id", id);
+                        if (error) alert("Gagal hapus: " + error.message);
                     }
                 }
             });
@@ -169,94 +159,93 @@
         });
     }
 
-    // Subscribe ke transaksi user secara realtime
-    function subscribeTransaksi(userId) {
-        if (transaksiListener) transaksiListener();
-        const colRef = db.collection("users").doc(userId).collection("transaksi").orderBy("tanggal", "desc");
-        transaksiListener = colRef.onSnapshot(snapshot => {
-            const transaksiArr = [];
-            snapshot.forEach(doc => {
-                transaksiArr.push({ id: doc.id, ...doc.data() });
-            });
-            // hitung ulang ringkasan & render
-            hitungRingkasan(transaksiArr);
-            renderDaftar(transaksiArr);
-        }, error => {
-            console.error("Gagal load data:", error);
-            document.getElementById("daftarTransaksi").innerHTML = `<div class="kosong">Gagal memuat data. Cek koneksi.</div>`;
-        });
+    // Subscribe ke perubahan data secara realtime
+    function subscribeToChanges(userId) {
+        if (subscription) subscription.unsubscribe();
+        subscription = supabase
+            .channel(`transactions-${userId}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'transactions',
+                filter: `user_id=eq.${userId}`
+            }, () => {
+                fetchData(); // refresh data setiap ada perubahan
+            })
+            .subscribe();
+    }
+
+    // Ambil data dari Supabase
+    async function fetchData() {
+        if (!currentUser) return;
+        const { data, error } = await supabase
+            .from("transactions")
+            .select("*")
+            .eq("user_id", currentUser.id);
+        if (error) {
+            console.error(error);
+            document.getElementById("daftarTransaksi").innerHTML = `<div class="kosong">Gagal memuat data: ${error.message}</div>`;
+            return;
+        }
+        hitungRingkasan(data || []);
+        renderDaftar(data || []);
     }
 
     // Tambah transaksi
     async function tambahTransaksi() {
         if (!currentUser) {
-            alert("Belum terautentikasi. Coba refresh.");
+            alert("Belum login, coba refresh.");
             return;
         }
-        const deskripsi = document.getElementById("deskripsi").value.trim();
-        let jumlah = parseInt(document.getElementById("jumlah").value);
-        const tipe = document.getElementById("tipe").value;
+        const description = document.getElementById("deskripsi").value.trim();
+        let amount = parseInt(document.getElementById("jumlah").value);
+        const type = document.getElementById("tipe").value;
 
-        if (!deskripsi) { alert("Deskripsi harus diisi"); return; }
-        if (isNaN(jumlah) || jumlah <= 0) { alert("Jumlah harus lebih dari 0"); return; }
+        if (!description) { alert("Deskripsi harus diisi"); return; }
+        if (isNaN(amount) || amount <= 0) { alert("Jumlah harus lebih dari 0"); return; }
 
-        const data = {
-            deskripsi: deskripsi,
-            jumlah: jumlah,
-            tipe: tipe,
-            tanggal: firebase.firestore.Timestamp.now()
-        };
-        try {
-            await db.collection("users").doc(currentUser.uid).collection("transaksi").add(data);
-            // reset form
+        const { error } = await supabase.from("transactions").insert({
+            user_id: currentUser.id,
+            description: description,
+            amount: amount,
+            type: type
+        });
+        if (error) {
+            alert("Gagal simpan: " + error.message);
+        } else {
             document.getElementById("deskripsi").value = "";
             document.getElementById("jumlah").value = "";
             document.getElementById("tipe").value = "pemasukan";
             document.getElementById("deskripsi").focus();
-        } catch (err) {
-            alert("Gagal simpan: " + err.message);
+            // fetchData() otomatis dipanggil oleh realtime
         }
     }
 
-    // Autentikasi anonim (agar setiap perangkat punya ID unik, bisa diganti dengan login email)
-    auth.signInAnonymously().catch(err => console.error(err));
-    auth.onAuthStateChanged(async (user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById("userInfo").innerHTML = `🔐 ID: ${user.uid.slice(0,8)}... <span style="font-size:10px">(cloud sync)</span>`;
-            subscribeTransaksi(user.uid);
-        } else {
-            document.getElementById("userInfo").innerHTML = `⏳ Menyambung...`;
+    // Autentikasi anonim
+    async function initAuth() {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) {
+            document.getElementById("userInfo").innerHTML = "❌ Gagal login: " + error.message;
+            return;
         }
-    });
+        currentUser = data.user;
+        document.getElementById("userInfo").innerHTML = `🔐 Akun: ${currentUser.id.slice(0,8)}... <span style="font-size:10px">(cloud sync)</span>`;
+        subscribeToChanges(currentUser.id);
+        await fetchData();
+    }
 
-    // Event listeners
+    // Event listener
     document.getElementById("btnTambah").addEventListener("click", tambahTransaksi);
     document.querySelectorAll(".filter-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
+        btn.addEventListener("click", () => {
             filterAktif = btn.getAttribute("data-filter");
             document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("aktif"));
             btn.classList.add("aktif");
-            // trigger ulang render dari data terakhir? Listener akan memanggil renderDaftar dengan data terbaru.
-            // Kita panggil ulang render dengan data terakhir yang ada di memori? Lebih baik panggil ulang dari snapshot? 
-            // Solusi: simpan data terakhir. Tapi karena subscribe sudah punya snapshot, kita perlu menyimpan array terakhir.
-            // Cara mudah: kita panggil subscribe lagi? Tidak efisien. Saya akan simpan variable global lastTransaksiArr.
-            if (window.__lastTransaksiArr) {
-                renderDaftar(window.__lastTransaksiArr);
-            }
+            fetchData(); // refresh render dengan filter baru
         });
     });
 
-    // Menyimpan data terakhir agar filter bisa bekerja tanpa re-fetch
-    // override renderDaftar dan hitungRingkasan untuk menyimpan array
-    const originalRenderDaftar = renderDaftar;
-    window.renderDaftar = function(transaksiArr) {
-        window.__lastTransaksiArr = transaksiArr;
-        originalRenderDaftar(transaksiArr);
-    };
-    renderDaftar = window.renderDaftar;
-
-    // juga override hitungRingkasan tidak perlu.
+    initAuth();
 </script>
 </body>
 </html>
