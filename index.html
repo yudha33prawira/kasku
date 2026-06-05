@@ -5,349 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Keuangan Keluarga</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            background: #f1f5f9;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        /* Login Container */
-        .login-card {
-            max-width: 400px;
-            width: 100%;
-            background: white;
-            border-radius: 32px;
-            padding: 32px 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 32px;
-            color: #1e293b;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        .input-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #475569;
-            margin-bottom: 8px;
-            display: block;
-        }
-        .input-wrapper {
-            position: relative;
-        }
-        .input-wrapper input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 40px;
-            font-size: 16px;
-            background: #f8fafc;
-            outline: none;
-            transition: all 0.2s;
-        }
-        .input-wrapper input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        .input-wrapper .toggle-password {
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #94a3b8;
-            padding: 0;
-        }
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .login-btn:active {
-            background: #2563eb;
-        }
-        .guest-btn {
-            width: 100%;
-            padding: 14px;
-            background: #e2e8f0;
-            color: #475569;
-            border: none;
-            border-radius: 40px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 12px;
-        }
-        .switch-mode {
-            text-align: center;
-            margin-top: 20px;
-            color: #3b82f6;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .error-msg {
-            color: #ef4444;
-            font-size: 13px;
-            text-align: center;
-            margin-top: 12px;
-            padding: 8px;
-            background: #fee2e2;
-            border-radius: 20px;
-        }
-        
-        /* App Container */
-        .app-container {
-            max-width: 450px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 16px;
-            padding-bottom: 80px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .user-info {
-            background: #e2e8f0;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .balance-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            border-radius: 28px;
-            padding: 24px;
-            margin-bottom: 20px;
-            color: white;
-        }
-        .balance-amount {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 8px 0;
-        }
-        .balance-stats {
-            display: flex;
-            gap: 16px;
-            margin-top: 16px;
-        }
-        .stat-item {
-            flex: 1;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #f8f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding-bottom: 70px; }
+        .app-container { max-width: 450px; margin: 0 auto; padding: 16px; }
+        .login-container { max-width: 400px; width: 90%; margin: 50px auto; background: white; border-radius: 32px; padding: 32px 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .login-title { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 32px; color: #1e293b; }
+        .input-group { margin-bottom: 20px; }
+        .input-label { font-size: 14px; font-weight: 500; color: #475569; margin-bottom: 8px; display: block; }
+        .password-wrapper { position: relative; }
+        .password-wrapper input { width: 100%; padding: 14px 50px 14px 16px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 16px; background: #f8fafc; }
+        .password-wrapper input:focus { outline: none; border-color: #3b82f6; }
+        .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
+        input[type="email"] { width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 16px; background: #f8fafc; }
+        input[type="email"]:focus { outline: none; border-color: #3b82f6; }
+        .login-btn { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 40px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+        .guest-btn { width: 100%; padding: 14px; background: #e2e8f0; color: #475569; border: none; border-radius: 40px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+        .switch-mode { text-align: center; margin-top: 20px; color: #3b82f6; cursor: pointer; font-size: 14px; }
+        .error-msg { color: #ef4444; font-size: 13px; text-align: center; margin-top: 12px; padding: 8px; background: #fee2e2; border-radius: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .user-info { background: #e2e8f0; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 500; }
+        .logout-btn { background: #ef4444; color: white; border: none; border-radius: 30px; padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; }
+        .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 28px; padding: 24px; margin-bottom: 20px; color: white; position: relative; }
+        .balance-eye { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 6px 12px; color: white; font-size: 14px; cursor: pointer; }
+        .balance-amount { font-size: 36px; font-weight: 700; margin: 8px 0; }
+        .balance-stats { display: flex; gap: 16px; margin-top: 16px; }
+        .stat-item { flex: 1; }
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
-        .quick-add {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .btn-income {
-            flex: 1;
-            background: #10b981;
-            border: none;
-            border-radius: 60px;
-            padding: 14px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-expense {
-            flex: 1;
-            background: #ef4444;
-            border: none;
-            border-radius: 60px;
-            padding: 14px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-        .card-title {
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #1e293b;
-        }
-        .transaction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f2f5;
-        }
-        .transaction-desc {
-            font-weight: 500;
-        }
-        .transaction-date {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
+        .quick-add { display: flex; gap: 12px; margin-bottom: 20px; }
+        .btn-income { flex: 1; background: #10b981; border: none; border-radius: 60px; padding: 14px; color: white; font-weight: 600; cursor: pointer; }
+        .btn-expense { flex: 1; background: #ef4444; border: none; border-radius: 60px; padding: 14px; color: white; font-weight: 600; cursor: pointer; }
+        .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card-title { font-weight: 600; margin-bottom: 12px; color: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+        .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
+        .transaction-desc { font-weight: 500; }
+        .transaction-date { font-size: 11px; color: #94a3b8; margin-top: 4px; }
         .transaction-amount.income { color: #10b981; font-weight: 600; }
         .transaction-amount.expense { color: #ef4444; font-weight: 600; }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #94a3b8;
-        }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 16px 20px;
-            border-top: 1px solid #e2e8f0;
-            max-width: 450px;
-            margin: 0 auto;
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            background: none;
-            border: none;
-            font-size: 11px;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 30px;
-        }
-        .nav-item.active {
-            color: #3b82f6;
-            background: #eff6ff;
-        }
-        .nav-icon {
-            font-size: 22px;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            padding: 20px;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 32px;
-            padding: 24px;
-            width: 100%;
-            max-width: 340px;
-        }
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .modal-input {
-            width: 100%;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 40px;
-            font-size: 15px;
-            background: #f8fafc;
-        }
-        .modal-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 40px;
-            border: none;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .modal-btn-primary {
-            background: #3b82f6;
-            color: white;
-        }
-        .modal-btn-secondary {
-            background: #e2e8f0;
-            color: #475569;
-        }
-        .toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-size: 13px;
-            z-index: 300;
-        }
-        .hidden {
-            display: none;
-        }
+        .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 16px 20px; border-top: 1px solid #e2e8f0; max-width: 450px; margin: 0 auto; z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 11px; color: #94a3b8; cursor: pointer; padding: 8px 12px; border-radius: 30px; }
+        .nav-item.active { color: #3b82f6; background: #eff6ff; }
+        .nav-icon { font-size: 22px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+        .modal-content { background: white; border-radius: 32px; padding: 24px; width: 100%; max-width: 340px; }
+        .modal-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 20px; }
+        .modal-input, .modal-select { width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 15px; background: #f8fafc; }
+        .modal-btn { width: 100%; padding: 14px; border-radius: 40px; border: none; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 8px; }
+        .modal-btn-primary { background: #3b82f6; color: white; }
+        .modal-btn-secondary { background: #e2e8f0; color: #475569; }
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 13px; z-index: 300; }
+        .hidden { display: none; }
+        .filter { display: flex; gap: 8px; margin-bottom: 16px; }
+        .filter-btn { padding: 8px 16px; border: none; border-radius: 40px; background: #e2e8f0; font-size: 13px; cursor: pointer; }
+        .filter-btn.active { background: #0f172a; color: white; }
+        .month-selector { display: flex; justify-content: space-between; align-items: center; background: white; border-radius: 60px; padding: 8px 12px; margin-bottom: 16px; }
+        .month-selector button { background: none; border: none; font-size: 18px; cursor: pointer; padding: 8px 12px; color: #3b82f6; }
+        .debt-summary { display: flex; gap: 12px; margin-bottom: 20px; }
+        .debt-box { flex: 1; background: #f8fafc; border-radius: 20px; padding: 12px; text-align: center; }
+        .debt-box.piutang { background: #d1fae5; }
+        .debt-box.hutang { background: #fee2e2; }
+        .debt-amount { font-size: 18px; font-weight: 700; }
+        .debt-amount.piutang { color: #10b981; }
+        .debt-amount.hutang { color: #ef4444; }
     </style>
 </head>
 <body>
 
-<!-- Login Card -->
-<div id="loginCard" class="login-card">
+<!-- Login Container -->
+<div id="loginContainer" class="login-container">
     <div class="login-title" id="loginTitle">Masuk</div>
     <div class="input-group">
         <div class="input-label">Email</div>
-        <div class="input-wrapper">
-            <input type="email" id="emailInput" placeholder="contoh@email.com">
-        </div>
+        <input type="email" id="emailInput" placeholder="contoh@email.com">
     </div>
     <div class="input-group">
         <div class="input-label">Password</div>
-        <div class="input-wrapper">
+        <div class="password-wrapper">
             <input type="password" id="passwordInput" placeholder="Minimal 6 karakter">
             <button type="button" id="togglePasswordBtn" class="toggle-password">👁️</button>
         </div>
@@ -366,6 +103,7 @@
     </div>
     
     <div class="balance-card">
+        <button id="toggleBalanceBtn" class="balance-eye">👁️</button>
         <div class="balance-label">Total Saldo</div>
         <div class="balance-amount" id="totalSaldo">Rp 0</div>
         <div class="balance-stats">
@@ -385,10 +123,8 @@
         <button id="quickAddExpense" class="btn-expense">- Pengeluaran</button>
     </div>
     
-    <div class="card">
-        <div class="card-title">📋 Transaksi Terbaru</div>
-        <div id="recentTransactions"></div>
-    </div>
+    <!-- Dynamic Content -->
+    <div id="mainContent"></div>
     
     <div class="bottom-nav">
         <button class="nav-item active" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
@@ -409,8 +145,13 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb = null;
 let currentUser = null;
 let transactions = [];
-let isLoginMode = true;
+let debts = [];
+let categories = [];
 let currentNav = "home";
+let isLoginMode = true;
+let isBalanceHidden = false;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
 
 // ============================================
 // HELPER FUNCTIONS
@@ -443,22 +184,110 @@ function updateBalanceUI() {
         if (t.type === 'pemasukan') pemasukan += t.amount;
         else pengeluaran += t.amount;
     }
-    document.getElementById('totalSaldo').innerText = `Rp ${formatRupiah(pemasukan - pengeluaran)}`;
-    document.getElementById('totalPemasukan').innerText = `Rp ${formatRupiah(pemasukan)}`;
-    document.getElementById('totalPengeluaran').innerText = `Rp ${formatRupiah(pengeluaran)}`;
+    const displaySaldo = isBalanceHidden ? '••••••' : `Rp ${formatRupiah(pemasukan - pengeluaran)}`;
+    const displayPemasukan = isBalanceHidden ? '••••' : `Rp ${formatRupiah(pemasukan)}`;
+    const displayPengeluaran = isBalanceHidden ? '••••' : `Rp ${formatRupiah(pengeluaran)}`;
+    
+    document.getElementById('totalSaldo').innerText = displaySaldo;
+    document.getElementById('totalPemasukan').innerText = displayPemasukan;
+    document.getElementById('totalPengeluaran').innerText = displayPengeluaran;
 }
 
-function renderRecentTransactions() {
-    const container = document.getElementById('recentTransactions');
+// ============================================
+// RENDER FUNCTIONS
+// ============================================
+function renderHome() {
+    let totalPiutang = 0, totalHutang = 0;
+    for (const d of debts) {
+        if (d.status === 'lunas') continue;
+        if (d.type === 'piutang') totalPiutang += d.amount;
+        else totalHutang += d.amount;
+    }
+    
     const recent = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
     
+    let html = `
+        <div class="debt-summary">
+            <div class="debt-box piutang">
+                <div style="font-size:12px">💰 Piutang</div>
+                <div class="debt-amount piutang">Rp ${formatRupiah(totalPiutang)}</div>
+            </div>
+            <div class="debt-box hutang">
+                <div style="font-size:12px">💸 Hutang</div>
+                <div class="debt-amount hutang">Rp ${formatRupiah(totalHutang)}</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Transaksi Terbaru</div>
+            <div id="recentTransactionsList"></div>
+        </div>
+    `;
+    
+    document.getElementById('mainContent').innerHTML = html;
+    
+    const container = document.getElementById('recentTransactionsList');
     if (recent.length === 0) {
         container.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
+    } else {
+        let rHtml = '';
+        for (const t of recent) {
+            const kelas = t.type === 'pemasukan' ? 'income' : 'expense';
+            const prefix = t.type === 'pemasukan' ? '+' : '-';
+            rHtml += `
+                <div class="transaction-item">
+                    <div>
+                        <div class="transaction-desc">${escapeHtml(t.description)}</div>
+                        <div class="transaction-date">${new Date(t.created_at).toLocaleDateString("id-ID")}</div>
+                    </div>
+                    <div class="transaction-amount ${kelas}">${prefix} Rp ${formatRupiah(t.amount)}</div>
+                </div>
+            `;
+        }
+        container.innerHTML = rHtml;
+    }
+}
+
+function renderTransaksi() {
+    let html = `
+        <div class="card">
+            <div class="card-title">📋 Semua Transaksi</div>
+            <div class="filter">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="income">Pemasukan</button>
+                <button class="filter-btn" data-filter="expense">Pengeluaran</button>
+            </div>
+            <div id="allTransactionsList"></div>
+        </div>
+    `;
+    document.getElementById('mainContent').innerHTML = html;
+    
+    renderTransactionList(transactions);
+    
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            let filtered = [...transactions];
+            if (filter === 'income') filtered = filtered.filter(t => t.type === 'pemasukan');
+            if (filter === 'expense') filtered = filtered.filter(t => t.type === 'pengeluaran');
+            renderTransactionList(filtered);
+        };
+    });
+}
+
+function renderTransactionList(data) {
+    const container = document.getElementById('allTransactionsList');
+    if (!container) return;
+    
+    if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state">Tidak ada transaksi</div>';
         return;
     }
     
+    data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     let html = '';
-    for (const t of recent) {
+    for (const t of data) {
         const kelas = t.type === 'pemasukan' ? 'income' : 'expense';
         const prefix = t.type === 'pemasukan' ? '+' : '-';
         html += `
@@ -467,168 +296,74 @@ function renderRecentTransactions() {
                     <div class="transaction-desc">${escapeHtml(t.description)}</div>
                     <div class="transaction-date">${new Date(t.created_at).toLocaleDateString("id-ID")}</div>
                 </div>
-                <div class="transaction-amount ${kelas}">${prefix} Rp ${formatRupiah(t.amount)}</div>
+                <div style="display:flex; align-items:center; gap:8px">
+                    <div class="transaction-amount ${kelas}">${prefix} Rp ${formatRupiah(t.amount)}</div>
+                    <button class="delete-transaksi" data-id="${t.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">🗑️</button>
+                </div>
             </div>
         `;
     }
     container.innerHTML = html;
-}
-
-// ============================================
-// TRANSACTION FUNCTIONS
-// ============================================
-async function loadTransactions() {
-    if (!currentUser) return;
-    const { data, error } = await sb.from('transactions').select('*').eq('user_id', currentUser.id);
-    if (error) {
-        console.error('Error:', error);
-        return;
-    }
-    transactions = data || [];
-    updateBalanceUI();
-    renderRecentTransactions();
-}
-
-async function addTransaction(description, amount, type) {
-    if (!currentUser) return false;
-    const { error } = await sb.from('transactions').insert({
-        user_id: currentUser.id,
-        description: description,
-        amount: amount,
-        type: type
-    });
-    if (error) {
-        showToast('Gagal: ' + error.message);
-        return false;
-    }
-    showToast('Transaksi berhasil ditambahkan');
-    await loadTransactions();
-    return true;
-}
-
-function openAddTransactionModal(predefinedType) {
-    const desc = prompt('Masukkan deskripsi transaksi:');
-    if (!desc) return;
-    const amount = parseInt(prompt('Masukkan jumlah (Rp):'));
-    if (isNaN(amount) || amount <= 0) {
-        showToast('Jumlah tidak valid');
-        return;
-    }
-    addTransaction(desc, amount, predefinedType);
-}
-
-// ============================================
-// AUTHENTICATION FUNCTIONS
-// ============================================
-async function handleLogin() {
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value;
-    const errorDiv = document.getElementById('errorMsg');
     
-    if (!email || !password) {
-        errorDiv.textContent = 'Email dan password harus diisi';
-        errorDiv.classList.remove('hidden');
-        return;
-    }
-    errorDiv.classList.add('hidden');
-    
-    if (isLoginMode) {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) {
-            errorDiv.textContent = error.message;
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-        await onLoginSuccess(data.user);
-    } else {
-        const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) {
-            errorDiv.textContent = error.message;
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-        if (data.user) {
-            alert('Pendaftaran berhasil! Silakan login.');
-            toggleMode();
-        }
-    }
-}
-
-async function handleGuestLogin() {
-    const { data, error } = await sb.auth.signInAnonymously();
-    if (error) {
-        const errorDiv = document.getElementById('errorMsg');
-        errorDiv.textContent = error.message;
-        errorDiv.classList.remove('hidden');
-        return;
-    }
-    await onLoginSuccess(data.user);
-}
-
-function toggleMode() {
-    isLoginMode = !isLoginMode;
-    document.getElementById('loginTitle').innerText = isLoginMode ? 'Masuk' : 'Daftar';
-    document.getElementById('loginBtn').innerText = isLoginMode ? 'Masuk' : 'Daftar';
-    document.getElementById('switchModeText').innerText = isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk';
-    document.getElementById('errorMsg').classList.add('hidden');
-}
-
-async function onLoginSuccess(user) {
-    currentUser = user;
-    document.getElementById('loginCard').classList.add('hidden');
-    document.getElementById('appContainer').classList.remove('hidden');
-    document.getElementById('userInfo').innerHTML = user.email ? `👤 ${user.email}` : `👤 Tamu`;
-    
-    await loadTransactions();
-}
-
-async function logout() {
-    await sb.auth.signOut();
-    currentUser = null;
-    transactions = [];
-    document.getElementById('appContainer').classList.add('hidden');
-    document.getElementById('loginCard').classList.remove('hidden');
-    document.getElementById('emailInput').value = '';
-    document.getElementById('passwordInput').value = '';
-    document.getElementById('errorMsg').classList.add('hidden');
-}
-
-async function checkSession() {
-    const { data } = await sb.auth.getSession();
-    if (data.session?.user) {
-        await onLoginSuccess(data.session.user);
-    } else {
-        document.getElementById('loginCard').classList.remove('hidden');
-        document.getElementById('appContainer').classList.add('hidden');
-    }
-}
-
-// ============================================
-// NAVIGATION
-// ============================================
-function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
-            currentNav = item.dataset.nav;
-            
-            if (currentNav === 'home') {
-                renderRecentTransactions();
-            } else {
-                showToast('Fitur ' + currentNav + ' akan segera hadir');
+    document.querySelectorAll('.delete-transaksi').forEach(btn => {
+        btn.onclick = async () => {
+            if (confirm('Hapus transaksi?')) {
+                await sb.from('transactions').delete().eq('id', btn.dataset.id);
+                showToast('Transaksi dihapus');
+                await loadTransactions();
+                renderCurrentView();
             }
-        });
+        };
     });
 }
 
-// ============================================
-// INITIALIZATION
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Supabase
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function renderLaporan() {
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     
-    // Toggle password visibility
+    const filtered = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
     
+    let pemasukan = 0, pengeluaran = 0;
+    for (const t of filtered) {
+        if (t.type === 'pemasukan') pemasukan += t.amount;
+        else pengeluaran += t.amount;
+    }
+    
+    let html = `
+        <div class="month-selector">
+            <button id="prevMonth">◀</button>
+            <span>${monthNames[currentMonth]} ${currentYear}</span>
+            <button id="nextMonth">▶</button>
+        </div>
+        <div class="balance-card" style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; text-align:center;">
+                <div style="flex:1"><div style="font-size:12px; opacity:0.7">Pemasukan</div><div style="font-size:20px; font-weight:600; color:#4ade80">+Rp ${formatRupiah(pemasukan)}</div></div>
+                <div style="flex:1"><div style="font-size:12px; opacity:0.7">Pengeluaran</div><div style="font-size:20px; font-weight:600; color:#f87171">-Rp ${formatRupiah(pengeluaran)}</div></div>
+                <div style="flex:1"><div style="font-size:12px; opacity:0.7">Saldo</div><div style="font-size:20px; font-weight:600">Rp ${formatRupiah(pemasukan - pengeluaran)}</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">📋 Detail Transaksi</div>
+            <div id="laporanDetailList"></div>
+        </div>
+    `;
+    document.getElementById('mainContent').innerHTML = html;
+    
+    const grouped = {};
+    for (const t of filtered) {
+        const date = new Date(t.created_at).toLocaleDateString('id-ID');
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push(t);
+    }
+    
+    const detailContainer = document.getElementById('laporanDetailList');
+    if (filtered.length === 0) {
+        detailContainer.innerHTML = '<div class="empty-state">Tidak ada transaksi bulan ini</div>';
+    } else {
+        let detailHtml = '';
+        for (const [date, items] of Object.entries(grouped)) {
+            let totalHari = 0;
+            for (const item of items) totalHari += item.type === 'pemasukan' ? item.amount : -item.amount;
+            detailHtml += `<div style="margin-top:12px; padding:8px 0; border-bottom:1px solid #eef2f
