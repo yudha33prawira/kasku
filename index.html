@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keuangan Keluarga</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
@@ -13,7 +13,7 @@
             padding-bottom: 70px;
         }
         
-        /* Login */
+        /* Login - SAMA PERSIS DENGAN TEST.HTML */
         .login-card {
             background: white;
             padding: 30px;
@@ -55,8 +55,6 @@
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .user-badge { background: #e2e8f0; padding: 8px 16px; border-radius: 30px; font-size: 13px; }
         .logout-btn { background: #ef4444; width: auto; padding: 8px 16px; margin: 0; }
-        
-        /* Balance Card */
         .balance-card {
             background: linear-gradient(135deg, #1e293b, #0f172a);
             border-radius: 28px;
@@ -82,17 +80,11 @@
         .stat-item { flex: 1; }
         .income-text { color: #4ade80; }
         .expense-text { color: #f87171; }
-        
-        /* Quick Add */
         .quick-row { display: flex; gap: 12px; margin-bottom: 20px; }
         .btn-income { background: #10b981; margin: 0; }
         .btn-expense { background: #ef4444; margin: 0; }
-        
-        /* Card */
         .card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 16px; }
-        .card-title { font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; }
-        
-        /* Transaction List */
+        .card-title { font-weight: 600; margin-bottom: 12px; }
         .txn-item {
             display: flex;
             justify-content: space-between;
@@ -114,8 +106,6 @@
             padding: 0 8px;
             color: #cbd5e1;
         }
-        
-        /* Filter */
         .filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
         .filter-btn {
             padding: 6px 16px;
@@ -128,8 +118,6 @@
             cursor: pointer;
         }
         .filter-btn.active { background: #0f172a; color: white; }
-        
-        /* Month Selector */
         .month-row {
             display: flex;
             justify-content: space-between;
@@ -148,8 +136,6 @@
             margin: 0;
             color: #3b82f6;
         }
-        
-        /* Debt Summary */
         .debt-row { display: flex; gap: 12px; margin-bottom: 20px; }
         .debt-box { flex: 1; border-radius: 20px; padding: 12px; text-align: center; }
         .debt-box.piutang { background: #d1fae5; }
@@ -157,8 +143,6 @@
         .debt-amount { font-size: 18px; font-weight: 700; }
         .debt-amount.piutang { color: #10b981; }
         .debt-amount.hutang { color: #ef4444; }
-        
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -198,8 +182,6 @@
         }
         .modal-btn { margin-top: 8px; }
         .modal-btn-secondary { background: #e2e8f0; color: #475569; }
-        
-        /* Bottom Nav */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -230,8 +212,6 @@
         }
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
         .nav-icon { font-size: 22px; }
-        
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 80px;
@@ -249,7 +229,7 @@
 </head>
 <body>
 
-<!-- Login Form -->
+<!-- Login Form - SAMA PERSIS DENGAN TEST.HTML -->
 <div id="loginForm" class="login-card">
     <h2 id="formTitle">Masuk</h2>
     <input type="email" id="email" placeholder="Email">
@@ -307,7 +287,7 @@ const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log("Supabase ready");
+console.log("Supabase initialized");
 
 let currentUser = null;
 let transactions = [];
@@ -535,4 +515,15 @@ function renderTransaksi() {
                             renderCurrentView();
                         }
                     };
-                }
+                });
+            }
+        };
+    });
+}
+
+function renderLaporan() {
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    const filtered = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d.getMon
