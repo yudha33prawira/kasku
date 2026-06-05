@@ -2,9 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Keuangan Keluarga</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,148 +14,56 @@
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
+            background: #f8f9fc;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f7fb;
-            min-height: 100vh;
-            padding: 16px;
-            padding-bottom: 80px;
+            padding-bottom: 70px;
         }
-        
-        /* Login Card */
-        .login-card {
-            background: white;
-            border-radius: 28px;
-            padding: 32px 24px;
-            max-width: 400px;
-            margin: 50px auto;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-        }
-        
-        .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 32px;
-            color: #1e293b;
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-        
-        .input-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 60px;
-            font-size: 16px;
-            background: #f8fafc;
-        }
-        
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 60px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 12px;
-        }
-        
-        .btn-secondary {
-            width: 100%;
-            padding: 14px;
-            background: #e2e8f0;
-            color: #475569;
-            border: none;
-            border-radius: 60px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 12px;
-        }
-        
-        .btn-text {
-            background: none;
-            border: none;
-            color: #3b82f6;
-            font-size: 14px;
-            text-align: center;
-            width: 100%;
-            margin-top: 16px;
-            cursor: pointer;
-        }
-        
-        .message {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 14px;
-            padding: 8px;
-            border-radius: 60px;
-        }
-        
-        .message.error {
-            background: #fee2e2;
-            color: #ef4444;
-        }
-        
-        .message.success {
-            background: #d1fae5;
-            color: #10b981;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        /* App Container */
+
         .app-container {
-            max-width: 500px;
+            max-width: 450px;
             margin: 0 auto;
+            padding: 16px;
         }
-        
+
         /* Header */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding: 4px 0;
         }
-        
-        .user-badge {
-            background: #e2e8f0;
-            padding: 8px 16px;
-            border-radius: 60px;
+        .user-info {
+            background: #e8edf5;
+            padding: 6px 14px;
+            border-radius: 30px;
             font-size: 13px;
             font-weight: 500;
+            color: #1e293b;
         }
-        
         .logout-btn {
             background: #ef4444;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 60px;
+            border-radius: 30px;
+            padding: 6px 14px;
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
         }
-        
-        /* Balance Card */
+
+        /* Kartu Saldo */
         .balance-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border-radius: 32px;
-            padding: 24px;
+            padding: 20px;
             margin-bottom: 20px;
             color: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             position: relative;
         }
-        
         .balance-eye {
             position: absolute;
             right: 20px;
@@ -162,277 +72,114 @@
             border: none;
             border-radius: 30px;
             padding: 6px 12px;
-            font-size: 14px;
             color: white;
+            font-size: 14px;
             cursor: pointer;
         }
-        
-        .balance-amount {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 8px 0;
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
         }
-        
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 8px 0 4px;
+            letter-spacing: -0.5px;
+        }
         .balance-stats {
             display: flex;
             gap: 16px;
             margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.15);
         }
-        
         .stat-item {
             flex: 1;
         }
-        
-        .income-text {
-            color: #4ade80;
-            font-weight: 600;
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.7;
         }
-        
-        .expense-text {
-            color: #f87171;
+        .stat-value {
+            font-size: 18px;
             font-weight: 600;
+            margin-top: 4px;
         }
-        
-        /* Quick Add */
-        .quick-row {
+        .stat-value.income { color: #4ade80; }
+        .stat-value.expense { color: #f87171; }
+
+        /* Quick Add Buttons */
+        .quick-add {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
         }
-        
         .btn-income {
             flex: 1;
             background: #10b981;
-            color: white;
             border: none;
-            padding: 14px;
             border-radius: 60px;
+            padding: 14px;
+            color: white;
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-        }
-        
-        .btn-expense {
-            flex: 1;
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        /* Card */
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-        
-        .card-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 12px;
-            color: #1e293b;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        /* Transaction List */
-        .txn-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        
-        .txn-desc {
-            font-weight: 500;
-            font-size: 15px;
-        }
-        
-        .txn-date {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
-        
-        .txn-income {
-            color: #10b981;
-            font-weight: 600;
-        }
-        
-        .txn-expense {
-            color: #ef4444;
-            font-weight: 600;
-        }
-        
-        .delete-icon {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0 8px;
-            color: #cbd5e1;
-        }
-        
-        /* Filter */
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        
-        .filter-btn {
-            padding: 6px 16px;
-            background: #e2e8f0;
-            border: none;
-            border-radius: 30px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        
-        .filter-btn.active {
-            background: #0f172a;
-            color: white;
-        }
-        
-        /* Month Selector */
-        .month-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            border-radius: 60px;
-            padding: 8px 16px;
-            margin-bottom: 16px;
-        }
-        
-        .month-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 8px 12px;
-            color: #3b82f6;
-        }
-        
-        /* Debt Summary */
-        .debt-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .debt-box {
-            flex: 1;
-            border-radius: 20px;
-            padding: 12px;
-            text-align: center;
-        }
-        
-        .debt-box.piutang {
-            background: #d1fae5;
-        }
-        
-        .debt-box.hutang {
-            background: #fee2e2;
-        }
-        
-        .debt-amount {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        
-        .debt-amount.piutang {
-            color: #10b981;
-        }
-        
-        .debt-amount.hutang {
-            color: #ef4444;
-        }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            gap: 8px;
         }
-        
-        .modal-box {
-            background: white;
-            border-radius: 28px;
-            padding: 24px;
-            width: 90%;
-            max-width: 340px;
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .modal-input, .modal-select {
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 60px;
-            font-size: 15px;
-            background: #f8fafc;
-        }
-        
-        .modal-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 60px;
+        .btn-expense {
+            flex: 1;
+            background: #ef4444;
             border: none;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        
-        .modal-btn-primary {
-            background: #3b82f6;
+            border-radius: 60px;
+            padding: 14px;
             color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        
-        .modal-btn-secondary {
-            background: #e2e8f0;
-            color: #475569;
+
+        /* Card Umum */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
-        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: white;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(10px);
             display: flex;
             justify-content: space-around;
-            padding: 12px 16px 24px;
-            border-top: 1px solid #e2e8f0;
-            max-width: 500px;
+            padding: 8px 16px 20px;
+            border-top: 1px solid #eef2f6;
+            max-width: 450px;
             margin: 0 auto;
+            z-index: 100;
         }
-        
         .nav-item {
             display: flex;
             flex-direction: column;
@@ -442,29 +189,202 @@
             border: none;
             font-size: 11px;
             color: #94a3b8;
-            padding: 8px 12px;
-            border-radius: 40px;
             cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 40px;
+            transition: all 0.2s;
+            font-weight: 500;
         }
-        
+        .nav-item .nav-icon {
+            font-size: 22px;
+        }
         .nav-item.active {
             color: #3b82f6;
             background: #eff6ff;
         }
-        
-        .nav-icon {
-            font-size: 22px;
+
+        /* Password Input dengan mata */
+        .password-wrapper {
+            position: relative;
         }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px;
+        .password-wrapper input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
             color: #94a3b8;
         }
-        
+
+        /* List Items */
+        .transaction-list, .savings-list, .reminders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .transaction-item, .savings-item, .reminder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .transaction-info, .savings-info, .reminder-info {
+            flex: 1;
+        }
+        .transaction-desc, .savings-name, .reminder-title {
+            font-weight: 500;
+            font-size: 15px;
+            color: #1e293b;
+        }
+        .transaction-meta, .savings-meta, .reminder-meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .transaction-date, .reminder-date {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .transaction-cat {
+            font-size: 10px;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 30px;
+            color: #475569;
+        }
+        .transaction-amount, .savings-amount {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .transaction-amount.income { color: #10b981; }
+        .transaction-amount.expense { color: #ef4444; }
+        .delete-btn, .edit-btn, .action-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            color: #94a3b8;
+        }
+
+        /* Top Expenses */
+        .top-expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .top-expense-rank {
+            width: 28px;
+            height: 28px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        /* Month Selector */
+        .month-selector, .period-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-radius: 60px;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+        }
+        .month-selector button, .period-selector button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px 12px;
+            color: #3b82f6;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            width: 100%;
+            max-width: 340px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .modal-input, .modal-select, .modal-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 15px;
+            background: #f8fafc;
+        }
+        .modal-textarea {
+            border-radius: 20px;
+            resize: none;
+        }
+        .modal-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            border: none;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .modal-btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .modal-btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .modal-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Toast */
         .toast {
             position: fixed;
-            bottom: 100px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             background: #1e293b;
@@ -472,94 +392,117 @@
             padding: 10px 20px;
             border-radius: 40px;
             font-size: 13px;
-            z-index: 1000;
+            z-index: 300;
+            white-space: nowrap;
         }
-        
-        button {
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            background: white;
+            border-radius: 60px;
+            padding: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
+        }
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Filter */
+        .filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 40px;
+            background: #e2e8f0;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: #0f172a;
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Reminder urgent */
+        .reminder-urgent {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        .reminder-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
         }
     </style>
 </head>
 <body>
+<div class="app-container" id="appContainer"></div>
 
-<!-- Login Screen -->
-<div id="loginScreen" class="login-card">
-    <div class="login-title" id="loginTitle">Masuk</div>
-    <div class="input-group">
-        <input type="email" id="email" placeholder="Email" autocomplete="email">
-    </div>
-    <div class="input-group">
-        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-    </div>
-    <button id="loginBtn" class="btn-primary">Masuk</button>
-    <button id="guestBtn" class="btn-secondary">Lanjut sebagai Tamu</button>
-    <button id="switchBtn" class="btn-text">Belum punya akun? Daftar</button>
-    <div id="message" class="message hidden"></div>
-</div>
-
-<!-- App Screen -->
-<div id="appScreen" class="app-container hidden">
-    <div class="header">
-        <div class="user-badge" id="userName">Loading...</div>
-        <button id="logoutBtn" class="logout-btn">Logout</button>
-    </div>
-    
-    <div class="balance-card">
-        <button id="toggleBalanceBtn" class="balance-eye">👁️</button>
-        <div style="font-size:14px; opacity:0.7">Total Saldo</div>
-        <div class="balance-amount" id="totalSaldo">Rp 0</div>
-        <div class="balance-stats">
-            <div class="stat-item">
-                <div style="font-size:12px; opacity:0.7">Pemasukan</div>
-                <div class="income-text" id="totalPemasukan">Rp 0</div>
-            </div>
-            <div class="stat-item">
-                <div style="font-size:12px; opacity:0.7">Pengeluaran</div>
-                <div class="expense-text" id="totalPengeluaran">Rp 0</div>
-            </div>
+<!-- Modal Login -->
+<div id="loginModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-title" id="modalTitle">Masuk / Daftar</div>
+        <input type="email" id="emailInput" class="modal-input" placeholder="Email">
+        <div class="password-wrapper">
+            <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
+            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('passwordInput')">👁️</button>
         </div>
-    </div>
-    
-    <div class="quick-row">
-        <button id="addIncomeBtn" class="btn-income">+ Pemasukan</button>
-        <button id="addExpenseBtn" class="btn-expense">- Pengeluaran</button>
-    </div>
-    
-    <div id="dynamicContent"></div>
-    
-    <div class="bottom-nav">
-        <button class="nav-item active" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
-        <button class="nav-item" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
-        <button class="nav-item" data-nav="laporan"><span class="nav-icon">📅</span><span>Laporan</span></button>
-        <button class="nav-item" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
-        <button class="nav-item" data-nav="pengaturan"><span class="nav-icon">⚙️</span><span>Atur</span></button>
+        <button id="submitLoginBtn" class="modal-btn modal-btn-primary">Masuk</button>
+        <div id="switchText" style="text-align:center; margin:12px 0; color:#3b82f6; cursor:pointer;">Belum punya akun? Daftar</div>
+        <button id="guestBtn" class="modal-btn modal-btn-secondary">Lanjut sebagai Tamu</button>
+        <div id="loginError" style="color:#ef4444; font-size:12px; text-align:center; margin-top:12px;"></div>
     </div>
 </div>
 
 <script>
-// ============================================
-// KONFIGURASI SUPABASE
-// ============================================
+// Supabase Config
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log("Supabase initialized");
-
-// Global variables
+let sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
+let categories = [];
 let transactions = [];
 let debts = [];
-let categories = [];
+let savings = [];
+let reminders = [];
+let sharedUsers = [];
+let chart = null;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
 let currentNav = "home";
 let isLoginMode = true;
 let isBalanceHidden = false;
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
+let currentPeriod = "weekly"; // weekly or monthly
 
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
 function showToast(msg) {
     let toast = document.querySelector('.toast');
     if (toast) toast.remove();
@@ -570,61 +513,123 @@ function showToast(msg) {
     setTimeout(() => toast.remove(), 2000);
 }
 
-function formatRp(angka) {
+function formatRupiah(angka) {
     return new Intl.NumberFormat("id-ID").format(angka || 0);
 }
 
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
-function updateBalanceUI() {
+function getCategoryById(id) {
+    if (!id) return null;
+    return categories.find(c => c.id === id);
+}
+
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+    } else {
+        input.type = 'password';
+    }
+}
+
+// Hitung total saldo (dompet utama)
+function hitungTotalSaldo() {
     let pemasukan = 0, pengeluaran = 0;
     for (const t of transactions) {
-        if (t.type === 'pemasukan') pemasukan += t.amount;
+        if (t.type === "pemasukan") pemasukan += t.amount;
         else pengeluaran += t.amount;
     }
-    const displaySaldo = isBalanceHidden ? '••••••' : `Rp ${formatRp(pemasukan - pengeluaran)}`;
-    const displayPemasukan = isBalanceHidden ? '••••' : `Rp ${formatRp(pemasukan)}`;
-    const displayPengeluaran = isBalanceHidden ? '••••' : `Rp ${formatRp(pengeluaran)}`;
+    return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
+}
+
+// Hitung total tabungan
+function hitungTotalTabungan() {
+    let total = 0;
+    for (const s of savings) {
+        total += s.current_amount;
+    }
+    return total;
+}
+
+// Transfer dari dompet ke tabungan
+async function transferToSavings(savingsId, amount) {
+    if (amount <= 0) return;
+    const savingsItem = savings.find(s => s.id === savingsId);
+    if (!savingsItem) return;
     
-    document.getElementById('totalSaldo').innerText = displaySaldo;
-    document.getElementById('totalPemasukan').innerText = displayPemasukan;
-    document.getElementById('totalPengeluaran').innerText = displayPengeluaran;
+    // Kurangi dari dompet utama (buat transaksi pengeluaran)
+    const { error: transError } = await sb.from("transactions").insert({
+        user_id: currentUser.id,
+        description: `Transfer ke tabungan: ${savingsItem.name}`,
+        amount: amount,
+        type: "pengeluaran",
+        is_fixed_expense: false
+    });
+    if (transError) return;
+    
+    // Tambah ke tabungan
+    const newAmount = savingsItem.current_amount + amount;
+    await sb.from("savings").update({ current_amount: newAmount }).eq("id", savingsId);
+    showToast(`Rp ${formatRupiah(amount)} ditransfer ke ${savingsItem.name}`);
+    await loadSavings();
+    await loadTransactions();
 }
 
-// ============================================
-// DATA LOADING
-// ============================================
-async function loadCategories() {
-    if (!currentUser) return;
-    const { data } = await sb.from('categories').select('*').eq('user_id', currentUser.id);
-    categories = data || [];
+// Transfer dari tabungan ke dompet
+async function transferFromSavings(savingsId, amount) {
+    if (amount <= 0) return;
+    const savingsItem = savings.find(s => s.id === savingsId);
+    if (!savingsItem || savingsItem.current_amount < amount) return;
+    
+    // Tambah ke dompet utama (buat transaksi pemasukan)
+    const { error: transError } = await sb.from("transactions").insert({
+        user_id: currentUser.id,
+        description: `Ambil dari tabungan: ${savingsItem.name}`,
+        amount: amount,
+        type: "pemasukan",
+        is_fixed_expense: false
+    });
+    if (transError) return;
+    
+    // Kurangi dari tabungan
+    const newAmount = savingsItem.current_amount - amount;
+    await sb.from("savings").update({ current_amount: newAmount }).eq("id", savingsId);
+    showToast(`Rp ${formatRupiah(amount)} diambil dari ${savingsItem.name}`);
+    await loadSavings();
+    await loadTransactions();
 }
 
-async function loadTransactions() {
-    if (!currentUser) return;
-    const { data } = await sb.from('transactions').select('*').eq('user_id', currentUser.id);
-    transactions = data || [];
-    updateBalanceUI();
-}
-
-async function loadDebts() {
-    if (!currentUser) return;
-    const { data } = await sb.from('debts').select('*').eq('user_id', currentUser.id);
-    debts = data || [];
-}
-
-// ============================================
-// RENDER FUNCTIONS
-// ============================================
-function renderHome() {
+// Render Beranda
+async function renderHome() {
+    const totals = hitungTotalSaldo();
+    const totalSavings = hitungTotalTabungan();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    
+    // Transaksi bulan ini (untuk pengeluaran teratas)
+    const bulanIni = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear() && t.type === "pengeluaran" && !t.is_fixed_expense;
+    });
+    
+    // Top 3 pengeluaran tertinggi
+    const topExpenses = [...bulanIni].sort((a,b) => b.amount - a.amount).slice(0,3);
+    
+    // Minggu ini
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0,0,0,0);
+    const mingguIni = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d >= startOfWeek && t.type === "pengeluaran" && !t.is_fixed_expense;
+    });
+    const topWeekly = [...mingguIni].sort((a,b) => b.amount - a.amount).slice(0,3);
+    
+    // Hutang piutang
     let totalPiutang = 0, totalHutang = 0;
     for (const d of debts) {
         if (d.status === 'lunas') continue;
@@ -632,67 +637,21 @@ function renderHome() {
         else totalHutang += d.amount;
     }
     
+    // Reminder yang akan datang
+    const upcomingReminders = reminders.filter(r => !r.is_done && new Date(r.due_date) >= new Date()).sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).slice(0,3);
+    
+    // 5 transaksi terakhir
     const recent = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
     
     let html = `
-        <div class="debt-row">
-            <div class="debt-box piutang">
-                <div style="font-size:12px">💰 Piutang</div>
-                <div class="debt-amount piutang">Rp ${formatRp(totalPiutang)}</div>
-            </div>
-            <div class="debt-box hutang">
-                <div style="font-size:12px">💸 Hutang</div>
-                <div class="debt-amount hutang">Rp ${formatRp(totalHutang)}</div>
-            </div>
+        <div class="header">
+            <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
         </div>
-        <div class="card">
-            <div class="card-title">📋 Transaksi Terbaru</div>
-            <div id="recentList"></div>
-        </div>
-    `;
-    
-    document.getElementById('dynamicContent').innerHTML = html;
-    
-    const container = document.getElementById('recentList');
-    if (recent.length === 0) {
-        container.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
-    } else {
-        let rHtml = '';
-        for (const t of recent) {
-            const kelas = t.type === 'pemasukan' ? 'txn-income' : 'txn-expense';
-            const prefix = t.type === 'pemasukan' ? '+' : '-';
-            rHtml += `
-                <div class="txn-item">
-                    <div>
-                        <div class="txn-desc">${escapeHtml(t.description)}</div>
-                        <div class="txn-date">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
-                    </div>
-                    <div class="${kelas}">${prefix} Rp ${formatRp(t.amount)}</div>
-                </div>
-            `;
-        }
-        container.innerHTML = rHtml;
-    }
-}
-
-function renderTransaksi() {
-    let html = `
-        <div class="card">
-            <div class="card-title">📋 Semua Transaksi</div>
-            <div class="filter-row">
-                <button class="filter-btn active" data-filter="all">Semua</button>
-                <button class="filter-btn" data-filter="income">Pemasukan</button>
-                <button class="filter-btn" data-filter="expense">Pengeluaran</button>
-            </div>
-            <div id="allTransactionsList"></div>
-        </div>
-    `;
-    document.getElementById('dynamicContent').innerHTML = html;
-    
-    const container = document.getElementById('allTransactionsList');
-    const all = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    
-    if (all.length === 0) {
-        container.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
-    } else {
- 
+        
+        <div class="balance-card">
+            <button id="toggleBalanceBtn" class="balance-eye">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
+            <div class="balance-label">Total Saldo</div>
+            <div class="balance-amount">${isBalanceHidden ? '••••••' : `Rp ${formatRupiah(totals.saldo)}`}</div>
+            <div class="balance-stats">
+                <div 
