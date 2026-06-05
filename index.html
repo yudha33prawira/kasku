@@ -320,9 +320,7 @@ let isBalanceHidden = false;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
+// Helper functions
 function showToast(msg) {
     let toast = document.querySelector('.toast');
     if (toast) toast.remove();
@@ -357,9 +355,45 @@ function updateBalanceUI() {
     document.getElementById('totalPengeluaran').innerText = displayPengeluaran;
 }
 
-// ============================================
-// RENDER FUNCTIONS
-// ============================================
+// Load data
+async function loadCategories() {
+    if (!currentUser) return;
+    const { data } = await sb.from('categories').select('*').eq('user_id', currentUser.id);
+    categories = data || [];
+}
+
+async function loadTransactions() {
+    if (!currentUser) return;
+    const { data } = await sb.from('transactions').select('*').eq('user_id', currentUser.id);
+    transactions = data || [];
+    updateBalanceUI();
+}
+
+async function loadDebts() {
+    if (!currentUser) return;
+    const { data } = await sb.from('debts').select('*').eq('user_id', currentUser.id);
+    debts = data || [];
+}
+
+// Add transaction
+async function addTransaction(desc, amount, type, catId = null) {
+    if (!desc) return alert('Deskripsi harus diisi');
+    if (isNaN(amount) || amount <= 0) return alert('Jumlah harus > 0');
+    
+    const data = { user_id: currentUser.id, description: desc, amount, type };
+    if (catId) data.category_id = catId;
+    
+    const { error } = await sb.from('transactions').insert(data);
+    if (error) {
+        alert('Gagal: ' + error.message);
+        return false;
+    }
+    showToast('Transaksi berhasil ditambahkan');
+    await loadTransactions();
+    return true;
+}
+
+// Render functions
 function renderHome() {
     let totalPiutang = 0, totalHutang = 0;
     for (const d of debts) {
@@ -425,49 +459,31 @@ function renderTransaksi() {
     `;
     document.getElementById('dynamicContent').innerHTML = html;
     
-    renderTransactionList(transactions);
-    
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const filter = btn.dataset.filter;
-            let filtered = [...transactions];
-            if (filter === 'income') filtered = filtered.filter(t => t.type === 'pemasukan');
-            if (filter === 'expense') filtered = filtered.filter(t => t.type === 'pengeluaran');
-            renderTransactionList(filtered);
-        };
-    });
-}
-
-function renderTransactionList(data) {
     const container = document.getElementById('allTransactionsList');
-    if (!container) return;
+    const all = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     
-    if (data.length === 0) {
-        container.innerHTML = '<div class="empty-state">Tidak ada transaksi</div>';
-        return;
-    }
-    
-    data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    let html = '';
-    for (const t of data) {
-        const kelas = t.type === 'pemasukan' ? 'txn-income' : 'txn-expense';
-        const prefix = t.type === 'pemasukan' ? '+' : '-';
-        html += `
-            <div class="txn-item">
-                <div>
-                    <div class="txn-desc">${escapeHtml(t.description)}</div>
-                    <div class="txn-date">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
+    if (all.length === 0) {
+        container.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
+    } else {
+        let listHtml = '';
+        for (const t of all) {
+            const kelas = t.type === 'pemasukan' ? 'txn-income' : 'txn-expense';
+            const prefix = t.type === 'pemasukan' ? '+' : '-';
+            listHtml += `
+                <div class="txn-item">
+                    <div>
+                        <div class="txn-desc">${escapeHtml(t.description)}</div>
+                        <div class="txn-date">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
+                    </div>
+                    <div style="display:flex; align-items:center">
+                        <div class="${kelas}">${prefix} Rp ${formatRp(t.amount)}</div>
+                        <button class="delete-icon" data-id="${t.id}">🗑️</button>
+                    </div>
                 </div>
-                <div style="display:flex; align-items:center">
-                    <div class="${kelas}">${prefix} Rp ${formatRp(t.amount)}</div>
-                    <button class="delete-icon" data-id="${t.id}">🗑️</button>
-                </div>
-            </div>
-        `;
+            `;
+        }
+        container.innerHTML = listHtml;
     }
-    container.innerHTML = html;
     
     document.querySelectorAll('.delete-icon').forEach(btn => {
         btn.onclick = async () => {
@@ -479,55 +495,51 @@ function renderTransactionList(data) {
             }
         };
     });
+    
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+            let filtered = [...transactions];
+            if (filter === 'income') filtered = filtered.filter(t => t.type === 'pemasukan');
+            if (filter === 'expense') filtered = filtered.filter(t => t.type === 'pengeluaran');
+            filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state">Tidak ada transaksi</div>';
+            } else {
+                let fHtml = '';
+                for (const t of filtered) {
+                    const kelas = t.type === 'pemasukan' ? 'txn-income' : 'txn-expense';
+                    const prefix = t.type === 'pemasukan' ? '+' : '-';
+                    fHtml += `
+                        <div class="txn-item">
+                            <div>
+                                <div class="txn-desc">${escapeHtml(t.description)}</div>
+                                <div class="txn-date">${new Date(t.created_at).toLocaleDateString('id-ID')}</div>
+                            </div>
+                            <div style="display:flex; align-items:center">
+                                <div class="${kelas}">${prefix} Rp ${formatRp(t.amount)}</div>
+                                <button class="delete-icon" data-id="${t.id}">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = fHtml;
+                
+                document.querySelectorAll('.delete-icon').forEach(btn => {
+                    btn.onclick = async () => {
+                        if (confirm('Hapus transaksi?')) {
+                            await sb.from('transactions').delete().eq('id', btn.dataset.id);
+                            await loadTransactions();
+                            renderCurrentView();
+                        }
+                    };
+                });
+            }
+        };
+    });
 }
 
-function renderLaporan() {
-    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    
-    const filtered = transactions.filter(t => {
-        const d = new Date(t.created_at);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    });
-    
-    let pemasukan = 0, pengeluaran = 0;
-    for (const t of filtered) {
-        if (t.type === 'pemasukan') pemasukan += t.amount;
-        else pengeluaran += t.amount;
-    }
-    
-    let html = `
-        <div class="month-row">
-            <button id="prevMonth" class="month-btn">◀</button>
-            <span>${monthNames[currentMonth]} ${currentYear}</span>
-            <button id="nextMonth" class="month-btn">▶</button>
-        </div>
-        <div class="balance-card" style="margin-bottom:16px;">
-            <div style="display:flex; justify-content:space-between; text-align:center;">
-                <div style="flex:1"><div style="font-size:12px; opacity:0.7">Pemasukan</div><div style="font-size:18px; font-weight:600; color:#4ade80">+Rp ${formatRp(pemasukan)}</div></div>
-                <div style="flex:1"><div style="font-size:12px; opacity:0.7">Pengeluaran</div><div style="font-size:18px; font-weight:600; color:#f87171">-Rp ${formatRp(pengeluaran)}</div></div>
-                <div style="flex:1"><div style="font-size:12px; opacity:0.7">Saldo</div><div style="font-size:18px; font-weight:600">Rp ${formatRp(pemasukan - pengeluaran)}</div></div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-title">📋 Detail Transaksi</div>
-            <div id="laporanDetail"></div>
-        </div>
-    `;
-    document.getElementById('dynamicContent').innerHTML = html;
-    
-    const grouped = {};
-    for (const t of filtered) {
-        const date = new Date(t.created_at).toLocaleDateString('id-ID');
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(t);
-    }
-    
-    const detailContainer = document.getElementById('laporanDetail');
-    if (filtered.length === 0) {
-        detailContainer.innerHTML = '<div class="empty-state">Tidak ada transaksi bulan ini</div>';
-    } else {
-        let detailHtml = '';
-        for (const [date, items] of Object.entries(grouped)) {
-            let totalHari = 0;
-            for (const item of items) totalHari += item.type === 'pemasukan' ? item.amount : -item.amount;
-            detailHtml += `<div style="margin-top:12px; padding:8px 0; border-bottom:1px solid #eef2f6;"><strong>📌 ${date}</strong> <span style="color:${totalHari >= 0 ? '#10b981' : '#ef4444'}">${totalHari >= 0 ? '+' : '-'} Rp ${form
+function renderLapor
