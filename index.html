@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Keuangan Keluarga • Login Dulu</title>
-    <script src="https://esm.sh/@supabase/supabase-js@2"></script>
+    <!-- Gunakan CDN UMD yang lebih stabil -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         body { background: #f1f5f9; margin: 0; padding: 16px; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; border-radius: 28px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .saldo-wrap { text-align: center; }
+        .label-saldo { font-size: 14px; color: #475569; }
         .saldo { font-size: 36px; font-weight: 800; margin: 8px 0; }
         .ringkasan { display: flex; gap: 12px; margin-top: 16px; }
         .box { flex: 1; background: #f8fafc; border-radius: 20px; padding: 12px; text-align: center; }
@@ -23,8 +25,8 @@
         .filter-btn { background: #e2e8f0; border: none; border-radius: 40px; padding: 8px 16px; cursor: pointer; }
         .filter-btn.aktif { background: #0f172a; color: white; }
         .transaksi-item { background: white; border-radius: 20px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .jumlah.plus { color: #10b981; }
-        .jumlah.minus { color: #ef4444; }
+        .jumlah.plus { color: #10b981; font-weight: 700; }
+        .jumlah.minus { color: #ef4444; font-weight: 700; }
         .hapus-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
         .kosong { text-align: center; color: #64748b; padding: 32px; background: white; border-radius: 28px; }
         .loading { text-align: center; padding: 20px; color: #475569; }
@@ -102,247 +104,256 @@
 </div>
 
 <script>
-    // *********************************************************
-    // 🔧 GANTI DENGAN KONFIGURASI SUPABASE ANDA
-    // *********************************************************
-    const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co/rest/v1/";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let currentUser = null;
-    let filterAktif = "semua";
-    let subscription = null;
-    let isLoginMode = true; // true = login, false = register
-
-    // DOM elements
-    const appContainer = document.getElementById("appContainer");
-    const loginModal = document.getElementById("loginModal");
-    const modalTitle = document.getElementById("modalTitle");
-    const submitBtn = document.getElementById("submitLoginBtn");
-    const switchText = document.getElementById("switchText");
-    const emailInput = document.getElementById("emailInput");
-    const passwordInput = document.getElementById("passwordInput");
-    const loginError = document.getElementById("loginError");
-
-    // Helper format
-    function formatRupiah(angka) {
-        return new Intl.NumberFormat("id-ID").format(angka);
-    }
-
-    function escapeHtml(str) {
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    // Hitung ringkasan
-    function hitungRingkasan(transaksiArr) {
-        let pemasukan = 0, pengeluaran = 0;
-        transaksiArr.forEach(t => {
-            if (t.type === "pemasukan") pemasukan += t.amount;
-            else pengeluaran += t.amount;
-        });
-        const saldo = pemasukan - pengeluaran;
-        document.getElementById("totalSaldo").innerText = formatRupiah(saldo);
-        document.getElementById("totalPemasukan").innerText = formatRupiah(pemasukan);
-        document.getElementById("totalPengeluaran").innerText = formatRupiah(pengeluaran);
-    }
-
-    // Render daftar
-    function renderDaftar(transaksiArr) {
-        const container = document.getElementById("daftarTransaksi");
-        let dataFilter = transaksiArr;
-        if (filterAktif === "pemasukan") dataFilter = transaksiArr.filter(t => t.type === "pemasukan");
-        if (filterAktif === "pengeluaran") dataFilter = transaksiArr.filter(t => t.type === "pengeluaran");
-
-        if (dataFilter.length === 0) {
-            container.innerHTML = `<div class="kosong">Tidak ada transaksi ${filterAktif === "semua" ? "" : filterAktif}</div>`;
+    (function() {
+        // *********************************************************
+        // 🔧 KONFIGURASI SUPABASE (sudah diperbaiki)
+        // *********************************************************
+        // HAPUS /rest/v1/ dari URL!
+        const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
+        
+        // Deteksi apakah Supabase sudah tersedia
+        if (typeof supabase === 'undefined' && typeof window.supabase === 'undefined') {
+            document.getElementById("loginError").innerText = "Gagal memuat Supabase. Refresh halaman.";
             return;
         }
+        
+        const supabaseClient = (typeof supabase !== 'undefined') ? supabase : window.supabase;
+        const sb = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let filterAktif = "semua";
+        let subscription = null;
+        let isLoginMode = true;
 
-        dataFilter.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-        let html = "";
-        dataFilter.forEach(t => {
-            const tanggal = new Date(t.created_at).toLocaleDateString("id-ID");
-            const jumlahFormatted = formatRupiah(t.amount);
-            const kelas = t.type === "pemasukan" ? "plus" : "minus";
-            const prefix = t.type === "pemasukan" ? "+" : "-";
-            html += `
-                <div class="transaksi-item" data-id="${t.id}">
-                    <div>
-                        <div style="font-weight:600">${escapeHtml(t.description)}</div>
-                        <div style="font-size:11px; color:#64748b">${tanggal}</div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px">
-                        <div class="jumlah ${kelas}">${prefix} Rp ${jumlahFormatted}</div>
-                        <button class="hapus-btn" data-id="${t.id}">🗑️</button>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
+        // DOM elements
+        const appContainer = document.getElementById("appContainer");
+        const loginModal = document.getElementById("loginModal");
+        const modalTitle = document.getElementById("modalTitle");
+        const submitBtn = document.getElementById("submitLoginBtn");
+        const switchText = document.getElementById("switchText");
+        const emailInput = document.getElementById("emailInput");
+        const passwordInput = document.getElementById("passwordInput");
+        const loginError = document.getElementById("loginError");
 
-        document.querySelectorAll(".hapus-btn").forEach(btn => {
-            btn.addEventListener("click", async (e) => {
-                const id = btn.getAttribute("data-id");
-                if (confirm("Hapus transaksi ini?")) {
-                    if (currentUser) {
-                        const { error } = await supabase.from("transactions").delete().eq("id", id);
-                        if (error) alert("Gagal hapus: " + error.message);
-                    }
-                }
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat("id-ID").format(angka);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
             });
-        });
-    }
-
-    async function fetchData() {
-        if (!currentUser) return;
-        const { data, error } = await supabase
-            .from("transactions")
-            .select("*")
-            .eq("user_id", currentUser.id);
-        if (error) {
-            console.error(error);
-            document.getElementById("daftarTransaksi").innerHTML = `<div class="kosong">Gagal memuat: ${error.message}</div>`;
-            return;
         }
-        hitungRingkasan(data || []);
-        renderDaftar(data || []);
-    }
 
-    function subscribeToChanges(userId) {
-        if (subscription) subscription.unsubscribe();
-        subscription = supabase
-            .channel(`transactions-${userId}`)
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'transactions',
-                filter: `user_id=eq.${userId}`
-            }, () => fetchData())
-            .subscribe();
-    }
-
-    async function tambahTransaksi() {
-        if (!currentUser) return alert("Belum login");
-        const description = document.getElementById("deskripsi").value.trim();
-        let amount = parseInt(document.getElementById("jumlah").value);
-        const type = document.getElementById("tipe").value;
-
-        if (!description) return alert("Deskripsi harus diisi");
-        if (isNaN(amount) || amount <= 0) return alert("Jumlah harus > 0");
-
-        const { error } = await supabase.from("transactions").insert({
-            user_id: currentUser.id,
-            description,
-            amount,
-            type
-        });
-        if (error) alert("Gagal simpan: " + error.message);
-        else {
-            document.getElementById("deskripsi").value = "";
-            document.getElementById("jumlah").value = "";
+        function hitungRingkasan(transaksiArr) {
+            let pemasukan = 0, pengeluaran = 0;
+            if (transaksiArr && transaksiArr.length) {
+                transaksiArr.forEach(t => {
+                    if (t.type === "pemasukan") pemasukan += t.amount;
+                    else pengeluaran += t.amount;
+                });
+            }
+            const saldo = pemasukan - pengeluaran;
+            document.getElementById("totalSaldo").innerText = formatRupiah(saldo);
+            document.getElementById("totalPemasukan").innerText = formatRupiah(pemasukan);
+            document.getElementById("totalPengeluaran").innerText = formatRupiah(pengeluaran);
         }
-    }
 
-    // Autentikasi handlers
-    async function handleLogin() {
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        if (!email || !password) {
-            loginError.innerText = "Email dan password harus diisi";
-            return;
+        function renderDaftar(transaksiArr) {
+            const container = document.getElementById("daftarTransaksi");
+            let dataFilter = transaksiArr || [];
+            
+            if (filterAktif === "pemasukan") dataFilter = dataFilter.filter(t => t.type === "pemasukan");
+            if (filterAktif === "pengeluaran") dataFilter = dataFilter.filter(t => t.type === "pengeluaran");
+
+            if (dataFilter.length === 0) {
+                container.innerHTML = `<div class="kosong">Tidak ada transaksi ${filterAktif === "semua" ? "" : filterAktif}</div>`;
+                return;
+            }
+
+            dataFilter.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            let html = "";
+            dataFilter.forEach(t => {
+                const tanggal = new Date(t.created_at).toLocaleDateString("id-ID");
+                const jumlahFormatted = formatRupiah(t.amount);
+                const kelas = t.type === "pemasukan" ? "plus" : "minus";
+                const prefix = t.type === "pemasukan" ? "+" : "-";
+                html += `
+                    <div class="transaksi-item" data-id="${t.id}">
+                        <div>
+                            <div style="font-weight:600">${escapeHtml(t.description)}</div>
+                            <div style="font-size:11px; color:#64748b">${tanggal}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px">
+                            <div class="jumlah ${kelas}">${prefix} Rp ${jumlahFormatted}</div>
+                            <button class="hapus-btn" data-id="${t.id}">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll(".hapus-btn").forEach(btn => {
+                btn.addEventListener("click", async (e) => {
+                    const id = btn.getAttribute("data-id");
+                    if (confirm("Hapus transaksi ini?")) {
+                        if (currentUser) {
+                            const { error } = await sb.from("transactions").delete().eq("id", id);
+                            if (error) alert("Gagal hapus: " + error.message);
+                        }
+                    }
+                });
+            });
         }
-        loginError.innerText = "";
-        if (isLoginMode) {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        async function fetchData() {
+            if (!currentUser) return;
+            const { data, error } = await sb
+                .from("transactions")
+                .select("*")
+                .eq("user_id", currentUser.id);
+            if (error) {
+                console.error(error);
+                document.getElementById("daftarTransaksi").innerHTML = `<div class="kosong">Gagal memuat: ${error.message}</div>`;
+                return;
+            }
+            hitungRingkasan(data || []);
+            renderDaftar(data || []);
+        }
+
+        function subscribeToChanges(userId) {
+            if (subscription) subscription.unsubscribe();
+            subscription = sb
+                .channel(`transactions-${userId}`)
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'transactions',
+                    filter: `user_id=eq.${userId}`
+                }, () => fetchData())
+                .subscribe();
+        }
+
+        async function tambahTransaksi() {
+            if (!currentUser) return alert("Belum login");
+            const description = document.getElementById("deskripsi").value.trim();
+            let amount = parseInt(document.getElementById("jumlah").value);
+            const type = document.getElementById("tipe").value;
+
+            if (!description) return alert("Deskripsi harus diisi");
+            if (isNaN(amount) || amount <= 0) return alert("Jumlah harus > 0");
+
+            const { error } = await sb.from("transactions").insert({
+                user_id: currentUser.id,
+                description,
+                amount,
+                type
+            });
+            if (error) alert("Gagal simpan: " + error.message);
+            else {
+                document.getElementById("deskripsi").value = "";
+                document.getElementById("jumlah").value = "";
+            }
+        }
+
+        async function handleLogin() {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            if (!email || !password) {
+                loginError.innerText = "Email dan password harus diisi";
+                return;
+            }
+            loginError.innerText = "";
+            if (isLoginMode) {
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) {
+                    loginError.innerText = error.message;
+                    return;
+                }
+                onAuthSuccess(data.user);
+            } else {
+                const { data, error } = await sb.auth.signUp({ email, password });
+                if (error) {
+                    loginError.innerText = error.message;
+                    return;
+                }
+                if (data.user) {
+                    alert("Pendaftaran berhasil! Silakan login.");
+                    toggleMode();
+                } else {
+                    loginError.innerText = "Gagal daftar, coba lagi.";
+                }
+            }
+        }
+
+        async function handleGuest() {
+            const { data, error } = await sb.auth.signInAnonymously();
             if (error) {
                 loginError.innerText = error.message;
                 return;
             }
             onAuthSuccess(data.user);
-        } else {
-            const { data, error } = await supabase.auth.signUp({ email, password });
-            if (error) {
-                loginError.innerText = error.message;
-                return;
-            }
-            if (data.user) {
-                alert("Pendaftaran berhasil! Silakan login.");
-                toggleMode(); // switch ke mode login
-            } else {
-                loginError.innerText = "Gagal daftar, coba lagi.";
-            }
         }
-    }
 
-    async function handleGuest() {
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) {
-            loginError.innerText = error.message;
-            return;
-        }
-        onAuthSuccess(data.user);
-    }
-
-    function onAuthSuccess(user) {
-        currentUser = user;
-        localStorage.setItem("lastUser", JSON.stringify({ id: user.id, email: user.email || "anon" }));
-        loginModal.style.display = "none";
-        appContainer.style.display = "block";
-        document.getElementById("userInfo").innerHTML = user.email ? `👤 ${user.email}` : `👤 Tamu (${user.id.slice(0,8)}...)`;
-        subscribeToChanges(user.id);
-        fetchData();
-    }
-
-    async function logout() {
-        await supabase.auth.signOut();
-        currentUser = null;
-        if (subscription) subscription.unsubscribe();
-        appContainer.style.display = "none";
-        loginModal.style.display = "flex";
-        emailInput.value = "";
-        passwordInput.value = "";
-        loginError.innerText = "";
-    }
-
-    function toggleMode() {
-        isLoginMode = !isLoginMode;
-        modalTitle.innerText = isLoginMode ? "Masuk / Daftar" : "Daftar Akun Baru";
-        submitBtn.innerText = isLoginMode ? "Masuk" : "Daftar";
-        switchText.innerText = isLoginMode ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
-    }
-
-    // Check existing session
-    async function checkSession() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            onAuthSuccess(session.user);
-        } else {
-            loginModal.style.display = "flex";
-            appContainer.style.display = "none";
-        }
-    }
-
-    // Event listeners
-    submitBtn.addEventListener("click", handleLogin);
-    switchText.addEventListener("click", toggleMode);
-    document.getElementById("guestBtn").addEventListener("click", handleGuest);
-    document.getElementById("logoutBtn").addEventListener("click", logout);
-    document.getElementById("btnTambah").addEventListener("click", tambahTransaksi);
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            filterAktif = btn.getAttribute("data-filter");
-            document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("aktif"));
-            btn.classList.add("aktif");
+        function onAuthSuccess(user) {
+            currentUser = user;
+            loginModal.style.display = "none";
+            appContainer.style.display = "block";
+            document.getElementById("userInfo").innerHTML = user.email ? `👤 ${user.email}` : `👤 Tamu (${user.id.slice(0,8)}...)`;
+            subscribeToChanges(user.id);
             fetchData();
-        });
-    });
+        }
 
-    checkSession();
+        async function logout() {
+            await sb.auth.signOut();
+            currentUser = null;
+            if (subscription) subscription.unsubscribe();
+            appContainer.style.display = "none";
+            loginModal.style.display = "flex";
+            emailInput.value = "";
+            passwordInput.value = "";
+            loginError.innerText = "";
+        }
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            modalTitle.innerText = isLoginMode ? "Masuk / Daftar" : "Daftar Akun Baru";
+            submitBtn.innerText = isLoginMode ? "Masuk" : "Daftar";
+            switchText.innerText = isLoginMode ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
+        }
+
+        async function checkSession() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session?.user) {
+                onAuthSuccess(session.user);
+            } else {
+                loginModal.style.display = "flex";
+                appContainer.style.display = "none";
+            }
+        }
+
+        // Event listeners
+        submitBtn.addEventListener("click", handleLogin);
+        switchText.addEventListener("click", toggleMode);
+        document.getElementById("guestBtn").addEventListener("click", handleGuest);
+        document.getElementById("logoutBtn").addEventListener("click", logout);
+        document.getElementById("btnTambah").addEventListener("click", tambahTransaksi);
+        document.querySelectorAll(".filter-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterAktif = btn.getAttribute("data-filter");
+                document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("aktif"));
+                btn.classList.add("aktif");
+                fetchData();
+            });
+        });
+
+        checkSession();
+    })();
 </script>
 </body>
 </html>
