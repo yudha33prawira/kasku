@@ -5,110 +5,346 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Keuangan Keluarga</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #f8f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding-bottom: 70px; }
-        .app-container { max-width: 450px; margin: 0 auto; padding: 16px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 4px 0; }
-        .user-info { background: #e8edf5; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; color: #1e293b; }
-        .logout-btn { background: #ef4444; color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; }
-        .balance-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 32px; padding: 20px; margin-bottom: 20px; color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.15); position: relative; }
-        .balance-eye { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 6px 12px; color: white; font-size: 14px; cursor: pointer; }
-        .balance-label { font-size: 14px; opacity: 0.7; }
-        .balance-amount { font-size: 32px; font-weight: 700; margin: 8px 0 4px; }
-        .balance-stats { display: flex; gap: 16px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); }
-        .stat-item { flex: 1; }
-        .stat-label { font-size: 12px; opacity: 0.7; }
-        .stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 90%;
+            margin: 20px auto;
+            background: white;
+            border-radius: 32px;
+            padding: 32px 24px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 32px;
+            color: #1e293b;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 16px;
+            background: #f8fafc;
+        }
+        .password-wrapper input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        input[type="email"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 40px;
+            font-size: 16px;
+            background: #f8fafc;
+        }
+        input[type="email"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .login-btn:active {
+            background: #2563eb;
+        }
+        .guest-btn {
+            width: 100%;
+            padding: 14px;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        .switch-mode {
+            text-align: center;
+            margin-top: 20px;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .error-msg {
+            color: #ef4444;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 12px;
+        }
+        .app-container {
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 80px;
+            display: none;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            background: #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .balance-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        .balance-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .stat-item {
+            flex: 1;
+        }
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
-        .quick-add { display: flex; gap: 12px; margin-bottom: 20px; }
-        .btn-income { flex: 1; background: #10b981; border: none; border-radius: 60px; padding: 14px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-expense { flex: 1; background: #ef4444; border: none; border-radius: 60px; padding: 14px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 8px 16px 20px; border-top: 1px solid #eef2f6; max-width: 450px; margin: 0 auto; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 11px; color: #94a3b8; cursor: pointer; padding: 8px 10px; border-radius: 40px; transition: all 0.2s; font-weight: 500; }
-        .nav-item .nav-icon { font-size: 22px; }
-        .nav-item.active { color: #3b82f6; background: #eff6ff; }
-        .password-wrapper { position: relative; }
-        .password-wrapper input { width: 100%; padding: 14px 50px 14px 16px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 15px; background: #f8fafc; }
-        .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8; }
-        .transaction-list, .savings-list, .reminders-list { display: flex; flex-direction: column; gap: 8px; }
-        .transaction-item, .savings-item, .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
-        .transaction-info, .savings-info, .reminder-info { flex: 1; }
-        .transaction-desc, .savings-name, .reminder-title { font-weight: 500; font-size: 15px; color: #1e293b; }
-        .transaction-meta, .savings-meta, .reminder-meta { display: flex; gap: 8px; margin-top: 4px; }
-        .transaction-date, .reminder-date { font-size: 11px; color: #94a3b8; }
-        .transaction-cat { font-size: 10px; background: #f1f5f9; padding: 2px 8px; border-radius: 30px; color: #475569; }
-        .transaction-amount { font-weight: 600; font-size: 15px; }
-        .transaction-amount.income { color: #10b981; }
-        .transaction-amount.expense { color: #ef4444; }
-        .top-expense-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f2f5; }
-        .top-expense-rank { width: 28px; height: 28px; background: #f1f5f9; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #475569; }
-        .month-selector, .period-selector { display: flex; justify-content: space-between; align-items: center; background: white; border-radius: 60px; padding: 8px 12px; margin-bottom: 16px; }
-        .month-selector button, .period-selector button { background: none; border: none; font-size: 18px; cursor: pointer; padding: 8px 12px; color: #3b82f6; }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-        .modal-content { background: white; border-radius: 32px; padding: 24px; width: 100%; max-width: 340px; max-height: 85vh; overflow-y: auto; }
-        .modal-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 20px; }
-        .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 40px; font-size: 15px; background: #f8fafc; }
-        .modal-textarea { border-radius: 20px; resize: none; }
-        .modal-btn { width: 100%; padding: 14px; border-radius: 40px; border: none; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 8px; }
-        .modal-btn-primary { background: #3b82f6; color: white; }
-        .modal-btn-secondary { background: #e2e8f0; color: #475569; }
-        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 13px; z-index: 300; white-space: nowrap; }
-        .filter { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
-        .filter-btn { padding: 8px 16px; border: none; border-radius: 40px; background: #e2e8f0; font-size: 13px; cursor: pointer; white-space: nowrap; }
-        .filter-btn.active { background: #0f172a; color: white; }
-        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        .reminder-urgent { background: #fee2e2; border-left: 4px solid #ef4444; }
-        .reminder-warning { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 16px 20px;
+            border-top: 1px solid #e2e8f0;
+            max-width: 450px;
+            margin: 0 auto;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            font-size: 11px;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 30px;
+        }
+        .nav-item.active {
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+        .nav-icon {
+            font-size: 22px;
+        }
+        .quick-add {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .btn-income {
+            flex: 1;
+            background: #10b981;
+            border: none;
+            border-radius: 60px;
+            padding: 14px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-expense {
+            flex: 1;
+            background: #ef4444;
+            border: none;
+            border-radius: 60px;
+            padding: 14px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .transaction-desc {
+            font-weight: 500;
+        }
+        .transaction-date {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .transaction-amount.income { color: #10b981; font-weight: 600; }
+        .transaction-amount.expense { color: #ef4444; font-weight: 600; }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            z-index: 300;
+        }
     </style>
 </head>
 <body>
-<div class="app-container" id="appContainer"></div>
 
-<div id="loginModal" class="modal-overlay" style="display: flex;">
-    <div class="modal-content">
-        <div class="modal-title" id="modalTitle">Masuk / Daftar</div>
-        <input type="email" id="emailInput" class="modal-input" placeholder="Email">
+<div id="loginContainer" class="login-container">
+    <div class="login-title" id="loginTitle">Masuk</div>
+    <div class="input-group">
+        <div class="input-label">Email</div>
+        <input type="email" id="loginEmail" placeholder="contoh@email.com">
+    </div>
+    <div class="input-group">
+        <div class="input-label">Password</div>
         <div class="password-wrapper">
-            <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
-            <button type="button" id="toggleLoginPassword" class="toggle-password">👁️</button>
+            <input type="password" id="loginPassword" placeholder="Minimal 6 karakter">
+            <button type="button" id="togglePasswordBtn" class="toggle-password">👁️</button>
         </div>
-        <button id="submitLoginBtn" class="modal-btn modal-btn-primary">Masuk</button>
-        <div id="switchText" style="text-align:center; margin:12px 0; color:#3b82f6; cursor:pointer;">Belum punya akun? Daftar</div>
-        <button id="guestBtn" class="modal-btn modal-btn-secondary">Lanjut sebagai Tamu</button>
-        <div id="loginError" style="color:#ef4444; font-size:12px; text-align:center; margin-top:12px;"></div>
+    </div>
+    <button id="loginSubmitBtn" class="login-btn">Masuk</button>
+    <button id="guestLoginBtn" class="guest-btn">Lanjut sebagai Tamu</button>
+    <div id="switchModeText" class="switch-mode">Belum punya akun? Daftar</div>
+    <div id="loginErrorMsg" class="error-msg"></div>
+</div>
+
+<div id="appContainer" class="app-container">
+    <div class="header">
+        <div class="user-info" id="userInfo">Memuat...</div>
+        <button id="logoutMainBtn" class="logout-btn">Logout</button>
+    </div>
+    <div class="balance-card" id="balanceCard">
+        <div style="font-size:14px; opacity:0.7">Total Saldo</div>
+        <div class="balance-amount" id="totalSaldo">Rp 0</div>
+        <div class="balance-stats">
+            <div class="stat-item">
+                <div style="font-size:12px; opacity:0.7">Pemasukan</div>
+                <div class="stat-value income" id="totalPemasukan">Rp 0</div>
+            </div>
+            <div class="stat-item">
+                <div style="font-size:12px; opacity:0.7">Pengeluaran</div>
+                <div class="stat-value expense" id="totalPengeluaran">Rp 0</div>
+            </div>
+        </div>
+    </div>
+    <div class="quick-add">
+        <button id="quickAddIncome" class="btn-income">+ Tambah Pemasukan</button>
+        <button id="quickAddExpense" class="btn-expense">- Tambah Pengeluaran</button>
+    </div>
+    <div class="card">
+        <div style="font-weight:600; margin-bottom:12px">📋 Transaksi Terbaru</div>
+        <div id="recentTransactions"></div>
+    </div>
+    <div class="bottom-nav">
+        <button class="nav-item active" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
+        <button class="nav-item" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
+        <button class="nav-item" data-nav="laporan"><span class="nav-icon">📅</span><span>Laporan</span></button>
+        <button class="nav-item" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
+        <button class="nav-item" data-nav="pengaturan"><span class="nav-icon">⚙️</span><span>Atur</span></button>
     </div>
 </div>
 
 <script>
-// Supabase Config
+// Konfigurasi Supabase
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
 let sb = null;
 let currentUser = null;
-let categories = [];
 let transactions = [];
-let debts = [];
-let savings = [];
-let reminders = [];
-let sharedUsers = [];
-let chart = null;
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
-let currentNav = "home";
 let isLoginMode = true;
-let isBalanceHidden = false;
-let currentPeriod = "weekly";
-let transaksiFilter = "all";
-let reminderFilter = "all";
 
-// Helper functions
 function showToast(msg) {
     let toast = document.querySelector('.toast');
     if (toast) toast.remove();
@@ -128,224 +364,220 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
-function getCategoryById(id) {
-    if (!id) return null;
-    return categories.find(c => c.id === id);
-}
-
-function hitungTotalSaldo() {
+function updateSaldo() {
     let pemasukan = 0, pengeluaran = 0;
     for (const t of transactions) {
-        if (t.type === "pemasukan") pemasukan += t.amount;
+        if (t.type === 'pemasukan') pemasukan += t.amount;
         else pengeluaran += t.amount;
     }
-    return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
+    document.getElementById('totalSaldo').innerText = `Rp ${formatRupiah(pemasukan - pengeluaran)}`;
+    document.getElementById('totalPemasukan').innerText = `Rp ${formatRupiah(pemasukan)}`;
+    document.getElementById('totalPengeluaran').innerText = `Rp ${formatRupiah(pengeluaran)}`;
 }
 
-function hitungTotalTabungan() {
-    let total = 0;
-    for (const s of savings) total += s.current_amount;
-    return total;
-}
-
-// Data loading functions
-async function loadCategories() {
-    if (!currentUser) return;
-    const { data } = await sb.from("categories").select("*").eq("user_id", currentUser.id);
-    categories = data || [];
+function renderRecentTransactions() {
+    const container = document.getElementById('recentTransactions');
+    const recent = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
+    
+    if (recent.length === 0) {
+        container.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
+        return;
+    }
+    
+    let html = '';
+    for (const t of recent) {
+        const kelas = t.type === 'pemasukan' ? 'income' : 'expense';
+        const prefix = t.type === 'pemasukan' ? '+' : '-';
+        html += `
+            <div class="transaction-item">
+                <div>
+                    <div class="transaction-desc">${escapeHtml(t.description)}</div>
+                    <div class="transaction-date">${new Date(t.created_at).toLocaleDateString("id-ID")}</div>
+                </div>
+                <div class="transaction-amount ${kelas}">${prefix} Rp ${formatRupiah(t.amount)}</div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
 }
 
 async function loadTransactions() {
     if (!currentUser) return;
-    const { data } = await sb.from("transactions").select("*").eq("user_id", currentUser.id);
+    const { data, error } = await sb.from('transactions').select('*').eq('user_id', currentUser.id);
+    if (error) {
+        console.error('Error loading transactions:', error);
+        return;
+    }
     transactions = data || [];
+    updateSaldo();
+    renderRecentTransactions();
 }
 
-async function loadDebts() {
-    if (!currentUser) return;
-    const { data } = await sb.from("debts").select("*").eq("user_id", currentUser.id);
-    debts = data || [];
+async function addTransaction(description, amount, type) {
+    if (!currentUser) return false;
+    const { error } = await sb.from('transactions').insert({
+        user_id: currentUser.id,
+        description: description,
+        amount: amount,
+        type: type
+    });
+    if (error) {
+        showToast('Gagal: ' + error.message);
+        return false;
+    }
+    showToast('Transaksi berhasil ditambahkan');
+    await loadTransactions();
+    return true;
 }
 
-async function loadSavings() {
-    if (!currentUser) return;
-    const { data } = await sb.from("savings").select("*").eq("user_id", currentUser.id);
-    savings = data || [];
+function openAddTransactionModal(predefinedType) {
+    const desc = prompt('Masukkan deskripsi:');
+    if (!desc) return;
+    const amount = parseInt(prompt('Masukkan jumlah (Rp):'));
+    if (isNaN(amount) || amount <= 0) {
+        showToast('Jumlah tidak valid');
+        return;
+    }
+    addTransaction(desc, amount, predefinedType);
 }
 
-async function loadReminders() {
-    if (!currentUser) return;
-    const { data } = await sb.from("reminders").select("*").eq("user_id", currentUser.id);
-    reminders = data || [];
-}
-
-// Authentication functions
+// Authentication Functions
 async function handleLogin() {
-    const email = document.getElementById("emailInput").value.trim();
-    const password = document.getElementById("passwordInput").value;
-    const errorDiv = document.getElementById("loginError");
-    if (!email || !password) { errorDiv.innerText = "Email dan password harus diisi"; return; }
-    errorDiv.innerText = "";
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorDiv = document.getElementById('loginErrorMsg');
+    
+    if (!email || !password) {
+        errorDiv.innerText = 'Email dan password harus diisi';
+        return;
+    }
+    errorDiv.innerText = '';
     
     if (isLoginMode) {
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) { errorDiv.innerText = error.message; return; }
-        await onAuthSuccess(data.user);
+        if (error) {
+            errorDiv.innerText = error.message;
+            return;
+        }
+        await onLoginSuccess(data.user);
     } else {
         const { data, error } = await sb.auth.signUp({ email, password });
-        if (error) { errorDiv.innerText = error.message; return; }
+        if (error) {
+            errorDiv.innerText = error.message;
+            return;
+        }
         if (data.user) {
-            alert("Pendaftaran berhasil! Silakan login.");
+            alert('Pendaftaran berhasil! Silakan login.');
             toggleMode();
         }
     }
 }
 
-async function handleGuest() {
+async function handleGuestLogin() {
     const { data, error } = await sb.auth.signInAnonymously();
-    if (error) { document.getElementById("loginError").innerText = error.message; return; }
-    await onAuthSuccess(data.user);
+    if (error) {
+        document.getElementById('loginErrorMsg').innerText = error.message;
+        return;
+    }
+    await onLoginSuccess(data.user);
 }
 
 function toggleMode() {
     isLoginMode = !isLoginMode;
-    document.getElementById("modalTitle").innerText = isLoginMode ? "Masuk / Daftar" : "Daftar Akun Baru";
-    document.getElementById("submitLoginBtn").innerText = isLoginMode ? "Masuk" : "Daftar";
-    document.getElementById("switchText").innerText = isLoginMode ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
+    document.getElementById('loginTitle').innerText = isLoginMode ? 'Masuk' : 'Daftar';
+    document.getElementById('loginSubmitBtn').innerText = isLoginMode ? 'Masuk' : 'Daftar';
+    document.getElementById('switchModeText').innerText = isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk';
 }
 
-async function onAuthSuccess(user) {
+async function onLoginSuccess(user) {
     currentUser = user;
-    document.getElementById("loginModal").style.display = "none";
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    document.getElementById('userInfo').innerHTML = user.email ? `👤 ${user.email}` : `👤 Tamu (${user.id.slice(0,8)})`;
     
-    await loadCategories();
     await loadTransactions();
-    await loadDebts();
-    await loadSavings();
-    await loadReminders();
-    await loadTransactions();
-    
-    addBottomNav();
-    renderCurrentView();
 }
 
 async function logout() {
     await sb.auth.signOut();
     currentUser = null;
-    document.querySelector(".bottom-nav")?.remove();
-    document.getElementById("appContainer").innerHTML = "";
-    document.getElementById("loginModal").style.display = "flex";
+    transactions = [];
+    document.getElementById('appContainer').style.display = 'none';
+    document.getElementById('loginContainer').style.display = 'block';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginErrorMsg').innerText = '';
 }
 
 async function checkSession() {
     const { data } = await sb.auth.getSession();
     if (data.session?.user) {
-        await onAuthSuccess(data.session.user);
+        await onLoginSuccess(data.session.user);
     } else {
-        document.getElementById("loginModal").style.display = "flex";
+        document.getElementById('loginContainer').style.display = 'block';
+        document.getElementById('appContainer').style.display = 'none';
     }
 }
 
 // Navigation
-function addBottomNav() {
-    const navHtml = `
-        <div class="bottom-nav">
-            <button class="nav-item" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
-            <button class="nav-item" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
-            <button class="nav-item" data-nav="laporan"><span class="nav-icon">📅</span><span>Laporan</span></button>
-            <button class="nav-item" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
-            <button class="nav-item" data-nav="settings"><span class="nav-icon">⚙️</span><span>Atur</span></button>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', navHtml);
-    
-    for (const btn of document.querySelectorAll('.nav-item')) {
-        btn.onclick = () => {
-            currentNav = btn.dataset.nav;
-            for (const b of document.querySelectorAll('.nav-item')) b.classList.remove('active');
-            btn.classList.add('active');
-            renderCurrentView();
-        };
-    }
+function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            item.classList.add('active');
+            const nav = item.dataset.nav;
+            if (nav === 'home') {
+                document.getElementById('recentTransactions').style.display = 'block';
+            } else {
+                showToast('Fitur ' + nav + ' akan segera hadir');
+            }
+        });
+    });
 }
 
-function renderCurrentView() {
-    if (currentNav === "home") renderHome();
-    else if (currentNav === "transaksi") renderTransaksi();
-    else if (currentNav === "laporan") renderLaporan();
-    else if (currentNav === "hutang") renderHutang();
-    else if (currentNav === "savings") renderSavings();
-    else if (currentNav === "reminders") renderReminders();
-    else if (currentNav === "settings") renderSettings();
-}
-
-// Render functions (simplified for brevity - keep existing render functions)
-function renderHome() {
-    const totals = hitungTotalSaldo();
-    const totalSavings = hitungTotalTabungan();
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Supabase
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    let totalPiutang = 0, totalHutang = 0;
-    for (const d of debts) {
-        if (d.status === 'lunas') continue;
-        if (d.type === 'piutang') totalPiutang += d.amount;
-        else totalHutang += d.amount;
+    // Toggle password visibility
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const passwordInput = document.getElementById('loginPassword');
+    if (toggleBtn && passwordInput) {
+        toggleBtn.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        });
     }
     
-    const recent = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
+    // Login button
+    document.getElementById('loginSubmitBtn').addEventListener('click', handleLogin);
     
-    let html = `
-        <div class="header">
-            <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
-            <button id="logoutBtn" class="logout-btn">Logout</button>
-        </div>
-        <div class="balance-card">
-            <button id="toggleBalanceBtn" class="balance-eye">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
-            <div class="balance-label">Total Saldo</div>
-            <div class="balance-amount">${isBalanceHidden ? '••••••' : `Rp ${formatRupiah(totals.saldo)}`}</div>
-            <div class="balance-stats">
-                <div class="stat-item"><div class="stat-label">Pemasukan</div><div class="stat-value income">${isBalanceHidden ? '••••' : `+Rp ${formatRupiah(totals.pemasukan)}`}</div></div>
-                <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden ? '••••' : `-Rp ${formatRupiah(totals.pengeluaran)}`}</div></div>
-            </div>
-        </div>
-        <div class="quick-add">
-            <button id="quickIncome" class="btn-income">+ Pemasukan</button>
-            <button id="quickExpense" class="btn-expense">- Pengeluaran</button>
-        </div>
-        <div style="display:flex; gap:12px; margin-bottom:20px;">
-            <div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center;"><div style="font-size:12px">💰 Piutang</div><div style="font-size:18px; font-weight:700; color:#10b981">Rp ${formatRupiah(totalPiutang)}</div></div>
-            <div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center;"><div style="font-size:12px">💸 Hutang</div><div style="font-size:18px; font-weight:700; color:#ef4444">Rp ${formatRupiah(totalHutang)}</div></div>
-        </div>
-        <div class="card">
-            <div class="card-title">💰 Tabungan <span style="font-size:14px; color:#10b981">Rp ${formatRupiah(totalSavings)}</span></div>
-            <button id="viewAllSavings" style="background:none; border:none; color:#3b82f6; font-size:13px; cursor:pointer;">Lihat semua tabungan →</button>
-        </div>
-        <div class="card">
-            <div class="card-title">📋 Transaksi Terbaru</div>
-            <div class="transaction-list" id="recentTransactionsList"></div>
-        </div>
-    `;
+    // Guest button
+    document.getElementById('guestLoginBtn').addEventListener('click', handleGuestLogin);
     
-    document.getElementById("appContainer").innerHTML = html;
+    // Switch mode (login/register)
+    document.getElementById('switchModeText').addEventListener('click', toggleMode);
     
-    const recentContainer = document.getElementById("recentTransactionsList");
-    if (recent.length === 0) {
-        recentContainer.innerHTML = '<div class="empty-state">Belum ada transaksi</div>';
-    } else {
-        let rHtml = "";
-        for (const t of recent) {
-            const cat = getCategoryById(t.category_id);
-            rHtml += `<div class="transaction-item"><div class="transaction-info"><div class="transaction-desc">${escapeHtml(t.description)}</div><div class="transaction-meta"><span class="transaction-date">${new Date(t.created_at).toLocaleDateString("id-ID")}</span>${cat ? `<span class="transaction-cat">${cat.icon} ${escapeHtml(cat.name)}</span>` : ''}</div></div><div class="transaction-amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'} Rp ${formatRupiah(t.amount)}</div></div>`;
-        }
-        recentContainer.innerHTML = rHtml;
-    }
+    // Logout button
+    document.getElementById('logoutMainBtn').addEventListener('click', logout);
     
-    document.getElementById("quickIncome")?.addEventListener("click", () => openTransaksiModal("pemasukan"));
-    document.getElementById("quickExpense")?.addEventListener("click", () => openTransaksiModal("pengeluaran"));
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
-    document.getElementById("toggleBalanceBtn")?.addEventListener("click", () => { isBalanceHidden = !isBalanceHidden; renderHome(); });
-    document.getElementById("viewAllSavings")?.addEventListener("click", () => { currentNav = "savings"; updateBottomNavActive(); renderSavings(); });
-}
-
-// Simplified render functions (keep existing implementations)
-function renderTransaksi() { document.getElementById("appContainer").innerHTML = '<div class="card"><div class="empty-state">Fitur sedang dimuat...</div></div>'; }
-f
+    // Quick add buttons
+    document.getElementById('quickAddIncome').addEventListener('click', () => openAddTransactionModal('pemasukan'));
+    document.getElementById('quickAddExpense').addEventListener('click', () => openAddTransactionModal('pengeluaran'));
+    
+    // Setup navigation
+    setupNavigation();
+    
+    // Check existing session
+    checkSession();
+});
+</script>
+</body>
+</html>
