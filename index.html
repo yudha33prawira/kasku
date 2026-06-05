@@ -27,7 +27,6 @@
             padding: 16px;
         }
 
-        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -54,7 +53,6 @@
             cursor: pointer;
         }
 
-        /* Kartu Saldo */
         .balance-card {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border-radius: 32px;
@@ -109,7 +107,6 @@
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
 
-        /* Quick Add Buttons */
         .quick-add {
             display: flex;
             gap: 12px;
@@ -146,7 +143,6 @@
             gap: 8px;
         }
 
-        /* Card Umum */
         .card {
             background: white;
             border-radius: 24px;
@@ -164,7 +160,6 @@
             justify-content: space-between;
         }
 
-        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -203,7 +198,6 @@
             background: #eff6ff;
         }
 
-        /* Password Input dengan mata */
         .password-wrapper {
             position: relative;
         }
@@ -223,7 +217,6 @@
             color: #94a3b8;
         }
 
-        /* List Items */
         .transaction-list, .savings-list, .reminders-list {
             display: flex;
             flex-direction: column;
@@ -275,7 +268,6 @@
             color: #94a3b8;
         }
 
-        /* Top Expenses */
         .top-expense-item {
             display: flex;
             justify-content: space-between;
@@ -296,7 +288,6 @@
             color: #475569;
         }
 
-        /* Month Selector */
         .month-selector, .period-selector {
             display: flex;
             justify-content: space-between;
@@ -315,7 +306,6 @@
             color: #3b82f6;
         }
 
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -381,7 +371,6 @@
             color: white;
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 80px;
@@ -396,7 +385,6 @@
             white-space: nowrap;
         }
 
-        /* Tabs */
         .tabs {
             display: flex;
             gap: 8px;
@@ -420,7 +408,6 @@
             color: white;
         }
 
-        /* Filter */
         .filter {
             display: flex;
             gap: 8px;
@@ -441,7 +428,6 @@
             color: white;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -452,7 +438,6 @@
             display: none;
         }
 
-        /* Reminder urgent */
         .reminder-urgent {
             background: #fee2e2;
             border-left: 4px solid #ef4444;
@@ -466,14 +451,13 @@
 <body>
 <div class="app-container" id="appContainer"></div>
 
-<!-- Modal Login -->
 <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">Masuk / Daftar</div>
         <input type="email" id="emailInput" class="modal-input" placeholder="Email">
         <div class="password-wrapper">
             <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
-            <button type="button" class="toggle-password" onclick="togglePasswordVisibility('passwordInput')">👁️</button>
+            <button type="button" class="toggle-password" id="toggleLoginPassword">👁️</button>
         </div>
         <button id="submitLoginBtn" class="modal-btn modal-btn-primary">Masuk</button>
         <div id="switchText" style="text-align:center; margin:12px 0; color:#3b82f6; cursor:pointer;">Belum punya akun? Daftar</div>
@@ -501,7 +485,21 @@ let currentYear = new Date().getFullYear();
 let currentNav = "home";
 let isLoginMode = true;
 let isBalanceHidden = false;
-let currentPeriod = "weekly"; // weekly or monthly
+let currentPeriod = "weekly";
+let transaksiFilter = "all";
+let reminderFilter = "all";
+
+// Helper functions
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        if (input.type === 'password') {
+            input.type = 'text';
+        } else {
+            input.type = 'password';
+        }
+    }
+}
 
 function showToast(msg) {
     let toast = document.querySelector('.toast');
@@ -527,16 +525,6 @@ function getCategoryById(id) {
     return categories.find(c => c.id === id);
 }
 
-function togglePasswordVisibility(inputId) {
-    const input = document.getElementById(inputId);
-    if (input.type === 'password') {
-        input.type = 'text';
-    } else {
-        input.type = 'password';
-    }
-}
-
-// Hitung total saldo (dompet utama)
 function hitungTotalSaldo() {
     let pemasukan = 0, pengeluaran = 0;
     for (const t of transactions) {
@@ -546,7 +534,6 @@ function hitungTotalSaldo() {
     return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
 }
 
-// Hitung total tabungan
 function hitungTotalTabungan() {
     let total = 0;
     for (const s of savings) {
@@ -555,13 +542,11 @@ function hitungTotalTabungan() {
     return total;
 }
 
-// Transfer dari dompet ke tabungan
 async function transferToSavings(savingsId, amount) {
     if (amount <= 0) return;
     const savingsItem = savings.find(s => s.id === savingsId);
     if (!savingsItem) return;
     
-    // Kurangi dari dompet utama (buat transaksi pengeluaran)
     const { error: transError } = await sb.from("transactions").insert({
         user_id: currentUser.id,
         description: `Transfer ke tabungan: ${savingsItem.name}`,
@@ -571,7 +556,6 @@ async function transferToSavings(savingsId, amount) {
     });
     if (transError) return;
     
-    // Tambah ke tabungan
     const newAmount = savingsItem.current_amount + amount;
     await sb.from("savings").update({ current_amount: newAmount }).eq("id", savingsId);
     showToast(`Rp ${formatRupiah(amount)} ditransfer ke ${savingsItem.name}`);
@@ -579,13 +563,11 @@ async function transferToSavings(savingsId, amount) {
     await loadTransactions();
 }
 
-// Transfer dari tabungan ke dompet
 async function transferFromSavings(savingsId, amount) {
     if (amount <= 0) return;
     const savingsItem = savings.find(s => s.id === savingsId);
     if (!savingsItem || savingsItem.current_amount < amount) return;
     
-    // Tambah ke dompet utama (buat transaksi pemasukan)
     const { error: transError } = await sb.from("transactions").insert({
         user_id: currentUser.id,
         description: `Ambil dari tabungan: ${savingsItem.name}`,
@@ -595,7 +577,6 @@ async function transferFromSavings(savingsId, amount) {
     });
     if (transError) return;
     
-    // Kurangi dari tabungan
     const newAmount = savingsItem.current_amount - amount;
     await sb.from("savings").update({ current_amount: newAmount }).eq("id", savingsId);
     showToast(`Rp ${formatRupiah(amount)} diambil dari ${savingsItem.name}`);
@@ -603,22 +584,17 @@ async function transferFromSavings(savingsId, amount) {
     await loadTransactions();
 }
 
-// Render Beranda
+// Render functions (simplified - same as before but with fixes)
 async function renderHome() {
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     
-    // Transaksi bulan ini (untuk pengeluaran teratas)
     const bulanIni = transactions.filter(t => {
         const d = new Date(t.created_at);
         return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear() && t.type === "pengeluaran" && !t.is_fixed_expense;
     });
-    
-    // Top 3 pengeluaran tertinggi
     const topExpenses = [...bulanIni].sort((a,b) => b.amount - a.amount).slice(0,3);
     
-    // Minggu ini
     const now = new Date();
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay());
@@ -629,7 +605,6 @@ async function renderHome() {
     });
     const topWeekly = [...mingguIni].sort((a,b) => b.amount - a.amount).slice(0,3);
     
-    // Hutang piutang
     let totalPiutang = 0, totalHutang = 0;
     for (const d of debts) {
         if (d.status === 'lunas') continue;
@@ -637,10 +612,7 @@ async function renderHome() {
         else totalHutang += d.amount;
     }
     
-    // Reminder yang akan datang
     const upcomingReminders = reminders.filter(r => !r.is_done && new Date(r.due_date) >= new Date()).sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).slice(0,3);
-    
-    // 5 transaksi terakhir
     const recent = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
     
     let html = `
@@ -654,4 +626,21 @@ async function renderHome() {
             <div class="balance-label">Total Saldo</div>
             <div class="balance-amount">${isBalanceHidden ? '••••••' : `Rp ${formatRupiah(totals.saldo)}`}</div>
             <div class="balance-stats">
-                <div 
+                <div class="stat-item">
+                    <div class="stat-label">Pemasukan</div>
+                    <div class="stat-value income">${isBalanceHidden ? '••••' : `+Rp ${formatRupiah(totals.pemasukan)}`}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Pengeluaran</div>
+                    <div class="stat-value expense">${isBalanceHidden ? '••••' : `-Rp ${formatRupiah(totals.pengeluaran)}`}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>💰 Tabungan</span>
+                <span style="font-size:14px; color:#10b981">Rp ${formatRupiah(totalSavings)}</span>
+            </div>
+            <div class="savings-list" id="savingsPreviewList"></div>
+            <button id="viewAllSavings" style="margin-top:12px; background:none; border:none;
