@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Keuangan Keluarga • Recurring</title>
+    <title>Keuangan Keluarga • Kategori</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         body { background: #f1f5f9; margin: 0; padding: 16px; }
@@ -17,32 +18,32 @@
         .pemasukan { color: #10b981; font-weight: 700; font-size: 20px; }
         .pengeluaran { color: #ef4444; font-weight: 700; font-size: 20px; }
         
-        /* Tab navigation */
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; background: white; border-radius: 60px; padding: 4px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 40px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; background: white; border-radius: 60px; padding: 4px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 40px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
         .tab-btn.aktif { background: #3b82f6; color: white; }
         
         .form-tambah { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
         .form-tambah input, .form-tambah select, .form-tambah button { padding: 12px 14px; border-radius: 40px; border: 1px solid #e2e8f0; font-size: 14px; background: white; }
         .form-tambah button { background: #3b82f6; color: white; border: none; font-weight: 600; cursor: pointer; }
         
-        .filter { display: flex; gap: 8px; margin-bottom: 16px; }
-        .filter-btn { background: #e2e8f0; border: none; border-radius: 40px; padding: 8px 16px; cursor: pointer; }
+        .filter { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
+        .filter-btn { background: #e2e8f0; border: none; border-radius: 40px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
         .filter-btn.aktif { background: #0f172a; color: white; }
         
-        .transaksi-item, .recurring-item { background: white; border-radius: 20px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .transaksi-item, .recurring-item, .category-item { background: white; border-radius: 20px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .jumlah.plus { color: #10b981; font-weight: 700; }
         .jumlah.minus { color: #ef4444; font-weight: 700; }
-        .hapus-btn, .toggle-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 4px; }
-        .toggle-btn.aktif { color: #10b981; }
-        .toggle-btn.nonaktif { color: #94a3b8; }
+        .hapus-btn, .edit-btn, .toggle-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 0 4px; }
+        .category-badge { display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; border-radius: 20px; padding: 2px 8px; font-size: 11px; margin-top: 4px; }
         .badge { background: #e2e8f0; border-radius: 20px; padding: 2px 8px; font-size: 11px; }
         .kosong { text-align: center; color: #64748b; padding: 32px; background: white; border-radius: 28px; }
         .loading { text-align: center; padding: 20px; color: #475569; }
         footer { font-size: 12px; text-align: center; margin-top: 24px; color: #94a3b8; }
         
-        .modal, .recurring-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-card { background: white; border-radius: 32px; padding: 24px; width: 90%; max-width: 350px; box-shadow: 0 20px 35px rgba(0,0,0,0.2); }
+        /* Modals */
+        .modal, .recurring-modal, .category-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-card { background: white; border-radius: 32px; padding: 24px; width: 90%; max-width: 350px; box-shadow: 0 20px 35px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto; }
         .modal-card h3 { margin-top: 0; text-align: center; }
         .modal-card input, .modal-card select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 40px; border: 1px solid #cbd5e1; }
         .modal-card button { width: 100%; padding: 12px; border-radius: 40px; border: none; background: #3b82f6; color: white; font-weight: bold; margin-top: 12px; cursor: pointer; }
@@ -51,7 +52,12 @@
         .error-msg { color: #ef4444; font-size: 12px; margin-top: 8px; text-align: center; }
         .user-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .logout-btn { background: #ef4444; color: white; border: none; border-radius: 40px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
-        .btn-tambah-recurring { background: #8b5cf6; margin-top: 12px; }
+        
+        /* Chart container */
+        .chart-container { background: white; border-radius: 20px; padding: 16px; margin-bottom: 20px; }
+        canvas { max-height: 200px; width: 100%; }
+        
+        .color-preview { width: 20px; height: 20px; border-radius: 10px; display: inline-block; margin-left: 8px; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -73,22 +79,29 @@
         </div>
     </div>
 
-    <!-- Tab Navigation -->
+    <!-- Tabs -->
     <div class="tabs">
         <button class="tab-btn aktif" data-tab="transaksi">📋 Transaksi</button>
         <button class="tab-btn" data-tab="recurring">🔄 Berulang</button>
+        <button class="tab-btn" data-tab="kategori">🏷️ Kategori</button>
+        <button class="tab-btn" data-tab="statistik">📊 Statistik</button>
     </div>
 
     <!-- Tab Transaksi -->
     <div id="tabTransaksi">
         <div class="form-tambah">
-            <input type="text" id="deskripsi" placeholder="Contoh: Belanja" style="flex:2">
+            <input type="text" id="deskripsi" placeholder="Deskripsi" style="flex:2">
             <input type="number" id="jumlah" placeholder="Jumlah" style="flex:1">
             <select id="tipe" style="flex:1">
                 <option value="pemasukan">💵 Pemasukan</option>
                 <option value="pengeluaran">💸 Pengeluaran</option>
             </select>
             <button id="btnTambah">+ Tambah</button>
+        </div>
+        <div class="form-tambah" style="margin-top: -10px;">
+            <select id="kategoriSelect" style="flex:2">
+                <option value="">Pilih Kategori</option>
+            </select>
         </div>
 
         <div class="filter">
@@ -108,7 +121,29 @@
         <div id="daftarRecurring" class="loading">Memuat daftar berulang...</div>
     </div>
 
-    <footer>🔄 Transaksi berulang otomatis ditambahkan setiap bulan</footer>
+    <!-- Tab Kategori -->
+    <div id="tabKategori" style="display: none;">
+        <div style="margin-bottom: 16px;">
+            <button id="btnTambahKategori" style="background: #10b981; color: white; border: none; border-radius: 40px; padding: 12px 20px; width: 100%; font-weight: 600;">+ Tambah Kategori Baru</button>
+        </div>
+        <div id="daftarKategori" class="loading">Memuat kategori...</div>
+    </div>
+
+    <!-- Tab Statistik -->
+    <div id="tabStatistik" style="display: none;">
+        <div class="filter" style="margin-bottom: 16px;">
+            <button class="stat-filter-btn aktif" data-stat-filter="pengeluaran">📊 Pengeluaran</button>
+            <button class="stat-filter-btn" data-stat-filter="pemasukan">📈 Pemasukan</button>
+        </div>
+        <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div id="statistikDetail" class="card" style="margin-top: 16px;">
+            <div class="loading">Pilih kategori untuk melihat detail</div>
+        </div>
+    </div>
+
+    <footer>🏷️ Kelola kategori & transaksi dengan mudah</footer>
 </div>
 
 <!-- Modal Login -->
@@ -128,18 +163,37 @@
 <div id="recurringModal" class="recurring-modal" style="display: none;">
     <div class="modal-card">
         <h3>➕ Transaksi Berulang</h3>
-        <input type="text" id="recurringDesc" placeholder="Deskripsi (contoh: Gaji, Cicilan)">
+        <input type="text" id="recurringDesc" placeholder="Deskripsi">
         <input type="number" id="recurringAmount" placeholder="Jumlah (Rp)">
         <select id="recurringType">
             <option value="pemasukan">💵 Pemasukan</option>
             <option value="pengeluaran">💸 Pengeluaran</option>
         </select>
-        <select id="recurringDay">
-            <option value="">Pilih tanggal (1-31)</option>
+        <select id="recurringDay"></select>
+        <select id="recurringCategory">
+            <option value="">Pilih Kategori</option>
         </select>
         <button id="btnSaveRecurring">Simpan</button>
-        <button id="btnCloseRecurring" style="background: #94a3b8; margin-top: 8px;">Batal</button>
+        <button id="btnCloseRecurring" style="background: #94a3b8;">Batal</button>
         <div id="recurringError" class="error-msg"></div>
+    </div>
+</div>
+
+<!-- Modal Tambah/Edit Kategori -->
+<div id="categoryModal" class="category-modal" style="display: none;">
+    <div class="modal-card">
+        <h3 id="categoryModalTitle">Tambah Kategori</h3>
+        <input type="text" id="categoryName" placeholder="Nama Kategori">
+        <input type="text" id="categoryIcon" placeholder="Icon (contoh: 🍔, 🚗, 💼)" value="📁">
+        <select id="categoryType">
+            <option value="pengeluaran">💸 Pengeluaran</option>
+            <option value="pemasukan">💵 Pemasukan</option>
+        </select>
+        <input type="color" id="categoryColor" value="#3b82f6">
+        <input type="hidden" id="categoryId" value="">
+        <button id="btnSaveCategory">Simpan</button>
+        <button id="btnCloseCategory" style="background: #94a3b8;">Batal</button>
+        <div id="categoryError" class="error-msg"></div>
     </div>
 </div>
 
@@ -159,10 +213,12 @@
         
         let currentUser = null;
         let filterAktif = "semua";
-        let subscription = null;
-        let recurringSubscription = null;
-        let isLoginMode = true;
+        let statFilter = "pengeluaran";
+        let subscriptions = [];
         let currentTab = "transaksi";
+        let categories = [];
+        let transactions = [];
+        let chart = null;
 
         // DOM elements
         const appContainer = document.getElementById("appContainer");
@@ -173,9 +229,6 @@
         const emailInput = document.getElementById("emailInput");
         const passwordInput = document.getElementById("passwordInput");
         const loginError = document.getElementById("loginError");
-        const tabTransaksi = document.getElementById("tabTransaksi");
-        const tabRecurring = document.getElementById("tabRecurring");
-        const recurringModal = document.getElementById("recurringModal");
 
         function formatRupiah(angka) {
             return new Intl.NumberFormat("id-ID").format(angka);
@@ -191,11 +244,16 @@
             });
         }
 
+        // Get category by id
+        function getCategoryById(id) {
+            return categories.find(c => c.id === id);
+        }
+
         // Hitung ringkasan
-        function hitungRingkasan(transaksiArr) {
+        function hitungRingkasan() {
             let pemasukan = 0, pengeluaran = 0;
-            if (transaksiArr && transaksiArr.length) {
-                transaksiArr.forEach(t => {
+            if (transactions && transactions.length) {
+                transactions.forEach(t => {
                     if (t.type === "pemasukan") pemasukan += t.amount;
                     else pengeluaran += t.amount;
                 });
@@ -207,9 +265,9 @@
         }
 
         // Render daftar transaksi
-        function renderDaftar(transaksiArr) {
+        function renderDaftar() {
             const container = document.getElementById("daftarTransaksi");
-            let dataFilter = transaksiArr || [];
+            let dataFilter = transactions || [];
             
             if (filterAktif === "pemasukan") dataFilter = dataFilter.filter(t => t.type === "pemasukan");
             if (filterAktif === "pengeluaran") dataFilter = dataFilter.filter(t => t.type === "pengeluaran");
@@ -226,14 +284,19 @@
                 const jumlahFormatted = formatRupiah(t.amount);
                 const kelas = t.type === "pemasukan" ? "plus" : "minus";
                 const prefix = t.type === "pemasukan" ? "+" : "-";
+                const category = t.category_id ? getCategoryById(t.category_id) : null;
+                const categoryHtml = category ? `<div class="category-badge" style="background:${category.color}20; color:${category.color}"><span>${category.icon}</span> ${escapeHtml(category.name)}</div>` : `<div class="category-badge">📁 Tidak berkategori</div>`;
+                
                 html += `
                     <div class="transaksi-item" data-id="${t.id}">
                         <div>
                             <div style="font-weight:600">${escapeHtml(t.description)}</div>
                             <div style="font-size:11px; color:#64748b">${tanggal}</div>
+                            ${categoryHtml}
                         </div>
                         <div style="display:flex; align-items:center; gap:8px">
                             <div class="jumlah ${kelas}">${prefix} Rp ${jumlahFormatted}</div>
+                            <button class="edit-btn" data-id="${t.id}" data-type="transaksi">✏️</button>
                             <button class="hapus-btn" data-id="${t.id}">🗑️</button>
                         </div>
                     </div>
@@ -255,25 +318,33 @@
         }
 
         // Render daftar recurring
-        function renderRecurring(recurringArr) {
+        async function renderRecurring() {
+            if (!currentUser) return;
+            const { data, error } = await sb
+                .from("recurring_transactions")
+                .select("*")
+                .eq("user_id", currentUser.id);
+            
             const container = document.getElementById("daftarRecurring");
-            if (!recurringArr || recurringArr.length === 0) {
+            if (error || !data || data.length === 0) {
                 container.innerHTML = `<div class="kosong">Belum ada transaksi berulang. Tambahkan sekarang!</div>`;
                 return;
             }
 
             let html = "";
-            recurringArr.forEach(r => {
+            for (const r of data) {
                 const jumlahFormatted = formatRupiah(r.amount);
                 const kelas = r.type === "pemasukan" ? "plus" : "minus";
                 const prefix = r.type === "pemasukan" ? "+" : "-";
                 const statusClass = r.is_active ? "aktif" : "nonaktif";
                 const statusText = r.is_active ? "✅ Aktif" : "⏸ Nonaktif";
+                const category = r.category_id ? getCategoryById(r.category_id) : null;
+                const categoryHtml = category ? ` • ${category.icon} ${escapeHtml(category.name)}` : '';
                 
                 html += `
                     <div class="recurring-item" data-id="${r.id}">
                         <div>
-                            <div style="font-weight:600">${escapeHtml(r.description)}</div>
+                            <div style="font-weight:600">${escapeHtml(r.description)}${categoryHtml}</div>
                             <div style="font-size:11px; color:#64748b">📅 Tanggal ${r.day_of_month} setiap bulan • ${statusText}</div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px">
@@ -283,48 +354,217 @@
                         </div>
                     </div>
                 `;
-            });
+            }
             container.innerHTML = html;
 
-            // Event toggle aktif/nonaktif
             document.querySelectorAll("#daftarRecurring .toggle-btn").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                     const id = btn.getAttribute("data-id");
                     const currentActive = btn.getAttribute("data-active") === "true";
-                    if (confirm(currentActive ? "Nonaktifkan transaksi berulang ini?" : "Aktifkan kembali transaksi berulang ini?")) {
-                        if (currentUser) {
-                            const { error } = await sb.from("recurring_transactions").update({ is_active: !currentActive }).eq("id", id);
-                            if (error) alert("Gagal mengubah status: " + error.message);
-                        }
+                    if (confirm(currentActive ? "Nonaktifkan transaksi berulang ini?" : "Aktifkan kembali?")) {
+                        await sb.from("recurring_transactions").update({ is_active: !currentActive }).eq("id", id);
                     }
                 });
             });
 
-            // Event hapus recurring
             document.querySelectorAll("#daftarRecurring .hapus-btn").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                     const id = btn.getAttribute("data-id");
                     if (confirm("Hapus transaksi berulang ini?")) {
-                        if (currentUser) {
-                            const { error } = await sb.from("recurring_transactions").delete().eq("id", id);
-                            if (error) alert("Gagal hapus: " + error.message);
-                        }
+                        await sb.from("recurring_transactions").delete().eq("id", id);
                     }
                 });
             });
         }
 
-        // Cek dan proses recurring yang harus dijalankan
+        // Render daftar kategori
+        async function renderKategori() {
+            if (!currentUser) return;
+            const { data, error } = await sb
+                .from("categories")
+                .select("*")
+                .eq("user_id", currentUser.id);
+            
+            if (error) {
+                document.getElementById("daftarKategori").innerHTML = `<div class="kosong">Gagal memuat kategori</div>`;
+                return;
+            }
+            categories = data || [];
+            
+            const container = document.getElementById("daftarKategori");
+            if (categories.length === 0) {
+                container.innerHTML = `<div class="kosong">Belum ada kategori. Tambahkan sekarang!</div>`;
+                return;
+            }
+
+            let html = "";
+            categories.forEach(c => {
+                html += `
+                    <div class="category-item" data-id="${c.id}">
+                        <div>
+                            <div style="font-weight:600"><span style="font-size:20px">${c.icon}</span> ${escapeHtml(c.name)}</div>
+                            <div style="font-size:11px; color:#64748b">${c.type === "pemasukan" ? "💵 Pemasukan" : "💸 Pengeluaran"}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px">
+                            <span class="color-preview" style="background:${c.color}"></span>
+                            <button class="edit-btn" data-id="${c.id}" data-type="kategori">✏️</button>
+                            <button class="hapus-btn" data-id="${c.id}" data-type="kategori">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll("#daftarKategori .edit-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = btn.getAttribute("data-id");
+                    const category = categories.find(c => c.id === id);
+                    if (category) {
+                        document.getElementById("categoryModalTitle").innerText = "Edit Kategori";
+                        document.getElementById("categoryName").value = category.name;
+                        document.getElementById("categoryIcon").value = category.icon;
+                        document.getElementById("categoryType").value = category.type;
+                        document.getElementById("categoryColor").value = category.color;
+                        document.getElementById("categoryId").value = category.id;
+                        document.getElementById("categoryModal").style.display = "flex";
+                    }
+                });
+            });
+
+            document.querySelectorAll("#daftarKategori .hapus-btn").forEach(btn => {
+                btn.addEventListener("click", async (e) => {
+                    const id = btn.getAttribute("data-id");
+                    if (confirm("Hapus kategori ini? Transaksi dengan kategori ini akan menjadi tidak berkategori.")) {
+                        await sb.from("categories").delete().eq("id", id);
+                    }
+                });
+            });
+            
+            updateCategoryDropdowns();
+            updateStatistik();
+        }
+
+        // Update semua dropdown kategori
+        function updateCategoryDropdowns() {
+            const kategoriSelect = document.getElementById("kategoriSelect");
+            const recurringCategory = document.getElementById("recurringCategory");
+            
+            let options = '<option value="">Tanpa Kategori</option>';
+            categories.forEach(c => {
+                options += `<option value="${c.id}">${c.icon} ${escapeHtml(c.name)} (${c.type === "pemasukan" ? "💵" : "💸"})</option>`;
+            });
+            
+            if (kategoriSelect) kategoriSelect.innerHTML = options;
+            if (recurringCategory) recurringCategory.innerHTML = options;
+        }
+
+        // Render statistik dengan chart
+        async function updateStatistik() {
+            if (!currentUser || transactions.length === 0) return;
+            
+            const filteredTransactions = transactions.filter(t => t.type === statFilter);
+            const categoryTotals = {};
+            
+            filteredTransactions.forEach(t => {
+                const categoryId = t.category_id || "uncategorized";
+                if (!categoryTotals[categoryId]) categoryTotals[categoryId] = 0;
+                categoryTotals[categoryId] += t.amount;
+            });
+            
+            const chartLabels = [];
+            const chartData = [];
+            const chartColors = [];
+            
+            for (const [catId, total] of Object.entries(categoryTotals)) {
+                if (catId === "uncategorized") {
+                    chartLabels.push("📁 Tanpa Kategori");
+                    chartColors.push("#94a3b8");
+                } else {
+                    const category = categories.find(c => c.id === catId);
+                    if (category) {
+                        chartLabels.push(`${category.icon} ${category.name}`);
+                        chartColors.push(category.color);
+                    } else {
+                        chartLabels.push("📁 Lainnya");
+                        chartColors.push("#94a3b8");
+                    }
+                }
+                chartData.push(total);
+            }
+            
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (chart) chart.destroy();
+            
+            chart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.label}: Rp ${formatRupiah(ctx.raw)}` } }
+                    }
+                }
+            });
+            
+            // Detail statistik
+            const detailHtml = `
+                <h4 style="margin:0 0 12px 0">📊 Detail ${statFilter === "pemasukan" ? "Pemasukan" : "Pengeluaran"}</h4>
+                ${Object.entries(categoryTotals).map(([catId, total]) => {
+                    let name, icon, color;
+                    if (catId === "uncategorized") {
+                        name = "Tanpa Kategori"; icon = "📁"; color = "#94a3b8";
+                    } else {
+                        const cat = categories.find(c => c.id === catId);
+                        name = cat ? cat.name : "Lainnya";
+                        icon = cat ? cat.icon : "📁";
+                        color = cat ? cat.color : "#94a3b8";
+                    }
+                    const percent = (total / filteredTransactions.reduce((sum, t) => sum + t.amount, 0) * 100).toFixed(1);
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #e2e8f0">
+                            <div><span style="font-size:18px">${icon}</span> <strong>${escapeHtml(name)}</strong></div>
+                            <div><span style="color:${color}">Rp ${formatRupiah(total)}</span> <span style="color:#64748b">(${percent}%)</span></div>
+                        </div>
+                    `;
+                }).join('')}
+                <div style="margin-top:12px; padding-top:8px; font-weight:bold; display:flex; justify-content:space-between">
+                    <span>Total ${statFilter === "pemasukan" ? "Pemasukan" : "Pengeluaran"}</span>
+                    <span>Rp ${formatRupiah(filteredTransactions.reduce((sum, t) => sum + t.amount, 0))}</span>
+                </div>
+            `;
+            document.getElementById("statistikDetail").innerHTML = detailHtml;
+        }
+
+        async function fetchTransactions() {
+            if (!currentUser) return;
+            const { data, error } = await sb
+                .from("transactions")
+                .select("*")
+                .eq("user_id", currentUser.id);
+            if (!error && data) {
+                transactions = data;
+                hitungRingkasan();
+                renderDaftar();
+                updateStatistik();
+            }
+        }
+
         async function processRecurring() {
             if (!currentUser) return;
-            
             const today = new Date();
             const currentDay = today.getDate();
             const currentMonth = today.getMonth();
             const currentYear = today.getFullYear();
             const todayStr = `${currentYear}-${currentMonth + 1}-${currentDay}`;
             
-            // Ambil semua recurring yang aktif
             const { data: recurringList, error } = await sb
                 .from("recurring_transactions")
                 .select("*")
@@ -334,85 +574,48 @@
             if (error || !recurringList) return;
             
             for (const recurring of recurringList) {
-                // Cek apakah hari ini sesuai dengan day_of_month
                 if (recurring.day_of_month !== currentDay) continue;
-                
-                // Cek apakah sudah diproses bulan ini
                 if (recurring.last_processed_date) {
                     const lastProcessed = new Date(recurring.last_processed_date);
-                    if (lastProcessed.getMonth() === currentMonth && lastProcessed.getFullYear() === currentYear) {
-                        continue; // Sudah diproses bulan ini
-                    }
+                    if (lastProcessed.getMonth() === currentMonth && lastProcessed.getFullYear() === currentYear) continue;
                 }
                 
-                // Buat transaksi otomatis
-                const { error: insertError } = await sb.from("transactions").insert({
+                const insertData = {
                     user_id: currentUser.id,
                     description: `${recurring.description} (otomatis)`,
                     amount: recurring.amount,
                     type: recurring.type,
                     created_at: new Date().toISOString()
-                });
+                };
+                if (recurring.category_id) insertData.category_id = recurring.category_id;
                 
+                const { error: insertError } = await sb.from("transactions").insert(insertData);
                 if (!insertError) {
-                    // Update last_processed_date
                     await sb.from("recurring_transactions").update({ last_processed_date: todayStr }).eq("id", recurring.id);
-                    console.log(`✅ Recurring processed: ${recurring.description}`);
                 }
             }
         }
 
-        async function fetchData() {
-            if (!currentUser) return;
-            const { data, error } = await sb
-                .from("transactions")
-                .select("*")
-                .eq("user_id", currentUser.id);
-            if (error) {
-                console.error(error);
-                document.getElementById("daftarTransaksi").innerHTML = `<div class="kosong">Gagal memuat: ${error.message}</div>`;
-                return;
-            }
-            hitungRingkasan(data || []);
-            renderDaftar(data || []);
-        }
-
-        async function fetchRecurring() {
-            if (!currentUser) return;
-            const { data, error } = await sb
-                .from("recurring_transactions")
-                .select("*")
-                .eq("user_id", currentUser.id);
-            if (error) {
-                console.error(error);
-                document.getElementById("daftarRecurring").innerHTML = `<div class="kosong">Gagal memuat: ${error.message}</div>`;
-                return;
-            }
-            renderRecurring(data || []);
-        }
-
-        function subscribeToChanges(userId) {
-            if (subscription) subscription.unsubscribe();
-            subscription = sb
-                .channel(`transactions-${userId}`)
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'transactions',
-                    filter: `user_id=eq.${userId}`
-                }, () => fetchData())
+        function subscribeToChanges() {
+            subscriptions.forEach(sub => sub?.unsubscribe());
+            subscriptions = [];
+            
+            const transSub = sb.channel(`transactions-${currentUser.id}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${currentUser.id}` }, 
+                    () => { fetchTransactions(); })
                 .subscribe();
-                
-            if (recurringSubscription) recurringSubscription.unsubscribe();
-            recurringSubscription = sb
-                .channel(`recurring-${userId}`)
-                .on('postgres_changes', {
-                    event: '*',
-                    schema: 'public',
-                    table: 'recurring_transactions',
-                    filter: `user_id=eq.${userId}`
-                }, () => fetchRecurring())
+            
+            const catSub = sb.channel(`categories-${currentUser.id}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'categories', filter: `user_id=eq.${currentUser.id}` }, 
+                    () => { renderKategori(); fetchTransactions(); })
                 .subscribe();
+            
+            const recSub = sb.channel(`recurring-${currentUser.id}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'recurring_transactions', filter: `user_id=eq.${currentUser.id}` }, 
+                    () => { renderRecurring(); })
+                .subscribe();
+            
+            subscriptions = [transSub, catSub, recSub];
         }
 
         async function tambahTransaksi() {
@@ -420,16 +623,15 @@
             const description = document.getElementById("deskripsi").value.trim();
             let amount = parseInt(document.getElementById("jumlah").value);
             const type = document.getElementById("tipe").value;
+            const categoryId = document.getElementById("kategoriSelect").value;
 
             if (!description) return alert("Deskripsi harus diisi");
             if (isNaN(amount) || amount <= 0) return alert("Jumlah harus > 0");
 
-            const { error } = await sb.from("transactions").insert({
-                user_id: currentUser.id,
-                description,
-                amount,
-                type
-            });
+            const insertData = { user_id: currentUser.id, description, amount, type };
+            if (categoryId) insertData.category_id = categoryId;
+
+            const { error } = await sb.from("transactions").insert(insertData);
             if (error) alert("Gagal simpan: " + error.message);
             else {
                 document.getElementById("deskripsi").value = "";
@@ -442,28 +644,21 @@
             let amount = parseInt(document.getElementById("recurringAmount").value);
             const type = document.getElementById("recurringType").value;
             const day = parseInt(document.getElementById("recurringDay").value);
+            const categoryId = document.getElementById("recurringCategory").value;
             
             const errorDiv = document.getElementById("recurringError");
-            
             if (!description) { errorDiv.innerText = "Deskripsi harus diisi"; return; }
             if (isNaN(amount) || amount <= 0) { errorDiv.innerText = "Jumlah harus > 0"; return; }
             if (!day || day < 1 || day > 31) { errorDiv.innerText = "Pilih tanggal (1-31)"; return; }
             
             errorDiv.innerText = "";
+            const insertData = { user_id: currentUser.id, description, amount, type, day_of_month: day, is_active: true };
+            if (categoryId) insertData.category_id = categoryId;
             
-            const { error } = await sb.from("recurring_transactions").insert({
-                user_id: currentUser.id,
-                description,
-                amount,
-                type,
-                day_of_month: day,
-                is_active: true
-            });
-            
-            if (error) {
-                errorDiv.innerText = "Gagal simpan: " + error.message;
-            } else {
-                recurringModal.style.display = "none";
+            const { error } = await sb.from("recurring_transactions").insert(insertData);
+            if (error) errorDiv.innerText = "Gagal simpan: " + error.message;
+            else {
+                document.getElementById("recurringModal").style.display = "none";
                 document.getElementById("recurringDesc").value = "";
                 document.getElementById("recurringAmount").value = "";
                 document.getElementById("recurringDay").value = "";
@@ -471,43 +666,67 @@
             }
         }
 
-        // Autentikasi handlers
+        async function tambahKategori() {
+            const name = document.getElementById("categoryName").value.trim();
+            const icon = document.getElementById("categoryIcon").value.trim() || "📁";
+            const type = document.getElementById("categoryType").value;
+            const color = document.getElementById("categoryColor").value;
+            const categoryId = document.getElementById("categoryId").value;
+            const errorDiv = document.getElementById("categoryError");
+            
+            if (!name) { errorDiv.innerText = "Nama kategori harus diisi"; return; }
+            errorDiv.innerText = "";
+            
+            if (categoryId) {
+                const { error } = await sb.from("categories").update({ name, icon, type, color }).eq("id", categoryId);
+                if (error) errorDiv.innerText = "Gagal update: " + error.message;
+                else closeCategoryModal();
+            } else {
+                const { error } = await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
+                if (error) errorDiv.innerText = "Gagal simpan: " + error.message;
+                else closeCategoryModal();
+            }
+        }
+
+        function closeCategoryModal() {
+            document.getElementById("categoryModal").style.display = "none";
+            document.getElementById("categoryId").value = "";
+            document.getElementById("categoryName").value = "";
+            document.getElementById("categoryIcon").value = "📁";
+            document.getElementById("categoryType").value = "pengeluaran";
+            document.getElementById("categoryColor").value = "#3b82f6";
+            document.getElementById("categoryError").innerText = "";
+            document.getElementById("categoryModalTitle").innerText = "Tambah Kategori";
+        }
+
+        function initDayDropdown() {
+            const select = document.getElementById("recurringDay");
+            select.innerHTML = '<option value="">Pilih tanggal (1-31)</option>';
+            for (let i = 1; i <= 31; i++) select.innerHTML += `<option value="${i}">${i}</option>`;
+        }
+
+        // Autentikasi
         async function handleLogin() {
             const email = emailInput.value.trim();
             const password = passwordInput.value;
-            if (!email || !password) {
-                loginError.innerText = "Email dan password harus diisi";
-                return;
-            }
+            if (!email || !password) { loginError.innerText = "Email dan password harus diisi"; return; }
             loginError.innerText = "";
+            
             if (isLoginMode) {
                 const { data, error } = await sb.auth.signInWithPassword({ email, password });
-                if (error) {
-                    loginError.innerText = error.message;
-                    return;
-                }
+                if (error) { loginError.innerText = error.message; return; }
                 onAuthSuccess(data.user);
             } else {
                 const { data, error } = await sb.auth.signUp({ email, password });
-                if (error) {
-                    loginError.innerText = error.message;
-                    return;
-                }
-                if (data.user) {
-                    alert("Pendaftaran berhasil! Silakan login.");
-                    toggleMode();
-                } else {
-                    loginError.innerText = "Gagal daftar, coba lagi.";
-                }
+                if (error) { loginError.innerText = error.message; return; }
+                if (data.user) { alert("Pendaftaran berhasil! Silakan login."); toggleMode(); }
+                else loginError.innerText = "Gagal daftar, coba lagi.";
             }
         }
 
         async function handleGuest() {
             const { data, error } = await sb.auth.signInAnonymously();
-            if (error) {
-                loginError.innerText = error.message;
-                return;
-            }
+            if (error) { loginError.innerText = error.message; return; }
             onAuthSuccess(data.user);
         }
 
@@ -516,18 +735,19 @@
             loginModal.style.display = "none";
             appContainer.style.display = "block";
             document.getElementById("userInfo").innerHTML = user.email ? `👤 ${user.email}` : `👤 Tamu (${user.id.slice(0,8)}...)`;
-            subscribeToChanges(user.id);
-            await fetchData();
-            await fetchRecurring();
-            await processRecurring(); // Cek recurring saat login
-            await fetchData(); // Refresh setelah processing
+            subscribeToChanges();
+            await renderKategori();
+            await fetchTransactions();
+            await renderRecurring();
+            await processRecurring();
+            await fetchTransactions();
         }
 
         async function logout() {
             await sb.auth.signOut();
             currentUser = null;
-            if (subscription) subscription.unsubscribe();
-            if (recurringSubscription) recurringSubscription.unsubscribe();
+            subscriptions.forEach(sub => sub?.unsubscribe());
+            subscriptions = [];
             appContainer.style.display = "none";
             loginModal.style.display = "flex";
             emailInput.value = "";
@@ -544,73 +764,60 @@
 
         async function checkSession() {
             const { data: { session } } = await sb.auth.getSession();
-            if (session?.user) {
-                onAuthSuccess(session.user);
-            } else {
-                loginModal.style.display = "flex";
-                appContainer.style.display = "none";
-            }
+            if (session?.user) onAuthSuccess(session.user);
+            else { loginModal.style.display = "flex"; appContainer.style.display = "none"; }
         }
 
-        // Tab switching
         function switchTab(tab) {
             currentTab = tab;
-            if (tab === "transaksi") {
-                tabTransaksi.style.display = "block";
-                tabRecurring.style.display = "none";
-                fetchData();
-            } else {
-                tabTransaksi.style.display = "none";
-                tabRecurring.style.display = "block";
-                fetchRecurring();
-            }
+            document.getElementById("tabTransaksi").style.display = tab === "transaksi" ? "block" : "none";
+            document.getElementById("tabRecurring").style.display = tab === "recurring" ? "block" : "none";
+            document.getElementById("tabKategori").style.display = tab === "kategori" ? "block" : "none";
+            document.getElementById("tabStatistik").style.display = tab === "statistik" ? "block" : "none";
+            
             document.querySelectorAll(".tab-btn").forEach(btn => {
-                if (btn.getAttribute("data-tab") === tab) {
-                    btn.classList.add("aktif");
-                } else {
-                    btn.classList.remove("aktif");
-                }
+                if (btn.getAttribute("data-tab") === tab) btn.classList.add("aktif");
+                else btn.classList.remove("aktif");
             });
+            
+            if (tab === "recurring") renderRecurring();
+            if (tab === "kategori") renderKategori();
+            if (tab === "statistik") updateStatistik();
         }
 
-        // Initialize recurring day dropdown
-        function initDayDropdown() {
-            const select = document.getElementById("recurringDay");
-            select.innerHTML = '<option value="">Pilih tanggal (1-31)</option>';
-            for (let i = 1; i <= 31; i++) {
-                select.innerHTML += `<option value="${i}">${i}</option>`;
-            }
-        }
-
-        // Event listeners
+        // Event Listeners
         submitBtn.addEventListener("click", handleLogin);
         switchText.addEventListener("click", toggleMode);
         document.getElementById("guestBtn").addEventListener("click", handleGuest);
         document.getElementById("logoutBtn").addEventListener("click", logout);
         document.getElementById("btnTambah").addEventListener("click", tambahTransaksi);
-        document.getElementById("btnTambahRecurring").addEventListener("click", () => {
-            initDayDropdown();
-            recurringModal.style.display = "flex";
-        });
+        document.getElementById("btnTambahRecurring").addEventListener("click", () => { initDayDropdown(); updateCategoryDropdowns(); document.getElementById("recurringModal").style.display = "flex"; });
         document.getElementById("btnSaveRecurring").addEventListener("click", tambahRecurring);
-        document.getElementById("btnCloseRecurring").addEventListener("click", () => {
-            recurringModal.style.display = "none";
-            document.getElementById("recurringError").innerText = "";
-        });
+        document.getElementById("btnCloseRecurring").addEventListener("click", () => document.getElementById("recurringModal").style.display = "none");
+        document.getElementById("btnTambahKategori").addEventListener("click", () => { closeCategoryModal(); document.getElementById("categoryModal").style.display = "flex"; });
+        document.getElementById("btnSaveCategory").addEventListener("click", tambahKategori);
+        document.getElementById("btnCloseCategory").addEventListener("click", closeCategoryModal);
         
         document.querySelectorAll(".filter-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 filterAktif = btn.getAttribute("data-filter");
                 document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("aktif"));
                 btn.classList.add("aktif");
-                fetchData();
+                renderDaftar();
             });
         });
-
-        document.querySelectorAll(".tab-btn").forEach(btn => {
+        
+        document.querySelectorAll(".stat-filter-btn").forEach(btn => {
             btn.addEventListener("click", () => {
-                switchTab(btn.getAttribute("data-tab"));
+                statFilter = btn.getAttribute("data-stat-filter");
+                document.querySelectorAll(".stat-filter-btn").forEach(b => b.classList.remove("aktif"));
+                btn.classList.add("aktif");
+                updateStatistik();
             });
+        });
+        
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => switchTab(btn.getAttribute("data-tab")));
         });
 
         checkSession();
