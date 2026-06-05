@@ -49,6 +49,7 @@
         .color-preview { width: 20px; height: 20px; border-radius: 10px; display: inline-block; margin-left: 8px; vertical-align: middle; }
         .btn-full { background: #8b5cf6; color: white; border: none; border-radius: 40px; padding: 12px 20px; width: 100%; font-weight: 600; margin-bottom: 16px; cursor: pointer; }
         .btn-green { background: #10b981; }
+        .success-msg { background: #d1fae5; color: #065f46; padding: 10px; border-radius: 20px; margin-bottom: 16px; text-align: center; font-size: 13px; display: none; }
     </style>
 </head>
 <body>
@@ -57,6 +58,8 @@
         <div id="userInfo">👤 Memuat...</div>
         <button id="logoutBtn" class="logout-btn">🚪 Keluar</button>
     </div>
+    
+    <div id="successMsg" class="success-msg"></div>
     
     <div class="card">
         <div class="saldo-wrap">
@@ -176,22 +179,24 @@
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
-let sb = null;
+let sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let categories = [];
 let transactions = [];
 let chart = null;
 let filterAktif = "semua";
 let statFilter = "pengeluaran";
+let isLoginMode = true;
 
-// Inisialisasi Supabase
-try {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} catch(e) {
-    console.error("Supabase init error:", e);
+function showSuccess(msg) {
+    const el = document.getElementById("successMsg");
+    if (el) {
+        el.innerText = msg;
+        el.style.display = "block";
+        setTimeout(() => { el.style.display = "none"; }, 2000);
+    }
 }
 
-// Helper functions
 function formatRupiah(angka) {
     return new Intl.NumberFormat("id-ID").format(angka || 0);
 }
@@ -202,39 +207,37 @@ function escapeHtml(str) {
 }
 
 function getCategoryById(id) {
+    if (!id) return null;
     return categories.find(c => c.id === id);
 }
 
-// Update dropdown kategori
-function updateCategoryDropdowns() {
+async function updateCategoryDropdowns() {
     const select = document.getElementById("kategoriSelect");
     const recurringCat = document.getElementById("recurringCategory");
     if (!select) return;
     
     let options = '<option value="">Tanpa Kategori</option>';
-    categories.forEach(c => {
+    for (const c of categories) {
         options += `<option value="${c.id}">${c.icon} ${escapeHtml(c.name)} (${c.type === "pemasukan" ? "💵" : "💸"})</option>`;
-    });
+    }
     select.innerHTML = options;
     if (recurringCat) recurringCat.innerHTML = options;
 }
 
-// Hitung ringkasan
 function hitungRingkasan() {
     let pemasukan = 0, pengeluaran = 0;
-    (transactions || []).forEach(t => {
+    for (const t of transactions) {
         if (t.type === "pemasukan") pemasukan += t.amount;
         else pengeluaran += t.amount;
-    });
+    }
     document.getElementById("totalSaldo").innerText = formatRupiah(pemasukan - pengeluaran);
     document.getElementById("totalPemasukan").innerText = formatRupiah(pemasukan);
     document.getElementById("totalPengeluaran").innerText = formatRupiah(pengeluaran);
 }
 
-// Render transaksi
 function renderDaftar() {
     const container = document.getElementById("daftarTransaksi");
-    let data = [...(transactions || [])];
+    let data = [...transactions];
     
     if (filterAktif === "pemasukan") data = data.filter(t => t.type === "pemasukan");
     if (filterAktif === "pengeluaran") data = data.filter(t => t.type === "pengeluaran");
@@ -246,7 +249,7 @@ function renderDaftar() {
     
     data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     let html = "";
-    data.forEach(t => {
+    for (const t of data) {
         const cat = getCategoryById(t.category_id);
         const catHtml = cat ? `<div class="category-badge" style="background:${cat.color}20; color:${cat.color}">${cat.icon} ${escapeHtml(cat.name)}</div>` : '<div class="category-badge">📁 Tidak berkategori</div>';
         const kelas = t.type === "pemasukan" ? "plus" : "minus";
@@ -265,75 +268,97 @@ function renderDaftar() {
                 </div>
             </div>
         `;
-    });
+    }
     container.innerHTML = html;
     
-    document.querySelectorAll(".hapus-transaksi").forEach(btn => {
+    for (const btn of document.querySelectorAll(".hapus-transaksi")) {
         btn.onclick = async () => {
             if (confirm("Hapus transaksi?")) {
-                await sb.from("transactions").delete().eq("id", btn.dataset.id);
-                await loadTransactions();
+                const { error } = await sb.from("transactions").delete().eq("id", btn.dataset.id);
+                if (error) alert("Error: " + error.message);
+                else {
+                    showSuccess("Transaksi dihapus");
+                    await loadTransactions();
+                }
             }
         };
-    });
+    }
 }
 
-// Load data
 async function loadCategories() {
     if (!currentUser) return;
-    const { data } = await sb.from("categories").select("*").eq("user_id", currentUser.id);
+    const { data, error } = await sb.from("categories").select("*").eq("user_id", currentUser.id);
+    if (error) {
+        console.error("Load categories error:", error);
+        return;
+    }
     categories = data || [];
-    updateCategoryDropdowns();
+    await updateCategoryDropdowns();
     
     const container = document.getElementById("daftarKategori");
-    if (container && categories.length > 0) {
-        let html = "";
-        categories.forEach(c => {
-            html += `
-                <div class="category-item">
-                    <div>
-                        <div style="font-weight:600"><span style="font-size:20px">${c.icon}</span> ${escapeHtml(c.name)}</div>
-                        <div style="font-size:11px">${c.type === "pemasukan" ? "💵 Pemasukan" : "💸 Pengeluaran"}</div>
-                    </div>
-                    <div style="display:flex; gap:8px">
-                        <span class="color-preview" style="background:${c.color}"></span>
-                        <button class="edit-kategori" data-id="${c.id}">✏️</button>
-                        <button class="hapus-kategori" data-id="${c.id}">🗑️</button>
-                    </div>
+    if (!container) return;
+    
+    if (categories.length === 0) {
+        container.innerHTML = `<div class="kosong">Belum ada kategori. Tambahkan sekarang!</div>`;
+        return;
+    }
+    
+    let html = "";
+    for (const c of categories) {
+        html += `
+            <div class="category-item">
+                <div>
+                    <div style="font-weight:600"><span style="font-size:20px">${c.icon}</span> ${escapeHtml(c.name)}</div>
+                    <div style="font-size:11px">${c.type === "pemasukan" ? "💵 Pemasukan" : "💸 Pengeluaran"}</div>
                 </div>
-            `;
-        });
-        container.innerHTML = html;
-        
-        document.querySelectorAll(".edit-kategori").forEach(btn => {
-            btn.onclick = () => editCategory(btn.dataset.id);
-        });
-        document.querySelectorAll(".hapus-kategori").forEach(btn => {
-            btn.onclick = async () => {
-                if (confirm("Hapus kategori?")) {
-                    await sb.from("categories").delete().eq("id", btn.dataset.id);
+                <div style="display:flex; gap:8px">
+                    <span class="color-preview" style="background:${c.color}"></span>
+                    <button class="edit-kategori" data-id="${c.id}">✏️</button>
+                    <button class="hapus-kategori" data-id="${c.id}">🗑️</button>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+    
+    for (const btn of document.querySelectorAll(".edit-kategori")) {
+        btn.onclick = () => editCategory(btn.dataset.id);
+    }
+    for (const btn of document.querySelectorAll(".hapus-kategori")) {
+        btn.onclick = async () => {
+            if (confirm("Hapus kategori ini? Transaksi akan menjadi tidak berkategori.")) {
+                const { error } = await sb.from("categories").delete().eq("id", btn.dataset.id);
+                if (error) alert("Error: " + error.message);
+                else {
+                    showSuccess("Kategori dihapus");
                     await loadCategories();
                     await loadTransactions();
                 }
-            };
-        });
-    } else if (container) {
-        container.innerHTML = `<div class="kosong">Belum ada kategori. Tambahkan sekarang!</div>`;
+            }
+        };
     }
 }
 
 async function loadTransactions() {
     if (!currentUser) return;
-    const { data } = await sb.from("transactions").select("*").eq("user_id", currentUser.id);
+    const { data, error } = await sb.from("transactions").select("*").eq("user_id", currentUser.id);
+    if (error) {
+        console.error("Load transactions error:", error);
+        return;
+    }
     transactions = data || [];
     hitungRingkasan();
     renderDaftar();
-    updateStatistik();
+    await updateStatistik();
 }
 
 async function loadRecurring() {
     if (!currentUser) return;
-    const { data } = await sb.from("recurring_transactions").select("*").eq("user_id", currentUser.id);
+    const { data, error } = await sb.from("recurring_transactions").select("*").eq("user_id", currentUser.id);
+    if (error) {
+        console.error("Load recurring error:", error);
+        return;
+    }
     const container = document.getElementById("daftarRecurring");
     if (!container) return;
     
@@ -362,32 +387,33 @@ async function loadRecurring() {
     }
     container.innerHTML = html;
     
-    document.querySelectorAll(".toggle-recurring").forEach(btn => {
+    for (const btn of document.querySelectorAll(".toggle-recurring")) {
         btn.onclick = async () => {
             const newActive = btn.dataset.active === "true" ? false : true;
-            await sb.from("recurring_transactions").update({ is_active: newActive }).eq("id", btn.dataset.id);
-            await loadRecurring();
+            const { error } = await sb.from("recurring_transactions").update({ is_active: newActive }).eq("id", btn.dataset.id);
+            if (error) alert("Error: " + error.message);
+            else await loadRecurring();
         };
-    });
-    document.querySelectorAll(".hapus-recurring").forEach(btn => {
+    }
+    for (const btn of document.querySelectorAll(".hapus-recurring")) {
         btn.onclick = async () => {
             if (confirm("Hapus transaksi berulang?")) {
-                await sb.from("recurring_transactions").delete().eq("id", btn.dataset.id);
-                await loadRecurring();
+                const { error } = await sb.from("recurring_transactions").delete().eq("id", btn.dataset.id);
+                if (error) alert("Error: " + error.message);
+                else await loadRecurring();
             }
         };
-    });
+    }
 }
 
-// Statistik
 async function updateStatistik() {
     if (!transactions) return;
     const filtered = transactions.filter(t => t.type === statFilter);
     const totals = {};
-    filtered.forEach(t => {
+    for (const t of filtered) {
         const id = t.category_id || "uncategorized";
         totals[id] = (totals[id] || 0) + t.amount;
-    });
+    }
     
     const labels = [], data = [], colors = [];
     for (const [id, val] of Object.entries(totals)) {
@@ -431,7 +457,7 @@ async function updateStatistik() {
                 icon = cat?.icon || "📁";
                 color = cat?.color || "#94a3b8";
             }
-            const percent = ((val / total) * 100).toFixed(1);
+            const percent = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
             detailHtml += `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e2e8f0">
                 <div><span style="font-size:18px">${icon}</span> <strong>${escapeHtml(name)}</strong></div>
                 <div><span style="color:${color}">Rp ${formatRupiah(val)}</span> <span style="color:#64748b">(${percent}%)</span></div>
@@ -445,7 +471,6 @@ async function updateStatistik() {
     }
 }
 
-// Process recurring
 async function processRecurring() {
     if (!currentUser) return;
     const today = new Date();
@@ -469,21 +494,27 @@ async function processRecurring() {
     }
 }
 
-// CRUD Transaksi
 async function tambahTransaksi() {
     const desc = document.getElementById("deskripsi").value.trim();
     const amount = parseInt(document.getElementById("jumlah").value);
     const type = document.getElementById("tipe").value;
     const catId = document.getElementById("kategoriSelect").value;
+    
     if (!desc) return alert("Deskripsi harus diisi");
     if (isNaN(amount) || amount <= 0) return alert("Jumlah harus > 0");
     
     const data = { user_id: currentUser.id, description: desc, amount, type };
     if (catId) data.category_id = catId;
-    await sb.from("transactions").insert(data);
-    document.getElementById("deskripsi").value = "";
-    document.getElementById("jumlah").value = "";
-    await loadTransactions();
+    
+    const { error } = await sb.from("transactions").insert(data);
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        showSuccess("Transaksi berhasil ditambahkan!");
+        document.getElementById("deskripsi").value = "";
+        document.getElementById("jumlah").value = "";
+        await loadTransactions();
+    }
 }
 
 async function tambahRecurring() {
@@ -499,11 +530,17 @@ async function tambahRecurring() {
     
     const data = { user_id: currentUser.id, description: desc, amount, type, day_of_month: day, is_active: true };
     if (catId) data.category_id = catId;
-    await sb.from("recurring_transactions").insert(data);
-    document.getElementById("recurringModal").style.display = "none";
-    document.getElementById("recurringDesc").value = "";
-    document.getElementById("recurringAmount").value = "";
-    await loadRecurring();
+    
+    const { error } = await sb.from("recurring_transactions").insert(data);
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        showSuccess("Transaksi berulang berhasil ditambahkan!");
+        document.getElementById("recurringModal").style.display = "none";
+        document.getElementById("recurringDesc").value = "";
+        document.getElementById("recurringAmount").value = "";
+        await loadRecurring();
+    }
 }
 
 async function tambahKategori() {
@@ -515,13 +552,23 @@ async function tambahKategori() {
     
     if (!name) return alert("Nama kategori harus diisi");
     
+    let error;
     if (id) {
-        await sb.from("categories").update({ name, icon, type, color }).eq("id", id);
+        const result = await sb.from("categories").update({ name, icon, type, color }).eq("id", id);
+        error = result.error;
+        if (!error) showSuccess("Kategori berhasil diupdate!");
     } else {
-        await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
+        const result = await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
+        error = result.error;
+        if (!error) showSuccess("Kategori berhasil ditambahkan!");
     }
-    closeCategoryModal();
-    await loadCategories();
+    
+    if (error) {
+        alert("Error: " + error.message);
+    } else {
+        closeCategoryModal();
+        await loadCategories();
+    }
 }
 
 function editCategory(id) {
@@ -553,9 +600,7 @@ function initDayDropdown() {
     for (let i = 1; i <= 31; i++) select.innerHTML += `<option value="${i}">${i}</option>`;
 }
 
-// Autentikasi
-let isLoginMode = true;
-
+// AUTHENTICATION
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
@@ -566,7 +611,7 @@ async function handleLogin() {
     if (isLoginMode) {
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { errorDiv.innerText = error.message; return; }
-        onAuthSuccess(data.user);
+        await onAuthSuccess(data.user);
     } else {
         const { data, error } = await sb.auth.signUp({ email, password });
         if (error) { errorDiv.innerText = error.message; return; }
@@ -580,7 +625,7 @@ async function handleLogin() {
 async function handleGuest() {
     const { data, error } = await sb.auth.signInAnonymously();
     if (error) { document.getElementById("loginError").innerText = error.message; return; }
-    onAuthSuccess(data.user);
+    await onAuthSuccess(data.user);
 }
 
 function toggleMode() {
@@ -613,24 +658,23 @@ async function logout() {
 async function checkSession() {
     const { data } = await sb.auth.getSession();
     if (data.session?.user) {
-        onAuthSuccess(data.session.user);
+        await onAuthSuccess(data.session.user);
     } else {
         document.getElementById("loginModal").style.display = "flex";
         document.getElementById("appContainer").style.display = "none";
     }
 }
 
-// Tab switching
 function switchTab(tab) {
     document.getElementById("tabTransaksi").style.display = tab === "transaksi" ? "block" : "none";
     document.getElementById("tabRecurring").style.display = tab === "recurring" ? "block" : "none";
     document.getElementById("tabKategori").style.display = tab === "kategori" ? "block" : "none";
     document.getElementById("tabStatistik").style.display = tab === "statistik" ? "block" : "none";
     
-    document.querySelectorAll(".tab-btn").forEach(btn => {
+    for (const btn of document.querySelectorAll(".tab-btn")) {
         if (btn.dataset.tab === tab) btn.classList.add("aktif");
         else btn.classList.remove("aktif");
-    });
+    }
     if (tab === "recurring") loadRecurring();
     if (tab === "kategori") loadCategories();
     if (tab === "statistik") updateStatistik();
@@ -649,27 +693,27 @@ document.getElementById("btnTambahKategori").onclick = () => { closeCategoryModa
 document.getElementById("btnSaveCategory").onclick = tambahKategori;
 document.getElementById("btnCloseCategory").onclick = closeCategoryModal;
 
-document.querySelectorAll(".filter-btn").forEach(btn => {
+for (const btn of document.querySelectorAll(".filter-btn")) {
     btn.onclick = () => {
         filterAktif = btn.dataset.filter;
-        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("aktif"));
+        for (const b of document.querySelectorAll(".filter-btn")) b.classList.remove("aktif");
         btn.classList.add("aktif");
         renderDaftar();
     };
-});
+}
 
-document.querySelectorAll(".stat-filter-btn").forEach(btn => {
+for (const btn of document.querySelectorAll(".stat-filter-btn")) {
     btn.onclick = () => {
         statFilter = btn.dataset.statFilter;
-        document.querySelectorAll(".stat-filter-btn").forEach(b => b.classList.remove("aktif"));
+        for (const b of document.querySelectorAll(".stat-filter-btn")) b.classList.remove("aktif");
         btn.classList.add("aktif");
         updateStatistik();
     };
-});
+}
 
-document.querySelectorAll(".tab-btn").forEach(btn => {
+for (const btn of document.querySelectorAll(".tab-btn")) {
     btn.onclick = () => switchTab(btn.dataset.tab);
-});
+}
 
 checkSession();
 </script>
