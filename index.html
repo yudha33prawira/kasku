@@ -180,6 +180,7 @@
             border: none;
             font-size: 20px;
             cursor: pointer;
+            color: #94a3b8;
         }
         .transaction-list, .savings-list, .reminders-list, .debts-list {
             display: flex;
@@ -280,7 +281,7 @@
         <input type="email" id="emailInput" class="modal-input" placeholder="Email">
         <div class="password-wrapper">
             <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
-            <button type="button" class="toggle-password" onclick="togglePassword('passwordInput')">👁️</button>
+            <button type="button" class="toggle-password" data-target="passwordInput">👁️</button>
         </div>
         <button id="submitLoginBtn" class="modal-btn modal-btn-primary">Masuk</button>
         <div id="switchText" style="text-align:center; margin:12px 0; color:#3b82f6; cursor:pointer;">Belum punya akun? Daftar</div>
@@ -303,7 +304,7 @@
     let savings = [];
     let reminders = [];
     let currentNav = "home";
-    let currentPeriod = "weekly"; // weekly or monthly
+    let currentPeriod = "weekly";
     let isBalanceHidden = false;
     let chart = null;
     
@@ -322,9 +323,20 @@
         return new Intl.NumberFormat("id-ID").format(angka || 0);
     }
     
-    function togglePassword(id) {
-        const inp = document.getElementById(id);
-        inp.type = inp.type === 'password' ? 'text' : 'password';
+    // Setup toggle password via event listener (no inline onclick)
+    function setupTogglePassword() {
+        document.querySelectorAll('.toggle-password').forEach(btn => {
+            btn.removeEventListener('click', handleTogglePassword);
+            btn.addEventListener('click', handleTogglePassword);
+        });
+    }
+    function handleTogglePassword(e) {
+        const btn = e.currentTarget;
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (input) {
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
     }
     
     async function loadCategories() {
@@ -369,9 +381,9 @@
         await loadSavings();
         await loadReminders();
         renderCurrentView();
+        setupTogglePassword(); // re-attach after dynamic content
     }
     
-    // Hitung saldo
     function getTotals() {
         let pemasukan = 0, pengeluaran = 0;
         transactions.forEach(t => {
@@ -381,13 +393,13 @@
         return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
     }
     
-    // Render berdasarkan navigasi
     function renderCurrentView() {
         if (currentNav === 'home') renderHome();
         else if (currentNav === 'transactions') renderTransactions();
         else if (currentNav === 'savings') renderSavings();
         else if (currentNav === 'reports') renderReports();
         else if (currentNav === 'more') renderMore();
+        setupTogglePassword(); // ensure toggle works after re-render
     }
     
     // Home
@@ -464,16 +476,4 @@
         document.getElementById('addTransBtn').onclick = () => showAddTransactionModal();
         document.querySelectorAll('.delete-btn').forEach(btn => btn.onclick = async (e) => {
             const id = btn.getAttribute('data-id');
-            await sb.from('transactions').delete().eq('id', id);
-            await loadTransactions();
-            renderTransactions();
-        });
-    }
-    
-    // Savings view
-    function renderSavings() {
-        let html = `<div class="card"><div class="card-title">Tabungan <button id="addSavingsBtn" class="action-btn">+ Buat</button></div><div class="savings-list">`;
-        if (savings.length === 0) html += '<div class="empty-state">Belum ada target tabungan</div>';
-        savings.forEach(s => {
-            html += `<div class="savings-item">
-                        
+            await sb.from('transact
