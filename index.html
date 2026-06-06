@@ -11,15 +11,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background: #f8f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding-bottom: 70px; }
         .app-container { max-width: 450px; margin: 0 auto; padding: 16px; }
-        
-        /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .user-info { background: #e8edf5; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; color: #1e293b; }
         .header-actions { display: flex; gap: 12px; align-items: center; }
         .settings-btn { background: none; border: none; font-size: 24px; cursor: pointer; padding: 8px; color: #475569; }
         .logout-btn { background: #ef4444; color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; }
-        
-        /* Kartu Saldo */
         .balance-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 32px; padding: 20px; margin-bottom: 20px; color: white; position: relative; }
         .balance-eye { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 6px 12px; color: white; font-size: 14px; cursor: pointer; }
         .balance-label { font-size: 14px; opacity: 0.7; }
@@ -30,32 +26,22 @@
         .stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; }
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
-        
-        /* Tombol */
         .btn-income, .btn-expense { flex: 1; border: none; border-radius: 60px; padding: 14px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-income { background: #10b981; }
         .btn-expense { background: #ef4444; }
         .btn-secondary { background: #64748b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
-        
-        /* Card */
         .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 8px 16px 20px; border-top: 1px solid #eef2f6; max-width: 450px; margin: 0 auto; z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 11px; color: #94a3b8; cursor: pointer; padding: 8px 10px; border-radius: 40px; transition: all 0.2s; font-weight: 500; }
         .nav-item .nav-icon { font-size: 22px; }
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
-        
-        /* List & Filter */
         .transaction-list, .task-list { display: flex; flex-direction: column; gap: 8px; }
         .transaction-item, .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
         .filter { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
         .filter-btn { padding: 8px 16px; border: none; border-radius: 40px; background: #e2e8f0; font-size: 13px; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: #0f172a; color: white; }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        
-        /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
         .modal-content { background: white; border-radius: 32px; padding: 24px; width: 100%; max-width: 340px; max-height: 85vh; overflow-y: auto; }
         .modal-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 20px; }
@@ -67,17 +53,15 @@
         .password-wrapper { position: relative; }
         .password-wrapper input { padding-right: 50px; }
         .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; }
-        
-        /* Progress bar tabungan */
         .progress-bar { background: #e2e8f0; border-radius: 10px; height: 6px; margin-top: 8px; }
         .progress-fill { background: #10b981; height: 6px; border-radius: 10px; }
         .month-selector { display: flex; justify-content: space-between; background: white; border-radius: 60px; padding: 8px 16px; margin-bottom: 16px; }
+        .top-expense-item { display: flex; justify-content: space-between; padding: 8px 0; }
     </style>
 </head>
 <body>
 <div class="app-container" id="appContainer"></div>
 
-<!-- Modal Login -->
 <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">Masuk / Daftar</div>
@@ -116,8 +100,16 @@ let currentPeriod = "weekly";
 let transaksiFilter = "all";
 let taskFilter = "all";
 
-// Helper
-function showToast(msg) { let t = document.querySelector('.toast'); if (t) t.remove(); t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
+// Helper functions
+function showToast(msg) {
+    let t = document.querySelector('.toast');
+    if (t) t.remove();
+    t = document.createElement('div');
+    t.className = 'toast';
+    t.innerText = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+}
 function formatRupiah(angka) { return new Intl.NumberFormat("id-ID").format(angka||0); }
 function escapeHtml(str) { return str?.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]) || ''; }
 function getCategoryById(id) { return categories.find(c => c.id === id); }
@@ -131,11 +123,11 @@ async function loadDebts() { if(currentUser) { const {data}=await sb.from("debts
 async function loadSavings() { if(currentUser) { const {data}=await sb.from("savings").select("*").eq("user_id",currentUser.id); savings=data||[]; } }
 async function loadReminders() { if(currentUser) { const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); reminders=data||[]; } }
 async function loadTasks() { if(currentUser) { const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); tasks=data||[]; } }
-async function processRecurring() { /* sama seperti sebelumnya, tidak diubah */ }
+async function processRecurring() { /* recurring akan diproses saat login */ }
 
 // ==================== RENDER FUNGSI ====================
 
-// Home (Beranda)
+// HOME
 async function renderHome() {
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
@@ -145,6 +137,7 @@ async function renderHome() {
     debts.forEach(d => { if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount; });
     const upcoming = reminders.filter(r=>!r.is_done && new Date(r.due_date)>=new Date()).sort((a,b)=>new Date(a.due_date)-new Date(b.due_date)).slice(0,2);
     const recent = [...transactions].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+    
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
@@ -167,7 +160,7 @@ async function renderHome() {
             <div id="savingsPreview"></div>
             <button id="viewAllSavings" class="btn-secondary" style="margin-top:8px; width:100%">Lihat semua tabungan →</button>
         </div>
-        <div class="quick-add" style="display:flex; gap:12px; margin-bottom:20px">
+        <div style="display:flex; gap:12px; margin-bottom:20px">
             <button id="quickIncome" class="btn-income">+ Pemasukan</button>
             <button id="quickExpense" class="btn-expense">- Pengeluaran</button>
         </div>
@@ -177,10 +170,10 @@ async function renderHome() {
         </div>
         <div class="card">
             <div class="card-title">📊 Pengeluaran Teratas</div>
-            <div id="topExpenses">${topExpenses.map((t,i)=>`<div class="top-expense-item" style="display:flex; justify-content:space-between; padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span></div>`).join('')||'<div class="empty-state">Belum ada</div>'}</div>
+            <div id="topExpenses">${topExpenses.map((t,i)=>`<div class="top-expense-item"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span></div>`).join('')||'<div class="empty-state">Belum ada</div>'}</div>
         </div>
         ${upcoming.length? `<div class="card"><div class="card-title">⏰ Pengingat</div>${upcoming.map(r=>`<div>📅 ${new Date(r.due_date).toLocaleDateString()} - ${escapeHtml(r.title)}</div>`).join('')}<button id="viewAllReminders" class="btn-secondary" style="margin-top:8px; width:100%">Lihat semua pengingat →</button></div>`:''}
-        <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div style="display:flex; justify-content:space-between; padding:8px 0"><div>${escapeHtml(t.description)}<br><small>${new Date(t.created_at).toLocaleDateString()}</small></div><div class="${t.type==='pemasukan'?'income':'expense'}" style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
+        <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div style="display:flex; justify-content:space-between; padding:8px 0"><div>${escapeHtml(t.description)}<br><small>${new Date(t.created_at).toLocaleDateString()}</small></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
     `;
     document.getElementById("appContainer").innerHTML = html;
     document.getElementById("quickIncome")?.addEventListener("click",()=>openTransaksiModal("pemasukan"));
@@ -190,7 +183,7 @@ async function renderHome() {
     document.getElementById("toggleBalanceBtn")?.addEventListener("click",()=>{ isBalanceHidden=!isBalanceHidden; renderHome(); });
     document.getElementById("viewAllSavings")?.addEventListener("click",()=>{ currentNav="savings"; updateNav(); renderSavings(); });
     document.getElementById("viewAllReminders")?.addEventListener("click",()=>{ currentNav="reminders"; updateNav(); renderReminders(); });
-    // Preview savings
+    
     const previewDiv = document.getElementById("savingsPreview");
     if(previewDiv) {
         if(savings.length===0) previewDiv.innerHTML='<div class="empty-state">Belum ada tabungan</div>';
@@ -198,7 +191,7 @@ async function renderHome() {
     }
 }
 
-// Transaksi dengan kelola kategori
+// TRANSAKSI dengan kelola kategori
 async function renderTransaksi() {
     let html = `
         <div class="header">
@@ -222,6 +215,7 @@ async function renderTransaksi() {
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    
     let data = [...transactions];
     if(transaksiFilter==='income') data=data.filter(t=>t.type==='pemasukan');
     if(transaksiFilter==='expense') data=data.filter(t=>t.type==='pengeluaran');
@@ -229,11 +223,12 @@ async function renderTransaksi() {
     const container = document.getElementById("transaksiList");
     if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
     else container.innerHTML = data.map(t=>`<div class="transaction-item"><div><div>${escapeHtml(t.description)}</div><div style="font-size:11px; color:#64748b">${new Date(t.created_at).toLocaleDateString()} ${t.category_id?`• ${getCategoryById(t.category_id)?.icon||''} ${getCategoryById(t.category_id)?.name||''}`:''}</div></div><div style="font-weight:600; color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div><button class="delete-transaksi" data-id="${t.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div>`).join('');
+    
     document.querySelectorAll(".delete-transaksi").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus transaksi?")){await sb.from("transactions").delete().eq("id",btn.dataset.id); showToast("Dihapus"); await loadTransactions(); renderTransaksi();}});
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.dataset.filter; renderTransaksi();});
 }
 
-// Modal tambah/edit kategori (dipanggil dari tombol kelola kategori)
+// Modal kelola kategori
 function openCategoryManageModal(editId=null) {
     const isEdit = !!editId;
     const cat = isEdit ? categories.find(c=>c.id===editId) : null;
@@ -270,15 +265,14 @@ function openCategoryManageModal(editId=null) {
         }
         modal.remove();
         await loadCategories();
-        renderTransaksi(); // refresh tampilan transaksi agar dropdown kategori terbaru
+        renderTransaksi();
     };
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
-function editCategory(id) { openCategoryManageModal(id); }
 
-// Modal tambah transaksi (dengan dropdown kategori)
+// Modal tambah transaksi
 function openTransaksiModal(predefinedType=null){
-    const modal=document.createElement('div');modal.className='modal-overlay';modal.id='tempModal';
+    const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">Tambah Transaksi</div>
@@ -310,7 +304,7 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// Laporan dengan export PDF dan header pengaturan
+// LAPORAN dengan export PDF
 async function renderLaporan() {
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
@@ -352,7 +346,193 @@ async function renderLaporan() {
     });
 }
 
-// Halaman Pengaturan (diperbagus)
+// HUTANG
+async function renderHutang() {
+    let piutang=0, hutang=0;
+    debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
+    let html=`
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        <div style="display:flex; gap:12px; margin-bottom:16px"><div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center"><div>💰 Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div><div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center"><div>💸 Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div></div>
+        <button id="addDebtBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Hutang/Piutang</button>
+        <div class="card"><div id="debtList"></div></div>
+    `;
+    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("addDebtBtn")?.addEventListener("click",()=>openDebtModal());
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    const container=document.getElementById("debtList");
+    if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
+    else container.innerHTML=debts.map(d=>`<div class="transaction-item"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`⏳ Belum Lunas ${d.due_date?` • ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="lunas-debt" data-id="${d.id}" ${d.status==='lunas'?'disabled':''} style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white;">✓ Lunas</button><button class="delete-debt" data-id="${d.id}" style="margin-left:8px; background:none; border:none;">🗑️</button></div></div>`).join('');
+    document.querySelectorAll(".lunas-debt").forEach(btn=>btn.onclick=async()=>{await sb.from("debts").update({status:'lunas'}).eq("id",btn.dataset.id); await loadDebts(); renderHutang();});
+    document.querySelectorAll(".delete-debt").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus?")){await sb.from("debts").delete().eq("id",btn.dataset.id); await loadDebts(); renderHutang();}});
+}
+function openDebtModal(){
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">Tambah Hutang/Piutang</div><input id="debtName" placeholder="Nama orang" class="modal-input"><input id="debtAmount" placeholder="Jumlah" type="number" class="modal-input"><select id="debtType" class="modal-select"><option value="piutang">💰 Piutang</option><option value="hutang">💸 Hutang</option></select><input id="debtDue" type="date" class="modal-input"><textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea><button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button><button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    document.getElementById("saveDebt").onclick=async()=>{
+        const name=document.getElementById("debtName").value.trim();
+        const amount=parseInt(document.getElementById("debtAmount").value);
+        const type=document.getElementById("debtType").value;
+        const due=document.getElementById("debtDue").value;
+        const desc=document.getElementById("debtDesc").value;
+        if(!name||isNaN(amount)||amount<=0) return alert("Isi dengan benar");
+        const {error}=await sb.from("debts").insert({user_id:currentUser.id,contact_name:name,amount,type,description:desc,due_date:due||null,status:'belum_lunas'});
+        if(error) alert(error.message);
+        else { showToast("Ditambahkan"); modal.remove(); await loadDebts(); renderHutang(); }
+    };
+    document.getElementById("closeDebt").onclick=()=>modal.remove();
+}
+
+// TABUNGAN
+async function renderSavings() {
+    let html=`
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        <button id="addSavingsBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Tabungan</button>
+        <div class="card"><div id="savingsList"></div></div>
+    `;
+    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("addSavingsBtn")?.addEventListener("click",()=>openSavingsModal());
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    const container=document.getElementById("savingsList");
+    if(!savings.length) container.innerHTML='<div class="empty-state">Belum ada tabungan</div>';
+    else container.innerHTML=savings.map(s=>`<div class="transaction-item"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (s.current_amount/s.target_amount*100).toFixed(0):0}%"></div></div></div><div><button class="edit-savings" data-id="${s.id}">✏️</button><button class="delete-savings" data-id="${s.id}">🗑️</button></div></div>`).join('');
+    document.querySelectorAll(".edit-savings").forEach(btn=>btn.onclick=()=>openSavingsModal(btn.dataset.id));
+    document.querySelectorAll(".delete-savings").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tabungan?")){await sb.from("savings").delete().eq("id",btn.dataset.id); await loadSavings(); renderSavings();}});
+}
+function openSavingsModal(editId=null){
+    const isEdit=!!editId;
+    const s=isEdit?savings.find(s=>s.id===editId):null;
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Tabungan':'Tambah Tabungan'}</div><input id="savingsName" class="modal-input" placeholder="Nama" value="${isEdit?escapeHtml(s.name):''}"><input id="savingsTarget" type="number" class="modal-input" placeholder="Target" value="${isEdit?s.target_amount:''}"><input id="savingsCurrent" type="number" class="modal-input" placeholder="Jumlah awal" value="${isEdit?s.current_amount:'0'}"><input id="savingsId" type="hidden" value="${editId||''}"><button id="saveSavings" class="modal-btn modal-btn-primary">Simpan</button><button id="closeSavings" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    document.getElementById("saveSavings").onclick=async()=>{
+        const name=document.getElementById("savingsName").value.trim();
+        const target=parseInt(document.getElementById("savingsTarget").value)||0;
+        const current=parseInt(document.getElementById("savingsCurrent").value)||0;
+        const id=document.getElementById("savingsId").value;
+        if(!name) return alert("Nama tabungan harus diisi");
+        if(id) await sb.from("savings").update({name,target_amount:target,current_amount:current}).eq("id",id);
+        else await sb.from("savings").insert({user_id:currentUser.id,name,target_amount:target,current_amount:current});
+        showToast(isEdit?"Tabungan diupdate":"Tabungan ditambahkan");
+        modal.remove(); await loadSavings(); renderSavings();
+    };
+    document.getElementById("closeSavings").onclick=()=>modal.remove();
+}
+
+// PENGINGAT
+async function renderReminders() {
+    let html=`
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        <button id="addReminderBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Pengingat</button>
+        <div class="card"><div id="remindersList"></div></div>
+    `;
+    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("addReminderBtn")?.addEventListener("click",()=>openReminderModal());
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    const container=document.getElementById("remindersList");
+    if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
+    else container.innerHTML=reminders.map(r=>`<div class="transaction-item"><div><div>${escapeHtml(r.title)}</div><div class="task-date">📅 ${new Date(r.due_date).toLocaleDateString()} ${r.is_done?'✅ Selesai':''}</div>${r.description?`<div class="task-date">${escapeHtml(r.description)}</div>`:''}</div><div><button class="edit-reminder" data-id="${r.id}">✏️</button><button class="delete-reminder" data-id="${r.id}">🗑️</button></div></div>`).join('');
+    document.querySelectorAll(".edit-reminder").forEach(btn=>btn.onclick=()=>openReminderModal(btn.dataset.id));
+    document.querySelectorAll(".delete-reminder").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus pengingat?")){await sb.from("reminders").delete().eq("id",btn.dataset.id); await loadReminders(); renderReminders();}});
+}
+function openReminderModal(editId=null){
+    const isEdit=!!editId;
+    const r=isEdit?reminders.find(r=>r.id===editId):null;
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Pengingat':'Tambah Pengingat'}</div><input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}"><textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea><input type="date" id="reminderDue" class="modal-input" value="${isEdit?r.due_date.slice(0,10):''}"><input id="reminderAmount" type="number" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?r.amount||'':''}"><input id="reminderId" type="hidden" value="${editId||''}"><button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button><button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    document.getElementById("saveReminder").onclick=async()=>{
+        const title=document.getElementById("reminderTitle").value.trim();
+        const desc=document.getElementById("reminderDesc").value;
+        const due=document.getElementById("reminderDue").value;
+        const amount=parseInt(document.getElementById("reminderAmount").value)||null;
+        const id=document.getElementById("reminderId").value;
+        if(!title||!due) return alert("Judul dan tanggal harus diisi");
+        if(id) await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",id);
+        else await sb.from("reminders").insert({user_id:currentUser.id,title,description:desc,due_date:due,amount});
+        showToast(isEdit?"Pengingat diupdate":"Pengingat ditambahkan");
+        modal.remove(); await loadReminders(); renderReminders();
+    };
+    document.getElementById("closeReminder").onclick=()=>modal.remove();
+}
+
+// TUGAS
+async function renderTasks() {
+    let html=`
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        <button id="addTaskBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Tugas</button>
+        <div class="filter">
+            <button class="filter-btn ${taskFilter==='all'?'active':''}" data-filter="all">Semua</button>
+            <button class="filter-btn ${taskFilter==='active'?'active':''}" data-filter="active">Belum Selesai</button>
+            <button class="filter-btn ${taskFilter==='completed'?'active':''}" data-filter="completed">Selesai</button>
+        </div>
+        <div class="card"><div id="tasksList"></div></div>
+    `;
+    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("addTaskBtn")?.addEventListener("click",()=>openTaskModal());
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    
+    let filtered=tasks;
+    if(taskFilter==='active') filtered=tasks.filter(t=>!t.is_completed);
+    if(taskFilter==='completed') filtered=tasks.filter(t=>t.is_completed);
+    const container=document.getElementById("tasksList");
+    if(!filtered.length) container.innerHTML='<div class="empty-state">Belum ada tugas</div>';
+    else container.innerHTML=filtered.map(t=>`<div class="task-item"><div style="display:flex; align-items:center; gap:8px; flex:1"><input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}><div><div class="${t.is_completed?'task-completed':''}">${escapeHtml(t.title)}</div><div class="task-date">${t.due_date?new Date(t.due_date).toLocaleDateString():''}</div>${t.description?`<div class="task-date">${escapeHtml(t.description)}</div>`:''}</div></div><div><button class="edit-task" data-id="${t.id}">✏️</button><button class="delete-task" data-id="${t.id}">🗑️</button></div></div>`).join('');
+    
+    document.querySelectorAll(".task-check").forEach(cb=>cb.onclick=async()=>{await sb.from("tasks").update({is_completed:cb.checked}).eq("id",cb.dataset.id); await loadTasks(); renderTasks();});
+    document.querySelectorAll(".edit-task").forEach(btn=>btn.onclick=()=>openTaskModal(btn.dataset.id));
+    document.querySelectorAll(".delete-task").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tugas?")){await sb.from("tasks").delete().eq("id",btn.dataset.id); await loadTasks(); renderTasks();}});
+    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{taskFilter=btn.dataset.filter; renderTasks();});
+}
+function openTaskModal(editId=null){
+    const isEdit=!!editId;
+    const t=isEdit?tasks.find(t=>t.id===editId):null;
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Tugas':'Tambah Tugas'}</div><input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}"><textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(t.description||''):''}</textarea><input type="date" id="taskDue" class="modal-input" value="${isEdit?t.due_date?.slice(0,10):''}"><input id="taskId" type="hidden" value="${editId||''}"><button id="saveTask" class="modal-btn modal-btn-primary">Simpan</button><button id="closeTask" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    document.getElementById("saveTask").onclick=async()=>{
+        const title=document.getElementById("taskTitle").value.trim();
+        const desc=document.getElementById("taskDesc").value;
+        const due=document.getElementById("taskDue").value;
+        const id=document.getElementById("taskId").value;
+        if(!title) return alert("Judul harus diisi");
+        if(id) await sb.from("tasks").update({title,description:desc,due_date:due||null}).eq("id",id);
+        else await sb.from("tasks").insert({user_id:currentUser.id,title,description:desc,due_date:due||null});
+        showToast(isEdit?"Tugas diupdate":"Tugas ditambahkan");
+        modal.remove(); await loadTasks(); renderTasks();
+    };
+    document.getElementById("closeTask").onclick=()=>modal.remove();
+}
+
+// PENGATURAN
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -410,31 +590,6 @@ async function renderSettings() {
     document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{const inp=document.getElementById(btn.dataset.target); if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁️';}});
 }
 
-// Hutang, Savings, Reminders, Tasks (disingkat agar tidak terlalu panjang, tapi tetap fungsional)
-async function renderHutang() { /* mirip seperti sebelumnya, dengan header pengaturan */ 
-    let piutang=0, hutang=0; debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
-    let html=`
-        <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="openSettingsBtn" class="settings-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
-        <div style="display:flex; gap:12px; margin-bottom:16px"><div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px"><div>💰 Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div><div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px"><div>💸 Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div></div>
-        <button id="addDebtBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Hutang/Piutang</button>
-        <div class="card"><div id="debtList"></div></div>
-    `;
-    document.getElementById("appContainer").innerHTML=html;
-    document.getElementById("addDebtBtn")?.addEventListener("click",()=>openDebtModal());
-    document.getElementById("logoutBtn")?.addEventListener("click",logout);
-    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
-    const container=document.getElementById("debtList");
-    if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
-    else container.innerHTML=debts.map(d=>`<div class="transaction-item"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`⏳ Belum Lunas ${d.due_date?` • ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="lunas-debt" data-id="${d.id}" ${d.status==='lunas'?'disabled':''} style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white;">✓ Lunas</button><button class="delete-debt" data-id="${d.id}" style="margin-left:8px; background:none; border:none;">🗑️</button></div></div>`).join('');
-    document.querySelectorAll(".lunas-debt").forEach(btn=>btn.onclick=async()=>{await sb.from("debts").update({status:'lunas'}).eq("id",btn.dataset.id); await loadDebts(); renderHutang();});
-    document.querySelectorAll(".delete-debt").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus?")){await sb.from("debts").delete().eq("id",btn.dataset.id); await loadDebts(); renderHutang();}});
-}
-function openDebtModal(){ /* sama seperti sebelumnya, tidak diubah */ }
-
-async function renderSavings() { /* sederhana, tidak diubah detailnya */ }
-async function renderReminders() { /* sama */ }
-async function renderTasks() { /* tugas dengan ceklis */ }
-
 // Navigation
 function renderCurrentView() {
     if(currentNav==='home') renderHome();
@@ -460,23 +615,57 @@ function addBottomNav() {
 }
 
 // Auth
-async function handleLogin() { /* sama */ }
-async function handleGuest() { /* sama */ }
-function toggleMode() { /* sama */ }
+async function handleLogin() {
+    const email = document.getElementById("emailInput").value.trim();
+    const password = document.getElementById("passwordInput").value;
+    const errorDiv = document.getElementById("loginError");
+    if (!email || !password) { errorDiv.innerText = "Email dan password harus diisi"; return; }
+    errorDiv.innerText = "";
+    if (isLoginMode) {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { errorDiv.innerText = error.message; return; }
+        await onAuthSuccess(data.user);
+    } else {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) { errorDiv.innerText = error.message; return; }
+        if (data.user) { alert("Pendaftaran berhasil! Silakan login."); toggleMode(); }
+    }
+}
+async function handleGuest() {
+    const { data, error } = await sb.auth.signInAnonymously();
+    if (error) { document.getElementById("loginError").innerText = error.message; return; }
+    await onAuthSuccess(data.user);
+}
+function toggleMode() {
+    isLoginMode = !isLoginMode;
+    document.getElementById("modalTitle").innerText = isLoginMode ? "Masuk / Daftar" : "Daftar Akun Baru";
+    document.getElementById("submitLoginBtn").innerText = isLoginMode ? "Masuk" : "Daftar";
+    document.getElementById("switchText").innerText = isLoginMode ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
+}
 async function onAuthSuccess(user) {
-    currentUser=user;
-    document.getElementById("loginModal").style.display="none";
+    currentUser = user;
+    document.getElementById("loginModal").style.display = "none";
     await loadCategories(); await loadTransactions(); await loadDebts(); await loadSavings(); await loadReminders(); await loadTasks();
-    await processRecurring(); await loadTransactions();
     addBottomNav();
     renderCurrentView();
 }
-async function logout() { await sb.auth.signOut(); currentUser=null; document.querySelector(".bottom-nav")?.remove(); document.getElementById("appContainer").innerHTML=""; document.getElementById("loginModal").style.display="flex"; }
-async function checkSession() { const {data}=await sb.auth.getSession(); if(data.session?.user) await onAuthSuccess(data.session.user); else document.getElementById("loginModal").style.display="flex"; }
+async function logout() {
+    await sb.auth.signOut();
+    currentUser = null;
+    document.querySelector(".bottom-nav")?.remove();
+    document.getElementById("appContainer").innerHTML = "";
+    document.getElementById("loginModal").style.display = "flex";
+}
+async function checkSession() {
+    const { data } = await sb.auth.getSession();
+    if (data.session?.user) { await onAuthSuccess(data.session.user); }
+    else { document.getElementById("loginModal").style.display = "flex"; }
+}
 
-document.getElementById("submitLoginBtn").onclick=handleLogin;
-document.getElementById("switchText").onclick=toggleMode;
-document.getElementById("guestBtn").onclick=handleGuest;
+// Event Listeners
+document.getElementById("submitLoginBtn").onclick = handleLogin;
+document.getElementById("switchText").onclick = toggleMode;
+document.getElementById("guestBtn").onclick = handleGuest;
 document.getElementById("toggleLoginPassword")?.addEventListener("click",()=>{const inp=document.getElementById("passwordInput"); if(inp.type==='password'){inp.type='text'; document.getElementById("toggleLoginPassword").textContent='🙈';}else{inp.type='password'; document.getElementById("toggleLoginPassword").textContent='👁️';}});
 checkSession();
 </script>
