@@ -372,8 +372,8 @@ async function renderTransaksi() {
     if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
     else container.innerHTML = data.map(t=>`<div class="transaction-item"><div><div>${escapeHtml(t.description)}</div><div style="font-size:11px; color:#64748b">${new Date(t.created_at).toLocaleDateString()} ${t.category_id?`• ${getCategoryById(t.category_id)?.icon||''} ${getCategoryById(t.category_id)?.name||''}`:''}</div></div><div style="font-weight:600; color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div><button class="delete-transaksi" data-id="${t.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div>`).join('');
     
-    document.querySelectorAll(".delete-transaksi").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus transaksi?")){await sb.from("transactions").delete().eq("id",btn.dataset.id); showToast("Dihapus"); await loadTransactions(); renderTransaksi();}});
-    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.dataset.filter; renderTransaksi();});
+    document.querySelectorAll(".delete-transaksi").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus transaksi?")){await sb.from("transactions").delete().eq("id",btn.getAttribute("data-id")); showToast("Dihapus"); await loadTransactions(); renderTransaksi();}});
+    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
 function openTransaksiModal(predefinedType=null){
@@ -506,7 +506,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG - PERBAIKAN TOMBOL LUNAS
+// HUTANG - dengan paid_date yang benar (tanggal saat klik lunas)
 async function renderHutang() {
     let piutang=0, hutang=0;
     debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
@@ -537,7 +537,7 @@ async function renderHutang() {
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
     else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}" data-debt-id="${d.id}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div></div>`).join('');
     
-    // PERBAIKAN: Event tombol lunas dengan cara yang lebih sederhana
+    // PERBAIKAN: Event tombol lunas - mencatat tanggal hari ini sebagai paid_date
     document.querySelectorAll(".lunas-debt").forEach(btn => {
         btn.onclick = async function(e) {
             e.preventDefault();
@@ -545,12 +545,16 @@ async function renderHutang() {
             const id = this.getAttribute("data-id");
             if(confirm("Tandai sebagai lunas?")){
                 try {
+                    // Dapatkan tanggal hari ini dalam format YYYY-MM-DD
+                    const today = new Date();
+                    const paidDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                    
                     const { error } = await sb.from("debts").update({ 
                         status: 'lunas', 
-                        paid_date: new Date().toISOString() 
+                        paid_date: paidDate 
                     }).eq("id", id);
                     if (error) throw error;
-                    showToast("Ditandai lunas");
+                    showToast("Ditandai lunas dengan tanggal " + paidDate);
                     await loadDebts();
                     renderHutang();
                 } catch(err) {
@@ -810,7 +814,7 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// LAPORAN - PERBAIKAN CHART
+// LAPORAN
 async function renderLaporan() {
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
@@ -828,7 +832,6 @@ async function renderLaporan() {
     `;
     document.getElementById("appContainer").innerHTML=html;
     
-    // Perbaikan chart - cek dan destroy chart lama dengan benar
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
     if(ctx && data.length > 0) {
         if(window.laporanChart && typeof window.laporanChart.destroy === 'function') {
