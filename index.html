@@ -39,7 +39,6 @@
         .btn-expense { background: #ef4444; }
         .btn-secondary { background: #64748b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         .btn-recurring { background: #8b5cf6; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
-        .btn-purple { background: #8b5cf6; }
         
         .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -120,14 +119,21 @@ let chart = null;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let currentNav = "home";
-let previousNav = "home"; // Untuk navigasi back
+let previousNav = "home";
 let isLoginMode = true;
 let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
 
-// Helper functions
-function showToast(msg) { let t = document.querySelector('.toast'); if (t) t.remove(); t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
+function showToast(msg) { 
+    let t = document.querySelector('.toast'); 
+    if (t) t.remove(); 
+    t = document.createElement('div'); 
+    t.className = 'toast'; 
+    t.innerText = msg; 
+    document.body.appendChild(t); 
+    setTimeout(() => t.remove(), 2000); 
+}
 
 function formatRupiah(angka) {
     if (angka === undefined || angka === null) return '0';
@@ -139,10 +145,24 @@ function parseRupiah(str) {
     return parseInt(str.replace(/\./g, '').replace(/[^0-9]/g, '')) || 0;
 }
 
-function escapeHtml(str) { return str?.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]) || ''; }
-function getCategoryById(id) { return categories.find(c => c.id === id); }
-function hitungTotalSaldo() { let p=0, k=0; transactions.forEach(t => t.type==='pemasukan'? p+=t.amount : k+=t.amount); return { pemasukan:p, pengeluaran:k, saldo:p-k }; }
-function hitungTotalTabungan() { return savings.reduce((a,b)=>a+b.current_amount,0); }
+function escapeHtml(str) { 
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); 
+}
+
+function getCategoryById(id) { 
+    return categories.find(c => c.id === id); 
+}
+
+function hitungTotalSaldo() { 
+    let p=0, k=0; 
+    transactions.forEach(t => t.type==='pemasukan'? p+=t.amount : k+=t.amount); 
+    return { pemasukan:p, pengeluaran:k, saldo:p-k }; 
+}
+
+function hitungTotalTabungan() { 
+    return savings.reduce((a,b)=>a+b.current_amount,0); 
+}
 
 function setupRupiahInput(inputId) {
     const input = document.getElementById(inputId);
@@ -155,15 +175,15 @@ function setupRupiahInput(inputId) {
 }
 
 // Load Data
-async function loadCategories() { if(currentUser) { const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); categories=data||[]; } }
-async function loadTransactions() { if(currentUser) { const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id); transactions=data||[]; } }
-async function loadDebts() { if(currentUser) { const {data}=await sb.from("debts").select("*").eq("user_id",currentUser.id); debts=data||[]; } }
-async function loadSavings() { if(currentUser) { const {data}=await sb.from("savings").select("*").eq("user_id",currentUser.id); savings=data||[]; } }
-async function loadReminders() { if(currentUser) { const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); reminders=data||[]; } }
-async function loadTasks() { if(currentUser) { const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); tasks=data||[]; } }
-async function loadRecurring() { if(currentUser) { const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); recurringList=data||[]; } }
+async function loadCategories() { if(currentUser) { const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); if(data) categories=data; } }
+async function loadTransactions() { if(currentUser) { const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id); if(data) transactions=data; } }
+async function loadDebts() { if(currentUser) { const {data}=await sb.from("debts").select("*").eq("user_id",currentUser.id); if(data) debts=data; } }
+async function loadSavings() { if(currentUser) { const {data}=await sb.from("savings").select("*").eq("user_id",currentUser.id); if(data) savings=data; } }
+async function loadReminders() { if(currentUser) { const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); if(data) reminders=data; } }
+async function loadTasks() { if(currentUser) { const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); if(data) tasks=data; } }
+async function loadRecurring() { if(currentUser) { const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); if(data) recurringList=data; } }
 
-// Process recurring transactions
+// Process recurring
 async function processRecurring() {
     if (!currentUser) return;
     const today = new Date();
@@ -192,7 +212,7 @@ async function processRecurring() {
     }
 }
 
-// Running text untuk deadline
+// Running text
 function getRunningText() {
     const today = new Date();
     const messages = [];
@@ -241,7 +261,6 @@ function renderRunningText() {
 
 // ==================== RENDER FUNGSI ====================
 
-// HOME
 async function renderHome() {
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
@@ -311,7 +330,6 @@ async function renderHome() {
     });
 }
 
-// TRANSAKSI
 async function renderTransaksi() {
     let html = `
         <div class="header">
@@ -358,7 +376,6 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.dataset.filter; renderTransaksi();});
 }
 
-// Modal Transaksi Biasa
 function openTransaksiModal(predefinedType=null){
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
@@ -391,7 +408,6 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// Modal Transaksi Berulang
 function openRecurringModal(editId=null){
     const isEdit = !!editId;
     const r = isEdit ? recurringList.find(x=>x.id===editId) : null;
@@ -449,7 +465,6 @@ function openRecurringModal(editId=null){
     document.getElementById("closeRecurring").onclick = () => modal.remove();
 }
 
-// Modal Kelola Kategori
 function openCategoryManageModal(editId=null) {
     const isEdit = !!editId;
     const cat = isEdit ? categories.find(c=>c.id===editId) : null;
@@ -491,7 +506,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG - dengan detail bisa edit tanggal jatuh tempo
+// HUTANG - PERBAIKAN TOMBOL LUNAS
 async function renderHutang() {
     let piutang=0, hutang=0;
     debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
@@ -520,28 +535,36 @@ async function renderHutang() {
     
     const container=document.getElementById("debtList");
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
-    else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="margin-left:8px; background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="margin-left:8px; background:none; border:none;">🗑️</button></div></div>`).join('');
+    else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}" data-debt-id="${d.id}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div></div>`).join('');
     
-    // Event untuk tombol lunas - PERBAIKAN
-    document.querySelectorAll(".lunas-debt").forEach(btn=>{
-        btn.onclick = async (e) => {
+    // PERBAIKAN: Event tombol lunas dengan cara yang lebih sederhana
+    document.querySelectorAll(".lunas-debt").forEach(btn => {
+        btn.onclick = async function(e) {
+            e.preventDefault();
             e.stopPropagation();
-            const id = btn.dataset.id;
+            const id = this.getAttribute("data-id");
             if(confirm("Tandai sebagai lunas?")){
-                const now = new Date().toISOString();
-                await sb.from("debts").update({status:'lunas', paid_date: now}).eq("id", id);
-                showToast("Ditandai lunas");
-                await loadDebts();
-                renderHutang();
+                try {
+                    const { error } = await sb.from("debts").update({ 
+                        status: 'lunas', 
+                        paid_date: new Date().toISOString() 
+                    }).eq("id", id);
+                    if (error) throw error;
+                    showToast("Ditandai lunas");
+                    await loadDebts();
+                    renderHutang();
+                } catch(err) {
+                    console.error("Error:", err);
+                    alert("Gagal update: " + err.message);
+                }
             }
         };
     });
     
-    document.querySelectorAll(".debt-detail").forEach(btn=>btn.onclick=()=>showDebtDetail(btn.dataset.id));
-    document.querySelectorAll(".delete-debt").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus?")){await sb.from("debts").delete().eq("id",btn.dataset.id); await loadDebts(); renderHutang();}});
+    document.querySelectorAll(".debt-detail").forEach(btn=>btn.onclick=()=>showDebtDetail(btn.getAttribute("data-id")));
+    document.querySelectorAll(".delete-debt").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus?")){await sb.from("debts").delete().eq("id",btn.getAttribute("data-id")); await loadDebts(); renderHutang();}});
 }
 
-// Fungsi showDebtDetail dengan edit tanggal jatuh tempo
 async function showDebtDetail(id) {
     const debt = debts.find(d=>d.id===id);
     if (!debt) return;
@@ -550,7 +573,7 @@ async function showDebtDetail(id) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail ${debt.type==='piutang'?'Piutang':'Hutang'}</div>
-            <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value" id="detailName">${escapeHtml(debt.contact_name)}</span></div>
+            <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">${escapeHtml(debt.contact_name)}</span></div>
             <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value">Rp ${formatRupiah(debt.amount)}</span></div>
             <div class="detail-row"><span class="detail-label">Tanggal Dibuat</span><span class="detail-value">${new Date(debt.created_at).toLocaleDateString()}</span></div>
             <div class="detail-row" id="dueDateRow">
@@ -566,7 +589,6 @@ async function showDebtDetail(id) {
     `;
     document.body.appendChild(modal);
     
-    // Edit tanggal jatuh tempo
     const editBtn = document.getElementById("editDueDateBtn");
     if(editBtn) {
         editBtn.onclick = () => {
@@ -643,8 +665,8 @@ async function renderSavings() {
     if(!savings.length) container.innerHTML='<div class="empty-state">Belum ada tabungan</div>';
     else container.innerHTML=savings.map(s=>`<div class="savings-item"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (s.current_amount/s.target_amount*100).toFixed(0):0}%"></div></div></div><div><button class="edit-savings" data-id="${s.id}">✏️</button><button class="delete-savings" data-id="${s.id}">🗑️</button></div></div>`).join('');
     
-    document.querySelectorAll(".edit-savings").forEach(btn=>btn.onclick=()=>openSavingsModal(btn.dataset.id));
-    document.querySelectorAll(".delete-savings").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tabungan?")){await sb.from("savings").delete().eq("id",btn.dataset.id); await loadSavings(); renderSavings();}});
+    document.querySelectorAll(".edit-savings").forEach(btn=>btn.onclick=()=>openSavingsModal(btn.getAttribute("data-id")));
+    document.querySelectorAll(".delete-savings").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tabungan?")){await sb.from("savings").delete().eq("id",btn.getAttribute("data-id")); await loadSavings(); renderSavings();}});
 }
 
 function openSavingsModal(editId=null){
@@ -697,8 +719,8 @@ async function renderReminders() {
     if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
     else container.innerHTML=reminders.map(r=>`<div class="reminder-item"><div><div>${escapeHtml(r.title)}</div><div class="task-date">📅 ${new Date(r.due_date).toLocaleDateString()} ${r.is_done?'✅ Selesai':''}</div>${r.description?`<div class="task-date">${escapeHtml(r.description)}</div>`:''}</div><div><button class="edit-reminder" data-id="${r.id}">✏️</button><button class="delete-reminder" data-id="${r.id}">🗑️</button></div></div>`).join('');
     
-    document.querySelectorAll(".edit-reminder").forEach(btn=>btn.onclick=()=>openReminderModal(btn.dataset.id));
-    document.querySelectorAll(".delete-reminder").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus pengingat?")){await sb.from("reminders").delete().eq("id",btn.dataset.id); await loadReminders(); renderReminders();}});
+    document.querySelectorAll(".edit-reminder").forEach(btn=>btn.onclick=()=>openReminderModal(btn.getAttribute("data-id")));
+    document.querySelectorAll(".delete-reminder").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus pengingat?")){await sb.from("reminders").delete().eq("id",btn.getAttribute("data-id")); await loadReminders(); renderReminders();}});
 }
 
 function openReminderModal(editId=null){
@@ -762,10 +784,10 @@ async function renderTasks() {
         return `<div class="task-item" style="${isOverdue?'background:#fee2e2; border-radius:12px; padding:8px; margin-bottom:8px':''}"><div style="display:flex; align-items:center; gap:8px; flex:1"><input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}><div><div class="${t.is_completed?'task-completed':''}" style="font-weight:500">${escapeHtml(t.title)}</div>${t.description?`<div class="task-date">📝 ${escapeHtml(t.description)}</div>`:''}<div class="task-date">📅 ${t.due_date?new Date(t.due_date).toLocaleDateString():'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div></div></div><div><button class="edit-task" data-id="${t.id}" style="background:none; border:none; font-size:18px;">✏️</button><button class="delete-task" data-id="${t.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div></div>`;
     }).join('');
     
-    document.querySelectorAll(".task-check").forEach(cb=>cb.onclick=async()=>{await sb.from("tasks").update({is_completed:cb.checked}).eq("id",cb.dataset.id); await loadTasks(); renderTasks();});
-    document.querySelectorAll(".edit-task").forEach(btn=>btn.onclick=()=>openTaskModal(btn.dataset.id));
-    document.querySelectorAll(".delete-task").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tugas?")){await sb.from("tasks").delete().eq("id",btn.dataset.id); await loadTasks(); renderTasks();}});
-    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{taskFilter=btn.dataset.filter; renderTasks();});
+    document.querySelectorAll(".task-check").forEach(cb=>cb.onclick=async()=>{await sb.from("tasks").update({is_completed:cb.checked}).eq("id",cb.getAttribute("data-id")); await loadTasks(); renderTasks();});
+    document.querySelectorAll(".edit-task").forEach(btn=>btn.onclick=()=>openTaskModal(btn.getAttribute("data-id")));
+    document.querySelectorAll(".delete-task").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tugas?")){await sb.from("tasks").delete().eq("id",btn.getAttribute("data-id")); await loadTasks(); renderTasks();}});
+    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{taskFilter=btn.getAttribute("data-filter"); renderTasks();});
 }
 
 function openTaskModal(editId=null){
@@ -788,7 +810,7 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// LAPORAN
+// LAPORAN - PERBAIKAN CHART
 async function renderLaporan() {
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
@@ -801,13 +823,25 @@ async function renderLaporan() {
         ${renderRunningText()}
         <div class="month-selector"><button id="prevMonth">◀</button><span>${monthNames[currentMonth]} ${currentYear}</span><button id="nextMonth">▶</button></div>
         <div class="balance-card"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 Rp ${formatRupiah(pemasukan-pengeluaran)}</div></div></div>
-        <div class="card"><div class="card-title">📊 Statistik Kategori <button id="exportPdfBtn" style="background:#6366f1; border:none; border-radius:30px; padding:8px 16px; color:white; font-size:12px;">📑 Export PDF</button></div><canvas id="laporanChart" style="max-height:180px"></canvas></div>
+        <div class="card"><div class="card-title">📊 Statistik Kategori <button id="exportPdfBtn" style="background:#6366f1; border:none; border-radius:30px; padding:8px 16px; color:white; font-size:12px;">📑 Export PDF</button></div><canvas id="laporanChart" style="max-height:180px; width:100%"></canvas></div>
         <div class="card"><div class="card-title">📋 Detail Transaksi</div><div id="detailTransaksi"></div></div>
     `;
     document.getElementById("appContainer").innerHTML=html;
-    const ctx=document.getElementById('laporanChart')?.getContext('2d');
-    if(ctx && data.length){ if(window.laporanChart) window.laporanChart.destroy(); window.laporanChart=new Chart(ctx,{type:'pie',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});}
-    const grouped={};
+    
+    // Perbaikan chart - cek dan destroy chart lama dengan benar
+    const ctx = document.getElementById('laporanChart')?.getContext('2d');
+    if(ctx && data.length > 0) {
+        if(window.laporanChart && typeof window.laporanChart.destroy === 'function') {
+            window.laporanChart.destroy();
+        }
+        window.laporanChart = new Chart(ctx, {
+            type: 'pie',
+            data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+        });
+    }
+    
+    const grouped = {};
     filtered.forEach(t=>{const d=new Date(t.created_at).toLocaleDateString(); if(!grouped[d]) grouped[d]=[]; grouped[d].push(t);});
     let detail='';
     Object.entries(grouped).forEach(([date,items])=>{let total=items.reduce((s,i)=>s+(i.type==='pemasukan'?i.amount:-i.amount),0); detail+=`<div style="margin-top:12px"><strong>📌 ${date}</strong> <span style="color:${total>=0?'#10b981':'#ef4444'}">${total>=0?'+':'-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`; items.forEach(i=>{const cat=getCategoryById(i.category_id); detail+=`<div style="padding-left:16px; margin:4px 0">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`;});});
@@ -824,7 +858,7 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// PENGATURAN - dengan navigasi back
+// PENGATURAN
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -858,7 +892,6 @@ async function renderSettings() {
     document.getElementById("appContainer").innerHTML = html;
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     
-    // Tombol back ke menu sebelumnya
     document.getElementById("backFromSettingsBtn")?.addEventListener("click",() => {
         if (previousNav && previousNav !== "settings") {
             currentNav = previousNav;
@@ -892,8 +925,8 @@ async function renderSettings() {
     const sharedDiv=document.getElementById("sharedList");
     if(!shared?.length) sharedDiv.innerHTML='<div class="empty-state">Belum ada akses bersama</div>';
     else sharedDiv.innerHTML=shared.map(s=>`<div class="transaction-item"><div>📧 ${escapeHtml(s.shared_email)}</div><div><span style="font-size:11px; background:#e2e8f0; padding:2px 8px; border-radius:20px">${s.access_level==='edit'?'✏️ Edit':'👁️ Lihat'}</span><button class="remove-shared" data-id="${s.id}" style="margin-left:12px; background:none; border:none;">🗑️</button></div></div>`).join('');
-    document.querySelectorAll(".remove-shared").forEach(btn=>btn.onclick=async()=>{await sb.from("shared_access").delete().eq("id",btn.dataset.id); showToast("Dihapus"); renderSettings();});
-    document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{const inp=document.getElementById(btn.dataset.target); if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁️';}});
+    document.querySelectorAll(".remove-shared").forEach(btn=>btn.onclick=async()=>{await sb.from("shared_access").delete().eq("id",btn.getAttribute("data-id")); showToast("Dihapus"); renderSettings();});
+    document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{const inp=document.getElementById(btn.getAttribute("data-target")); if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁️';}});
 }
 
 // Navigation
@@ -907,7 +940,14 @@ function renderCurrentView() {
     else if(currentNav==='tasks') renderTasks();
     else if(currentNav==='settings') renderSettings();
 }
-function updateNav() { document.querySelectorAll('.nav-item').forEach(btn=>{ if(btn.dataset.nav===currentNav) btn.classList.add('active'); else btn.classList.remove('active'); }); }
+
+function updateNav() { 
+    document.querySelectorAll('.nav-item').forEach(btn=>{ 
+        if(btn.getAttribute('data-nav')===currentNav) btn.classList.add('active'); 
+        else btn.classList.remove('active'); 
+    }); 
+}
+
 function addBottomNav() {
     const navHtml=`<div class="bottom-nav">
         <button class="nav-item ${currentNav==='home'?'active':''}" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
@@ -919,7 +959,7 @@ function addBottomNav() {
     document.body.insertAdjacentHTML('beforeend',navHtml);
     document.querySelectorAll('.nav-item').forEach(btn=>btn.onclick=()=>{
         previousNav = currentNav;
-        currentNav = btn.dataset.nav;
+        currentNav = btn.getAttribute("data-nav");
         updateNav();
         renderCurrentView();
     });
@@ -942,43 +982,77 @@ async function handleLogin() {
         if (data.user) { alert("Pendaftaran berhasil! Silakan login."); toggleMode(); }
     }
 }
+
 async function handleGuest() {
     const { data, error } = await sb.auth.signInAnonymously();
     if (error) { document.getElementById("loginError").innerText = error.message; return; }
     await onAuthSuccess(data.user);
 }
+
 function toggleMode() {
     isLoginMode = !isLoginMode;
     document.getElementById("modalTitle").innerText = isLoginMode ? "Masuk / Daftar" : "Daftar Akun Baru";
     document.getElementById("submitLoginBtn").innerText = isLoginMode ? "Masuk" : "Daftar";
     document.getElementById("switchText").innerText = isLoginMode ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk";
 }
+
 async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
-    await loadCategories(); await loadTransactions(); await loadDebts(); await loadSavings(); await loadReminders(); await loadTasks(); await loadRecurring();
+    await loadCategories(); 
+    await loadTransactions(); 
+    await loadDebts(); 
+    await loadSavings(); 
+    await loadReminders(); 
+    await loadTasks(); 
+    await loadRecurring();
     await processRecurring();
     await loadTransactions();
     addBottomNav();
     renderCurrentView();
 }
+
 async function logout() {
-    await sb.auth.signOut();
+    try {
+        await sb.auth.signOut();
+    } catch(e) {
+        console.log("Logout error:", e);
+    }
     currentUser = null;
     document.querySelector(".bottom-nav")?.remove();
     document.getElementById("appContainer").innerHTML = "";
     document.getElementById("loginModal").style.display = "flex";
+    document.getElementById("emailInput").value = "";
+    document.getElementById("passwordInput").value = "";
 }
+
 async function checkSession() {
-    const { data } = await sb.auth.getSession();
-    if (data.session?.user) { await onAuthSuccess(data.session.user); }
-    else { document.getElementById("loginModal").style.display = "flex"; }
+    try {
+        const { data } = await sb.auth.getSession();
+        if (data.session?.user) { 
+            await onAuthSuccess(data.session.user); 
+        } else { 
+            document.getElementById("loginModal").style.display = "flex"; 
+        }
+    } catch(e) {
+        console.log("Session check error:", e);
+        document.getElementById("loginModal").style.display = "flex";
+    }
 }
 
 document.getElementById("submitLoginBtn").onclick = handleLogin;
 document.getElementById("switchText").onclick = toggleMode;
 document.getElementById("guestBtn").onclick = handleGuest;
-document.getElementById("toggleLoginPassword")?.addEventListener("click",()=>{const inp=document.getElementById("passwordInput"); if(inp.type==='password'){inp.type='text'; document.getElementById("toggleLoginPassword").textContent='🙈';}else{inp.type='password'; document.getElementById("toggleLoginPassword").textContent='👁️';}});
+document.getElementById("toggleLoginPassword")?.addEventListener("click",()=>{
+    const inp=document.getElementById("passwordInput"); 
+    if(inp.type==='password'){
+        inp.type='text'; 
+        document.getElementById("toggleLoginPassword").textContent='🙈';
+    }else{
+        inp.type='password'; 
+        document.getElementById("toggleLoginPassword").textContent='👁️';
+    }
+});
 checkSession();
 </script>
 </body>
