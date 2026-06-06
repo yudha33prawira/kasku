@@ -3,538 +3,542 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>Keuangan Keluarga</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>Keuangan Keluarga - Sederhana</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
         body {
-            background: #f8f9fc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding-bottom: 70px;
+            background: #f0f2f5;
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 16px;
+            padding-bottom: 80px;
         }
-        .app-container {
+        .container {
             max-width: 450px;
             margin: 0 auto;
-            padding: 16px;
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            text-align: center;
             margin-bottom: 20px;
-            padding: 4px 0;
-        }
-        .user-info {
-            background: #e8edf5;
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 500;
             color: #1e293b;
         }
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 6px 14px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-        }
         .balance-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-radius: 32px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 24px;
             padding: 20px;
             margin-bottom: 20px;
             color: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            position: relative;
-        }
-        .balance-eye {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            border-radius: 30px;
-            padding: 6px 12px;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .balance-label {
-            font-size: 14px;
-            opacity: 0.7;
+            text-align: center;
         }
         .balance-amount {
-            font-size: 32px;
-            font-weight: 700;
-            margin: 8px 0 4px;
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
         }
         .balance-stats {
             display: flex;
-            gap: 16px;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.15);
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
         }
-        .stat-item { flex: 1; }
-        .stat-label { font-size: 12px; opacity: 0.7; }
-        .stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; }
-        .stat-value.income { color: #4ade80; }
-        .stat-value.expense { color: #f87171; }
-        .quick-add {
+        .stat { text-align: center; }
+        .stat-label { font-size: 12px; opacity: 0.8; }
+        .stat-value { font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .income { color: #4ade80; }
+        .expense { color: #f87171; }
+        
+        .button-group {
             display: flex;
             gap: 12px;
             margin-bottom: 20px;
         }
-        .btn-income {
+        .btn {
             flex: 1;
-            background: #10b981;
-            border: none;
-            border-radius: 60px;
             padding: 14px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 16px;
-        }
-        .btn-expense {
-            flex: 1;
-            background: #ef4444;
             border: none;
-            border-radius: 60px;
-            padding: 14px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            border-radius: 50px;
             font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s;
         }
+        .btn:active { transform: scale(0.98); }
+        .btn-income { background: #10b981; color: white; }
+        .btn-expense { background: #ef4444; color: white; }
+        
         .card {
             background: white;
-            border-radius: 24px;
+            border-radius: 20px;
             padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
+            font-size: 18px;
+            font-weight: bold;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(10px);
-            display: flex;
-            justify-content: space-around;
-            padding: 8px 16px 20px;
-            border-top: 1px solid #eef2f6;
-            max-width: 450px;
-            margin: 0 auto;
-            z-index: 100;
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            background: none;
-            border: none;
-            font-size: 11px;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 40px;
-        }
-        .nav-item .nav-icon { font-size: 22px; }
-        .nav-item.active { color: #3b82f6; background: #eff6ff; }
-        .transaction-list, .savings-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .transaction-item, .savings-item {
+        
+        .transaction-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid #f0f2f5;
+            border-bottom: 1px solid #eee;
         }
         .transaction-desc { font-weight: 500; }
-        .transaction-meta { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-        .transaction-amount { font-weight: 600; }
-        .transaction-amount.income { color: #10b981; }
-        .transaction-amount.expense { color: #ef4444; }
-        .delete-btn, .edit-btn, .action-btn {
+        .transaction-date { font-size: 11px; color: #888; margin-top: 4px; }
+        .transaction-amount { font-weight: bold; }
+        .amount-income { color: #10b981; }
+        .amount-expense { color: #ef4444; }
+        
+        .delete-btn {
             background: none;
             border: none;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
             padding: 8px;
-            color: #94a3b8;
+            color: #999;
         }
-        .modal-overlay {
+        
+        .nav-bar {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 16px 20px;
+            border-top: 1px solid #ddd;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 30px;
+        }
+        .nav-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .savings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .savings-name { font-weight: bold; }
+        .savings-target { font-size: 11px; color: #888; }
+        
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 200;
-            padding: 20px;
+            z-index: 1000;
         }
         .modal-content {
             background: white;
-            border-radius: 32px;
             padding: 24px;
-            width: 100%;
-            max-width: 340px;
-        }
-        .modal-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 20px; }
-        .modal-input {
-            width: 100%;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 40px;
-            font-size: 15px;
+            border-radius: 24px;
+            width: 300px;
         }
         .modal-btn {
             width: 100%;
-            padding: 14px;
-            border-radius: 40px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
+            padding: 12px;
             margin-top: 8px;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
         }
         .modal-btn-primary { background: #3b82f6; color: white; }
-        .modal-btn-secondary { background: #e2e8f0; color: #475569; }
+        .modal-btn-secondary { background: #e2e8f0; color: #333; }
+        .hidden { display: none; }
+        
         .toast {
             position: fixed;
-            bottom: 80px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            background: #1e293b;
+            background: #333;
             color: white;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-size: 13px;
-            z-index: 300;
-            white-space: nowrap;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            z-index: 1100;
         }
-        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        .period-selector { display: flex; gap: 12px; margin-bottom: 16px; }
-        .period-selector button { flex: 1; padding: 10px; border: 1px solid #e2e8f0; background: white; border-radius: 40px; cursor: pointer; }
-        .period-selector button.active { background: #3b82f6; color: white; border: none; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
-<div class="app-container" id="appContainer"></div>
-
-<div id="loginModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-title">Aplikasi Keuangan Keluarga</div>
-        <input type="text" id="userNameInput" class="modal-input" placeholder="Nama Anda" value="Keluarga">
-        <button id="startBtn" class="modal-btn modal-btn-primary">Mulai Aplikasi</button>
-    </div>
-</div>
+<div class="container" id="app"></div>
 
 <script>
-    // ==================== APLIKASI OFFLINE - TANPA SUPABASE ====================
-    // Semua data disimpan di localStorage
-    
-    let currentUser = null;
+    // ==================== DATA ====================
     let transactions = [];
     let savings = [];
-    let currentNav = "home";
-    let currentPeriod = "monthly";
-    let isBalanceHidden = false;
-    let chart = null;
+    let currentMenu = 'home';
     
-    // Helper functions
-    function showToast(msg) {
-        let toast = document.querySelector('.toast');
-        if (toast) toast.remove();
-        toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerText = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
+    // Load data dari localStorage
+    function loadData() {
+        const savedTrans = localStorage.getItem('transactions');
+        const savedSavings = localStorage.getItem('savings');
+        if (savedTrans) transactions = JSON.parse(savedTrans);
+        if (savedSavings) savings = JSON.parse(savedSavings);
     }
     
-    function formatRupiah(angka) {
-        return new Intl.NumberFormat("id-ID").format(angka || 0);
+    // Save data ke localStorage
+    function saveData() {
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        localStorage.setItem('savings', JSON.stringify(savings));
     }
     
-    // Simpan ke localStorage
-    function saveToLocalStorage() {
-        if (currentUser) {
-            localStorage.setItem(`keuangan_${currentUser}`, JSON.stringify({
-                transactions, savings
-            }));
-        }
-    }
-    
-    // Load dari localStorage
-    function loadFromLocalStorage() {
-        const saved = localStorage.getItem(`keuangan_${currentUser}`);
-        if (saved) {
-            const data = JSON.parse(saved);
-            transactions = data.transactions || [];
-            savings = data.savings || [];
-        } else {
-            // Data default contoh
-            transactions = [];
-            savings = [];
-        }
-    }
-    
-    // Hitung total saldo
-    function getTotals() {
-        let pemasukan = 0, pengeluaran = 0;
+    // Hitung saldo
+    function getSaldo() {
+        let income = 0, expense = 0;
         transactions.forEach(t => {
-            if (t.type === 'pemasukan') pemasukan += t.amount;
-            else pengeluaran += t.amount;
+            if (t.type === 'income') income += t.amount;
+            else expense += t.amount;
         });
-        return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
+        return { income, expense, balance: income - expense };
+    }
+    
+    // Format Rupiah
+    function rp(angka) {
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(angka || 0);
+    }
+    
+    // Toast notifikasi
+    function toast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.innerText = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2000);
     }
     
     // Tambah transaksi
-    function addTransaction(description, amount, type) {
-        if (!description || !amount || amount <= 0) {
-            showToast('Data tidak valid');
+    function addTransaction(desc, amount, type) {
+        if (!desc || amount <= 0) {
+            toast('Data tidak valid');
             return false;
         }
         transactions.unshift({
             id: Date.now(),
-            description: description,
+            desc: desc,
             amount: Number(amount),
             type: type,
-            date: new Date().toISOString(),
-            created_at: new Date().toISOString()
+            date: new Date().toLocaleDateString('id-ID')
         });
-        saveToLocalStorage();
-        showToast(`${type === 'pemasukan' ? '+ Pemasukan' : '- Pengeluaran'} berhasil ditambahkan`);
-        renderCurrentView();
+        saveData();
+        render();
+        toast(type === 'income' ? 'Pemasukan ditambahkan' : 'Pengeluaran ditambahkan');
         return true;
     }
     
     // Hapus transaksi
     function deleteTransaction(id) {
         transactions = transactions.filter(t => t.id != id);
-        saveToLocalStorage();
-        renderCurrentView();
-        showToast('Transaksi dihapus');
+        saveData();
+        render();
+        toast('Transaksi dihapus');
     }
     
-    // Tabungan
+    // Tambah tabungan
     function addSavings(name, target) {
-        if (!name || !target || target <= 0) return;
+        if (!name || target <= 0) return;
         savings.push({
             id: Date.now(),
             name: name,
-            target_amount: Number(target),
-            current_amount: 0
+            target: Number(target),
+            current: 0
         });
-        saveToLocalStorage();
-        renderCurrentView();
-        showToast('Tabungan dibuat');
+        saveData();
+        render();
+        toast('Tabungan dibuat');
     }
     
+    // Transfer ke tabungan
+    function transferToSavings(id, amount) {
+        const saving = savings.find(s => s.id == id);
+        if (!saving) return;
+        const saldo = getSaldo().balance;
+        if (saldo < amount) {
+            toast('Saldo tidak cukup');
+            return;
+        }
+        addTransaction(`Transfer ke ${saving.name}`, amount, 'expense');
+        saving.current += amount;
+        saveData();
+        render();
+        toast(`Rp ${amount.toLocaleString()} ditransfer`);
+    }
+    
+    // Ambil dari tabungan
+    function transferFromSavings(id, amount) {
+        const saving = savings.find(s => s.id == id);
+        if (!saving || saving.current < amount) {
+            toast('Dana tabungan tidak cukup');
+            return;
+        }
+        addTransaction(`Ambil dari ${saving.name}`, amount, 'income');
+        saving.current -= amount;
+        saveData();
+        render();
+        toast(`Rp ${amount.toLocaleString()} diambil`);
+    }
+    
+    // Hapus tabungan
     function deleteSavings(id) {
         savings = savings.filter(s => s.id != id);
-        saveToLocalStorage();
-        renderCurrentView();
+        saveData();
+        render();
+        toast('Tabungan dihapus');
     }
     
-    function transferToSavings(savingsId, amount) {
-        const saving = savings.find(s => s.id == savingsId);
-        if (!saving) return;
-        const totals = getTotals();
-        if (totals.saldo < amount) {
-            showToast('Saldo tidak cukup!');
-            return;
-        }
-        // Tambah transaksi pengeluaran
-        transactions.unshift({
-            id: Date.now(),
-            description: `Transfer ke tabungan: ${saving.name}`,
-            amount: Number(amount),
-            type: 'pengeluaran',
-            date: new Date().toISOString()
-        });
-        saving.current_amount += Number(amount);
-        saveToLocalStorage();
-        showToast(`Rp ${formatRupiah(amount)} ditransfer ke ${saving.name}`);
-        renderCurrentView();
-    }
-    
-    function transferFromSavings(savingsId, amount) {
-        const saving = savings.find(s => s.id == savingsId);
-        if (!saving) return;
-        if (saving.current_amount < amount) {
-            showToast('Dana tabungan tidak cukup!');
-            return;
-        }
-        transactions.unshift({
-            id: Date.now(),
-            description: `Ambil dari tabungan: ${saving.name}`,
-            amount: Number(amount),
-            type: 'pemasukan',
-            date: new Date().toISOString()
-        });
-        saving.current_amount -= Number(amount);
-        saveToLocalStorage();
-        showToast(`Rp ${formatRupiah(amount)} diambil dari ${saving.name}`);
-        renderCurrentView();
-    }
-    
-    // Render Home
+    // ==================== RENDER HOME ====================
     function renderHome() {
-        const totals = getTotals();
-        const totalSavings = savings.reduce((sum, s) => sum + s.current_amount, 0);
-        const now = new Date();
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        startOfWeek.setHours(0,0,0,0);
-        
-        let filteredTransactions = [...transactions];
-        if (currentPeriod === 'weekly') {
-            filteredTransactions = transactions.filter(t => new Date(t.date) >= startOfWeek);
-        } else {
-            filteredTransactions = transactions.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
-        }
-        
-        const periodExpenses = filteredTransactions.filter(t => t.type === 'pengeluaran').reduce((sum, t) => sum + t.amount, 0);
-        const topExpenses = [...transactions].filter(t => t.type === 'pengeluaran').sort((a,b) => b.amount - a.amount).slice(0,3);
-        const recent = [...transactions].slice(0,5);
+        const { income, expense, balance } = getSaldo();
+        const totalSavings = savings.reduce((sum, s) => sum + s.current, 0);
+        const recent = transactions.slice(0, 5);
         
         let html = `
-            <div class="header">
-                <div class="user-info">${currentUser}</div>
-                <button id="logoutBtn" class="logout-btn">Ganti Pengguna</button>
-            </div>
             <div class="balance-card">
-                <button id="toggleBalanceBtn" class="balance-eye">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
-                <div class="balance-label">Total Saldo</div>
-                <div class="balance-amount">${isBalanceHidden ? '••••••' : `Rp ${formatRupiah(totals.saldo)}`}</div>
+                <div style="font-size: 14px; opacity:0.8;">Total Saldo</div>
+                <div class="balance-amount">${rp(balance)}</div>
                 <div class="balance-stats">
-                    <div class="stat-item"><div class="stat-label">Pemasukan</div><div class="stat-value income">${isBalanceHidden ? '•••' : `Rp ${formatRupiah(totals.pemasukan)}`}</div></div>
-                    <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden ? '•••' : `Rp ${formatRupiah(totals.pengeluaran)}`}</div></div>
+                    <div class="stat"><div class="stat-label">Pemasukan</div><div class="stat-value income">${rp(income)}</div></div>
+                    <div class="stat"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${rp(expense)}</div></div>
+                    <div class="stat"><div class="stat-label">Tabungan</div><div class="stat-value">${rp(totalSavings)}</div></div>
                 </div>
             </div>
-            <div class="quick-add">
-                <button id="quickIncomeBtn" class="btn-income">+ Pemasukan</button>
-                <button id="quickExpenseBtn" class="btn-expense">- Pengeluaran</button>
+            
+            <div class="button-group">
+                <button class="btn btn-income" id="incomeBtn">+ Pemasukan</button>
+                <button class="btn btn-expense" id="expenseBtn">- Pengeluaran</button>
             </div>
-            <div class="card">
-                <div class="card-title">Ringkasan</div>
-                <div class="period-selector">
-                    <button id="weeklyBtn" class="${currentPeriod === 'weekly' ? 'active' : ''}">Minggu Ini</button>
-                    <button id="monthlyBtn" class="${currentPeriod === 'monthly' ? 'active' : ''}">Bulan Ini</button>
-                </div>
-                <div style="margin-top: 12px;">Total Pengeluaran: <strong>Rp ${formatRupiah(periodExpenses)}</strong></div>
-                <div>Total Tabungan: <strong>Rp ${formatRupiah(totalSavings)}</strong></div>
-            </div>
-            <div class="card">
-                <div class="card-title">Top 3 Pengeluaran Terbesar</div>
-                ${topExpenses.length ? topExpenses.map((t,i) => `<div style="display:flex; justify-content:space-between; padding:8px 0;"><span>${i+1}. ${t.description}</span><span>Rp ${formatRupiah(t.amount)}</span></div>`).join('') : '<div class="empty-state">Belum ada data</div>'}
-            </div>
+            
             <div class="card">
                 <div class="card-title">Transaksi Terbaru</div>
-                ${recent.length ? recent.map(t => `
-                    <div class="transaction-item">
-                        <div>
-                            <div class="transaction-desc">${t.description}</div>
-                            <div class="transaction-meta">${new Date(t.date).toLocaleDateString('id-ID')}</div>
+                ${recent.length === 0 ? '<div class="empty">Belum ada transaksi</div>' : 
+                    recent.map(t => `
+                        <div class="transaction-item">
+                            <div>
+                                <div class="transaction-desc">${t.desc}</div>
+                                <div class="transaction-date">${t.date}</div>
+                            </div>
+                            <div>
+                                <span class="transaction-amount ${t.type === 'income' ? 'amount-income' : 'amount-expense'}">
+                                    ${t.type === 'income' ? '+' : '-'} ${rp(t.amount)}
+                                </span>
+                                <button class="delete-btn" data-id="${t.id}">🗑️</button>
+                            </div>
                         </div>
-                        <div class="transaction-amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">
-                            ${t.type === 'pemasukan' ? '+' : '-'} Rp ${formatRupiah(t.amount)}
-                        </div>
-                    </div>
-                `).join('') : '<div class="empty-state">Belum ada transaksi. Tambahkan sekarang!</div>'}
+                    `).join('')
+                }
             </div>
         `;
         
-        document.getElementById('appContainer').innerHTML = html;
+        document.getElementById('app').innerHTML = html;
         
-        // Pasang event listeners
-        document.getElementById('quickIncomeBtn').onclick = () => {
+        document.getElementById('incomeBtn').onclick = () => {
             const desc = prompt('Deskripsi pemasukan:', 'Gaji');
             if (desc) {
                 const amount = prompt('Jumlah (Rp):');
-                if (amount && !isNaN(amount)) addTransaction(desc, Number(amount), 'pemasukan');
+                if (amount && !isNaN(amount)) addTransaction(desc, Number(amount), 'income');
             }
         };
-        document.getElementById('quickExpenseBtn').onclick = () => {
+        
+        document.getElementById('expenseBtn').onclick = () => {
             const desc = prompt('Deskripsi pengeluaran:', 'Belanja');
             if (desc) {
                 const amount = prompt('Jumlah (Rp):');
-                if (amount && !isNaN(amount)) addTransaction(desc, Number(amount), 'pengeluaran');
+                if (amount && !isNaN(amount)) addTransaction(desc, Number(amount), 'expense');
             }
         };
-        document.getElementById('toggleBalanceBtn').onclick = () => {
-            isBalanceHidden = !isBalanceHidden;
-            renderHome();
-        };
-        document.getElementById('logoutBtn').onclick = () => {
-            document.getElementById('loginModal').style.display = 'flex';
-        };
-        document.getElementById('weeklyBtn').onclick = () => {
-            currentPeriod = 'weekly';
-            renderHome();
-        };
-        document.getElementById('monthlyBtn').onclick = () => {
-            currentPeriod = 'monthly';
-            renderHome();
-        };
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.onclick = () => deleteTransaction(Number(btn.getAttribute('data-id')));
+        });
     }
     
-    // Render Transactions
+    // ==================== RENDER TRANSACTIONS ====================
     function renderTransactions() {
         let html = `
             <div class="card">
                 <div class="card-title">
                     Semua Transaksi
-                    <button id="addTransBtn" class="action-btn">+ Tambah</button>
+                    <button id="addTransBtn" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:20px;">+ Tambah</button>
                 </div>
-                <div class="transaction-list">
-                    ${transactions.length === 0 ? '<div class="empty-state">Belum ada transaksi</div>' : 
-                        transactions.map(t => `
-                            <div class="transaction-item">
-                                <div>
-                                    <div class="transaction-desc">${t.description}</div>
-                                    <div class="transaction-meta">${new Date(t.date).toLocaleDateString('id-ID')}</div>
-                                </div>
-                                <div class="transaction-amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">
-                                    ${t.type === 'pemasukan' ? '+' : '-'} Rp ${formatRupiah(t.amount)}
-                          
+                ${transactions.length === 0 ? '<div class="empty">Belum ada transaksi</div>' : 
+                    transactions.map(t => `
+                        <div class="transaction-item">
+                            <div>
+                                <div class="transaction-desc">${t.desc}</div>
+                                <div class="transaction-date">${t.date}</div>
+                            </div>
+                            <div>
+                                <span class="transaction-amount ${t.type === 'income' ? 'amount-income' : 'amount-expense'}">
+                                    ${t.type === 'income' ? '+' : '-'} ${rp(t.amount)}
+                                </span>
+                                <button class="delete-btn" data-id="${t.id}">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')
+                }
+            </div>
+        `;
+        
+        document.getElementById('app').innerHTML = html;
+        
+        document.getElementById('addTransBtn').onclick = () => {
+            const type = confirm('Pemasukan? (OK=Pemasukan, Batal=Pengeluaran)');
+            const desc = prompt('Deskripsi:');
+            if (desc) {
+                const amount = prompt('Jumlah (Rp):');
+                if (amount && !isNaN(amount)) {
+                    addTransaction(desc, Number(amount), type ? 'income' : 'expense');
+                }
+            }
+        };
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.onclick = () => deleteTransaction(Number(btn.getAttribute('data-id')));
+        });
+    }
+    
+    // ==================== RENDER SAVINGS ====================
+    function renderSavings() {
+        let html = `
+            <div class="card">
+                <div class="card-title">
+                    Tabungan
+                    <button id="addSavingsBtn" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:20px;">+ Buat</button>
+                </div>
+                ${savings.length === 0 ? '<div class="empty">Belum ada tabungan</div>' : 
+                    savings.map(s => `
+                        <div class="savings-item">
+                            <div>
+                                <div class="savings-name">${s.name}</div>
+                                <div class="savings-target">Target: ${rp(s.target)} | Terkumpul: ${rp(s.current)}</div>
+                            </div>
+                            <div>
+                                <button class="transfer-in-btn" data-id="${s.id}" style="background:#10b981; border:none; padding:6px 12px; border-radius:20px; margin:2px;">➕ Masuk</button>
+                                <button class="transfer-out-btn" data-id="${s.id}" style="background:#f59e0b; border:none; padding:6px 12px; border-radius:20px; margin:2px;">➖ Ambil</button>
+                                <button class="delete-savings-btn" data-id="${s.id}" style="background:#ef4444; border:none; padding:6px 12px; border-radius:20px; margin:2px;">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('')
+                }
+            </div>
+        `;
+        
+        document.getElementById('app').innerHTML = html;
+        
+        document.getElementById('addSavingsBtn').onclick = () => {
+            const name = prompt('Nama tabungan:', 'Liburan');
+            if (name) {
+                const target = prompt('Target jumlah (Rp):');
+                if (target && !isNaN(target)) addSavings(name, Number(target));
+            }
+        };
+        
+        document.querySelectorAll('.transfer-in-btn').forEach(btn => {
+            btn.onclick = () => {
+                const id = Number(btn.getAttribute('data-id'));
+                const amount = prompt('Jumlah yang ditransfer ke tabungan (Rp):');
+                if (amount && !isNaN(amount)) transferToSavings(id, Number(amount));
+            };
+        });
+        
+        document.querySelectorAll('.transfer-out-btn').forEach(btn => {
+            btn.onclick = () => {
+                const id = Number(btn.getAttribute('data-id'));
+                const amount = prompt('Jumlah yang diambil dari tabungan (Rp):');
+                if (amount && !isNaN(amount)) transferFromSavings(id, Number(amount));
+            };
+        });
+        
+        document.querySelectorAll('.delete-savings-btn').forEach(btn => {
+            btn.onclick = () => deleteSavings(Number(btn.getAttribute('data-id')));
+        });
+    }
+    
+    // ==================== RENDER STATS ====================
+    function renderStats() {
+        const { income, expense, balance } = getSaldo();
+        const totalSavings = savings.reduce((sum, s) => sum + s.current, 0);
+        const totalTarget = savings.reduce((sum, s) => sum + s.target, 0);
+        
+        let html = `
+            <div class="card">
+                <div class="card-title">Statistik Keuangan</div>
+                <div style="padding: 8px 0;"><strong>💰 Total Saldo:</strong> ${rp(balance)}</div>
+                <div style="padding: 8px 0;"><strong>📈 Total Pemasukan:</strong> ${rp(income)}</div>
+                <div style="padding: 8px 0;"><strong>📉 Total Pengeluaran:</strong> ${rp(expense)}</div>
+                <div style="padding: 8px 0;"><strong>🏦 Total Tabungan:</strong> ${rp(totalSavings)}</div>
+                <div style="padding: 8px 0;"><strong>🎯 Target Tabungan:</strong> ${rp(totalTarget)}</div>
+                <hr style="margin: 12px 0;">
+                <div style="padding: 8px 0;"><strong>📝 Jumlah Transaksi:</strong> ${transactions.length}</div>
+                <div style="padding: 8px 0;"><strong>📌 Jumlah Tabungan:</strong> ${savings.length}</div>
+                <button id="resetBtn" style="margin-top:16px; width:100%; padding:12px; background:#ef4444; color:white; border:none; border-radius:30px; font-weight:bold;">Reset Semua Data</button>
+            </div>
+        `;
+        
+        document.getElementById('app').innerHTML = html;
+        
+        document.getElementById('resetBtn').onclick = () => {
+            if (confirm('Yakin ingin menghapus SEMUA data? Aksi tidak dapat dibatalkan!')) {
+                transactions = [];
+                savings = [];
+                saveData();
+                render();
+                toast('Semua data telah direset');
+            }
+        };
+    }
+    
+    // ==================== NAVIGATION ====================
+    function render() {
+        if (currentMenu === 'home') renderHome();
+        else if (currentMenu === 'transactions') renderTransactions();
+        else if (currentMenu === 'savings') renderSavings();
+        else if (currentMenu === 'stats') renderStats();
+    }
+    
+    function initNav() {
+        const nav = document.createElement('div');
+        nav.className = 'nav-bar';
+        nav.innerHTML = `
+            <button class="nav-btn ${currentMenu === 'home' ? 'active' : ''}" data-men
