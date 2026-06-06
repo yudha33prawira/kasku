@@ -12,20 +12,17 @@
         body { background: #f8f9fc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding-bottom: 70px; }
         .app-container { max-width: 450px; margin: 0 auto; padding: 16px; }
         
-        /* Header & Running Text */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .user-info { background: #e8edf5; padding: 6px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; color: #1e293b; }
         .header-actions { display: flex; gap: 12px; align-items: center; }
         .settings-btn { background: none; border: none; font-size: 24px; cursor: pointer; padding: 8px; color: #475569; }
         .logout-btn { background: #ef4444; color: white; border: none; border-radius: 30px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; }
         
-        /* Running Text */
         .running-text-container { background: #fef3c7; border-radius: 12px; padding: 10px 16px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; position: relative; }
         .running-text { display: inline-block; animation: scroll 20s linear infinite; font-size: 13px; color: #92400e; }
         .running-text span { margin-right: 30px; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         
-        /* Balance Card */
         .balance-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 32px; padding: 20px; margin-bottom: 20px; color: white; position: relative; }
         .balance-eye { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 6px 12px; color: white; font-size: 14px; cursor: pointer; }
         .balance-label { font-size: 14px; opacity: 0.7; }
@@ -37,38 +34,32 @@
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
         
-        /* Buttons */
         .btn-income, .btn-expense { flex: 1; border: none; border-radius: 60px; padding: 14px; color: white; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-income { background: #10b981; }
         .btn-expense { background: #ef4444; }
         .btn-secondary { background: #64748b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         .btn-recurring { background: #8b5cf6; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
+        .btn-purple { background: #8b5cf6; }
         
-        /* Cards */
         .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 8px 16px 20px; border-top: 1px solid #eef2f6; max-width: 450px; margin: 0 auto; z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 11px; color: #94a3b8; cursor: pointer; padding: 8px 10px; border-radius: 40px; transition: all 0.2s; font-weight: 500; }
         .nav-item .nav-icon { font-size: 22px; }
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
         
-        /* Lists */
-        .transaction-list, .task-list, .recurring-list { display: flex; flex-direction: column; gap: 8px; }
-        .transaction-item, .task-item, .recurring-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
+        .transaction-list, .task-list, .savings-list, .reminders-list { display: flex; flex-direction: column; gap: 8px; }
+        .transaction-item, .task-item, .savings-item, .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
         .task-check { margin-right: 12px; transform: scale(1.2); cursor: pointer; }
         .task-title { font-weight: 500; flex: 1; }
         .task-completed { text-decoration: line-through; color: #94a3b8; }
         .task-date { font-size: 10px; color: #94a3b8; margin-top: 2px; }
-        .debt-urgent { background: #fee2e2; border-left: 3px solid #ef4444; padding-left: 8px; }
         
-        /* Filters */
         .filter { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; }
         .filter-btn { padding: 8px 16px; border: none; border-radius: 40px; background: #e2e8f0; font-size: 13px; cursor: pointer; white-space: nowrap; }
         .filter-btn.active { background: #0f172a; color: white; }
         
-        /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
         .modal-content { background: white; border-radius: 32px; padding: 24px; width: 100%; max-width: 340px; max-height: 85vh; overflow-y: auto; }
         .modal-title { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 20px; }
@@ -77,7 +68,6 @@
         .modal-btn-primary { background: #3b82f6; color: white; }
         .modal-btn-secondary { background: #e2e8f0; color: #475569; }
         
-        /* Toast & Empty */
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 13px; z-index: 300; white-space: nowrap; }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         .progress-bar { background: #e2e8f0; border-radius: 10px; height: 6px; margin-top: 8px; }
@@ -87,11 +77,10 @@
         .password-wrapper { position: relative; }
         .password-wrapper input { padding-right: 50px; }
         .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; }
-        
-        /* Detail Debt Modal */
         .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
         .detail-label { font-weight: 500; color: #475569; }
         .detail-value { color: #1e293b; }
+        .debt-urgent { background: #fee2e2; border-radius: 12px; padding: 8px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -138,13 +127,13 @@ let taskFilter = "all";
 // Helper functions
 function showToast(msg) { let t = document.querySelector('.toast'); if (t) t.remove(); t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
 
-// Format Rupiah dengan titik
 function formatRupiah(angka) {
     if (angka === undefined || angka === null) return '0';
     return new Intl.NumberFormat("id-ID").format(angka);
 }
 
 function parseRupiah(str) {
+    if (!str) return 0;
     return parseInt(str.replace(/\./g, '').replace(/[^0-9]/g, '')) || 0;
 }
 
@@ -153,7 +142,6 @@ function getCategoryById(id) { return categories.find(c => c.id === id); }
 function hitungTotalSaldo() { let p=0, k=0; transactions.forEach(t => t.type==='pemasukan'? p+=t.amount : k+=t.amount); return { pemasukan:p, pengeluaran:k, saldo:p-k }; }
 function hitungTotalTabungan() { return savings.reduce((a,b)=>a+b.current_amount,0); }
 
-// Input Rupiah otomatis
 function setupRupiahInput(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -199,7 +187,6 @@ async function processRecurring() {
         if (r.category_id) insertData.category_id = r.category_id;
         await sb.from("transactions").insert(insertData);
         await sb.from("recurring_transactions").update({ last_processed_date: todayStr }).eq("id", r.id);
-        showToast(`💸 Transaksi berulang: ${r.description}`);
     }
 }
 
@@ -208,38 +195,35 @@ function getRunningText() {
     const today = new Date();
     const messages = [];
     
-    // Hutang/Piutang deadline dalam 7 hari
     debts.forEach(d => {
         if (d.status === 'lunas') return;
         if (d.due_date) {
             const due = new Date(d.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
             if (diff >= 0 && diff <= 7) {
-                messages.push(`⚠️ ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} dari ${escapeHtml(d.contact_name)} jatuh tempo ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
+                messages.push(`⚠️ ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
     });
     
-    // Tugas deadline dalam 7 hari
     tasks.forEach(t => {
         if (t.is_completed) return;
         if (t.due_date) {
             const due = new Date(t.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
             if (diff >= 0 && diff <= 7) {
-                messages.push(`📋 Tugas "${escapeHtml(t.title)}" jatuh tempo ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
+                messages.push(`📋 Tugas "${escapeHtml(t.title)}" ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
     });
     
-    // Pengingat
     reminders.forEach(r => {
         if (r.is_done) return;
         if (r.due_date) {
             const due = new Date(r.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
             if (diff >= 0 && diff <= 7) {
-                messages.push(`⏰ Pengingat: ${escapeHtml(r.title)} ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
+                messages.push(`⏰ ${escapeHtml(r.title)} ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
     });
@@ -247,17 +231,10 @@ function getRunningText() {
     return messages;
 }
 
-// Render Running Text
 function renderRunningText() {
     const messages = getRunningText();
     if (messages.length === 0) return '';
-    return `
-        <div class="running-text-container">
-            <div class="running-text">
-                ${messages.map(m => `<span>🔔 ${m}</span>`).join('')}
-            </div>
-        </div>
-    `;
+    return `<div class="running-text-container"><div class="running-text">${messages.map(m => `<span>🔔 ${m}</span>`).join('')}</div></div>`;
 }
 
 // ==================== RENDER FUNGSI ====================
@@ -290,6 +267,11 @@ async function renderHome() {
                 <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden?'••••':`-Rp ${formatRupiah(totals.pengeluaran)}`}</div></div>
             </div>
         </div>
+        <div class="card">
+            <div class="card-title"><span>💰 Tabungan</span><span style="color:#10b981">Rp ${formatRupiah(totalSavings)}</span></div>
+            <div id="savingsPreview"></div>
+            <button id="viewAllSavings" class="btn-secondary" style="margin-top:8px; width:100%">Lihat semua tabungan →</button>
+        </div>
         <div style="display:flex; gap:12px; margin-bottom:20px">
             <button id="quickIncome" class="btn-income">+ Pemasukan</button>
             <button id="quickExpense" class="btn-expense">- Pengeluaran</button>
@@ -302,14 +284,23 @@ async function renderHome() {
         <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div style="display:flex; justify-content:space-between; padding:8px 0"><div>${escapeHtml(t.description)}<br><small>${new Date(t.created_at).toLocaleDateString()}</small></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
     `;
     document.getElementById("appContainer").innerHTML = html;
+    
+    // Preview savings
+    const previewDiv = document.getElementById("savingsPreview");
+    if(previewDiv) {
+        if(savings.length===0) previewDiv.innerHTML='<div class="empty-state" style="padding:12px">Belum ada tabungan</div>';
+        else previewDiv.innerHTML = savings.slice(0,2).map(s=>`<div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (s.current_amount/s.target_amount*100).toFixed(0):0}%"></div></div></div>`).join('');
+    }
+    
     document.getElementById("quickIncome")?.addEventListener("click",()=>openTransaksiModal("pemasukan"));
     document.getElementById("quickExpense")?.addEventListener("click",()=>openTransaksiModal("pengeluaran"));
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
     document.getElementById("toggleBalanceBtn")?.addEventListener("click",()=>{ isBalanceHidden=!isBalanceHidden; renderHome(); });
+    document.getElementById("viewAllSavings")?.addEventListener("click",()=>{ currentNav="savings"; updateNav(); renderSavings(); });
 }
 
-// TRANSAKSI dengan tombol recurring
+// TRANSAKSI
 async function renderTransaksi() {
     let html = `
         <div class="header">
@@ -322,7 +313,7 @@ async function renderTransaksi() {
         ${renderRunningText()}
         <div style="display:flex; gap:12px; margin-bottom:12px">
             <button id="addTransaksiBtn" class="btn-income" style="flex:1">+ Transaksi</button>
-            <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Transaksi Berulang</button>
+            <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
         <div class="filter">
@@ -351,8 +342,41 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.dataset.filter; renderTransaksi();});
 }
 
+// Modal Transaksi Biasa
+function openTransaksiModal(predefinedType=null){
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`
+        <div class="modal-content">
+            <div class="modal-title">Tambah Transaksi</div>
+            <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input">
+            <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input">
+            <select id="modalTipe" class="modal-select"><option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option><option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option></select>
+            <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select>
+            <label style="display:flex; align-items:center; gap:8px; margin:8px 0"><input type="checkbox" id="modalFixed"> Pengeluaran Tetap</label>
+            <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
+            <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    setupRupiahInput('modalJum');
+    document.getElementById("saveTransaksi").onclick=async()=>{
+        const desc=document.getElementById("modalDesk").value.trim();
+        const amount=parseRupiah(document.getElementById("modalJum").value);
+        const type=document.getElementById("modalTipe").value;
+        const catId=document.getElementById("modalKat").value;
+        const isFixed=document.getElementById("modalFixed").checked;
+        if(!desc||!amount) return alert("Isi dengan benar");
+        const data={user_id:currentUser.id,description:desc,amount,type,is_fixed_expense:isFixed};
+        if(catId) data.category_id=catId;
+        const {error}=await sb.from("transactions").insert(data);
+        if(error) alert(error.message);
+        else { showToast("Transaksi ditambahkan"); modal.remove(); await loadTransactions(); renderCurrentView(); }
+    };
+    document.getElementById("closeModal").onclick=()=>modal.remove();
+}
+
 // Modal Transaksi Berulang
-function openRecurringModal(editId=null) {
+function openRecurringModal(editId=null){
     const isEdit = !!editId;
     const r = isEdit ? recurringList.find(x=>x.id===editId) : null;
     const modal = document.createElement('div'); modal.className='modal-overlay';
@@ -409,7 +433,49 @@ function openRecurringModal(editId=null) {
     document.getElementById("closeRecurring").onclick = () => modal.remove();
 }
 
-// HUTANG dengan detail popup
+// Modal Kelola Kategori
+function openCategoryManageModal(editId=null) {
+    const isEdit = !!editId;
+    const cat = isEdit ? categories.find(c=>c.id===editId) : null;
+    const modal = document.createElement('div'); modal.className='modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">${isEdit ? 'Edit Kategori' : 'Tambah Kategori'}</div>
+            <input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit?escapeHtml(cat.name):''}">
+            <input type="text" id="catIcon" class="modal-input" placeholder="Icon (🍔, 🚗)" value="${isEdit?cat.icon:'📁'}">
+            <select id="catType" class="modal-select">
+                <option value="pengeluaran" ${isEdit && cat.type==='pengeluaran'?'selected':''}>💸 Pengeluaran</option>
+                <option value="pemasukan" ${isEdit && cat.type==='pemasukan'?'selected':''}>💵 Pemasukan</option>
+            </select>
+            <input type="color" id="catColor" class="modal-input" value="${isEdit?cat.color:'#3b82f6'}">
+            <input type="hidden" id="catId" value="${editId||''}">
+            <button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button>
+            <button id="closeCategoryModal" class="modal-btn modal-btn-secondary">Batal</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById("saveCategoryBtn").onclick = async () => {
+        const name = document.getElementById("catName").value.trim();
+        const icon = document.getElementById("catIcon").value.trim() || "📁";
+        const type = document.getElementById("catType").value;
+        const color = document.getElementById("catColor").value;
+        const id = document.getElementById("catId").value;
+        if(!name) return alert("Nama kategori harus diisi");
+        if(id) {
+            await sb.from("categories").update({name, icon, type, color}).eq("id",id);
+            showToast("Kategori diupdate");
+        } else {
+            await sb.from("categories").insert({user_id:currentUser.id, name, icon, type, color});
+            showToast("Kategori ditambahkan");
+        }
+        modal.remove();
+        await loadCategories();
+        renderTransaksi();
+    };
+    document.getElementById("closeCategoryModal").onclick = () => modal.remove();
+}
+
+// HUTANG
 async function renderHutang() {
     let piutang=0, hutang=0;
     debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
@@ -433,7 +499,7 @@ async function renderHutang() {
     
     const container=document.getElementById("debtList");
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
-    else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}" data-id="${d.id}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`⏳ ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="margin-left:8px; background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="margin-left:8px; background:none; border:none;">🗑️</button></div></div>`).join('');
+    else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="margin-left:8px; background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="margin-left:8px; background:none; border:none;">🗑️</button></div></div>`).join('');
     
     document.querySelectorAll(".debt-detail").forEach(btn=>btn.onclick=()=>showDebtDetail(btn.dataset.id));
     document.querySelectorAll(".lunas-debt").forEach(btn=>btn.onclick=async()=>{await sb.from("debts").update({status:'lunas',paid_date:new Date().toISOString()}).eq("id",btn.dataset.id); await loadDebts(); renderHutang();});
@@ -461,7 +527,124 @@ function showDebtDetail(id) {
     document.getElementById("closeDetail").onclick = () => modal.remove();
 }
 
-// TUGAS diperbagus
+function openDebtModal(){
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">Tambah Hutang/Piutang</div><input id="debtName" placeholder="Nama orang" class="modal-input"><input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input"><select id="debtType" class="modal-select"><option value="piutang">💰 Piutang</option><option value="hutang">💸 Hutang</option></select><input id="debtDue" type="date" class="modal-input"><textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea><button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button><button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    setupRupiahInput('debtAmount');
+    document.getElementById("saveDebt").onclick=async()=>{
+        const name=document.getElementById("debtName").value.trim();
+        const amount=parseRupiah(document.getElementById("debtAmount").value);
+        const type=document.getElementById("debtType").value;
+        const due=document.getElementById("debtDue").value;
+        const desc=document.getElementById("debtDesc").value;
+        if(!name||!amount) return alert("Isi dengan benar");
+        const {error}=await sb.from("debts").insert({user_id:currentUser.id,contact_name:name,amount,type,description:desc,due_date:due||null,status:'belum_lunas'});
+        if(error) alert(error.message);
+        else { showToast("Ditambahkan"); modal.remove(); await loadDebts(); renderHutang(); }
+    };
+    document.getElementById("closeDebt").onclick=()=>modal.remove();
+}
+
+// TABUNGAN
+async function renderSavings() {
+    let html=`
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        ${renderRunningText()}
+        <button id="addSavingsBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Tabungan</button>
+        <div class="card"><div id="savingsList"></div></div>
+    `;
+    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("addSavingsBtn")?.addEventListener("click",()=>openSavingsModal());
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    
+    const container=document.getElementById("savingsList");
+    if(!savings.length) container.innerHTML='<div class="empty-state">Belum ada tabungan</div>';
+    else container.innerHTML=savings.map(s=>`<div class="savings-item"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (s.current_amount/s.target_amount*100).toFixed(0):0}%"></div></div></div><div><button class="edit-savings" data-id="${s.id}">✏️</button><button class="delete-savings" data-id="${s.id}">🗑️</button></div></div>`).join('');
+    
+    document.querySelectorAll(".edit-savings").forEach(btn=>btn.onclick=()=>openSavingsModal(btn.dataset.id));
+    document.querySelectorAll(".delete-savings").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tabungan?")){await sb.from("savings").delete().eq("id",btn.dataset.id); await loadSavings(); renderSavings();}});
+}
+
+function openSavingsModal(editId=null){
+    const isEdit=!!editId;
+    const s=isEdit?savings.find(s=>s.id===editId):null;
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Tabungan':'Tambah Tabungan'}</div><input id="savingsName" class="modal-input" placeholder="Nama" value="${isEdit?escapeHtml(s.name):''}"><input type="text" id="savingsTarget" class="modal-input" placeholder="Target" value="${isEdit?formatRupiah(s.target_amount):''}"><input type="text" id="savingsCurrent" class="modal-input" placeholder="Jumlah awal" value="${isEdit?formatRupiah(s.current_amount):'0'}"><input id="savingsId" type="hidden" value="${editId||''}"><button id="saveSavings" class="modal-btn modal-btn-primary">Simpan</button><button id="closeSavings" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    setupRupiahInput('savingsTarget');
+    setupRupiahInput('savingsCurrent');
+    document.getElementById("saveSavings").onclick=async()=>{
+        const name=document.getElementById("savingsName").value.trim();
+        const target=parseRupiah(document.getElementById("savingsTarget").value);
+        const current=parseRupiah(document.getElementById("savingsCurrent").value);
+        const id=document.getElementById("savingsId").value;
+        if(!name) return alert("Nama tabungan harus diisi");
+        if(id) await sb.from("savings").update({name,target_amount:target,current_amount:current}).eq("id",id);
+        else await sb.from("savings").insert({user_id:currentUser.id,name,target_amount:target,current_amount:current});
+        showToast(isEdit?"Tabungan diupdate":"Tabungan ditambahkan");
+        modal.remove(); await loadSavings(); renderSavings();
+    };
+    document.getElementById("closeSavings").onclick=()=>modal.remove();
+}
+
+// PENGINGAT
+async function renderReminders() {
+    let html=`
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        ${renderRunningText()}
+        <button id="addReminderBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Pengingat</button>
+        <div class="card"><div id="remindersList"></div></div>
+    `;
+    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("addReminderBtn")?.addEventListener("click",()=>openReminderModal());
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    
+    const container=document.getElementById("remindersList");
+    if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
+    else container.innerHTML=reminders.map(r=>`<div class="reminder-item"><div><div>${escapeHtml(r.title)}</div><div class="task-date">📅 ${new Date(r.due_date).toLocaleDateString()} ${r.is_done?'✅ Selesai':''}</div>${r.description?`<div class="task-date">${escapeHtml(r.description)}</div>`:''}</div><div><button class="edit-reminder" data-id="${r.id}">✏️</button><button class="delete-reminder" data-id="${r.id}">🗑️</button></div></div>`).join('');
+    
+    document.querySelectorAll(".edit-reminder").forEach(btn=>btn.onclick=()=>openReminderModal(btn.dataset.id));
+    document.querySelectorAll(".delete-reminder").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus pengingat?")){await sb.from("reminders").delete().eq("id",btn.dataset.id); await loadReminders(); renderReminders();}});
+}
+
+function openReminderModal(editId=null){
+    const isEdit=!!editId;
+    const r=isEdit?reminders.find(r=>r.id===editId):null;
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Pengingat':'Tambah Pengingat'}</div><input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}"><textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea><input type="date" id="reminderDue" class="modal-input" value="${isEdit?r.due_date.slice(0,10):''}"><input type="text" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?formatRupiah(r.amount||0):''}"><input id="reminderId" type="hidden" value="${editId||''}"><button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button><button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    document.body.appendChild(modal);
+    setupRupiahInput('reminderAmount');
+    document.getElementById("saveReminder").onclick=async()=>{
+        const title=document.getElementById("reminderTitle").value.trim();
+        const desc=document.getElementById("reminderDesc").value;
+        const due=document.getElementById("reminderDue").value;
+        const amount=parseRupiah(document.getElementById("reminderAmount").value);
+        const id=document.getElementById("reminderId").value;
+        if(!title||!due) return alert("Judul dan tanggal harus diisi");
+        if(id) await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",id);
+        else await sb.from("reminders").insert({user_id:currentUser.id,title,description:desc,due_date:due,amount});
+        showToast(isEdit?"Pengingat diupdate":"Pengingat ditambahkan");
+        modal.remove(); await loadReminders(); renderReminders();
+    };
+    document.getElementById("closeReminder").onclick=()=>modal.remove();
+}
+
+// TUGAS
 async function renderTasks() {
     let html=`
         <div class="header">
@@ -501,7 +684,6 @@ async function renderTasks() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{taskFilter=btn.dataset.filter; renderTasks();});
 }
 
-// Modal Tugas
 function openTaskModal(editId=null){
     const isEdit=!!editId;
     const t=isEdit?tasks.find(t=>t.id===editId):null;
@@ -522,7 +704,7 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// Fungsi lain (Laporan, Tabungan, Pengingat, Pengaturan, dll) - disederhanakan
+// LAPORAN
 async function renderLaporan() {
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
@@ -553,46 +735,64 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// Tabungan, Pengingat, Pengaturan (disederhanakan)
-async function renderSavings() { /* sama seperti sebelumnya */ }
-async function renderReminders() { /* sama */ }
-async function renderSettings() { /* sama */ }
-
-// Modal Transaksi biasa
-function openTransaksiModal(predefinedType=null){
-    const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`
-        <div class="modal-content">
-            <div class="modal-title">Tambah Transaksi</div>
-            <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input">
-            <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input">
-            <select id="modalTipe" class="modal-select"><option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option><option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option></select>
-            <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select>
-            <label style="display:flex; align-items:center; gap:8px; margin:8px 0"><input type="checkbox" id="modalFixed"> Pengeluaran Tetap (tidak masuk statistik teratas)</label>
-            <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
-            <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
+// PENGATURAN
+async function renderSettings() {
+    let html = `
+        <div class="header">
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="header-actions">
+                <button id="openSettingsBtn" class="settings-btn">⚙️</button>
+                <button id="logoutBtn" class="logout-btn">Logout</button>
+            </div>
+        </div>
+        ${renderRunningText()}
+        <div class="card">
+            <div class="card-title">🔐 Ubah Password</div>
+            <div class="password-wrapper"><input type="password" id="oldPass" placeholder="Password Lama" class="modal-input"><button class="toggle-password" data-target="oldPass">👁️</button></div>
+            <div class="password-wrapper"><input type="password" id="newPass" placeholder="Password Baru (min 6)" class="modal-input"><button class="toggle-password" data-target="newPass">👁️</button></div>
+            <div class="password-wrapper"><input type="password" id="confirmPass" placeholder="Konfirmasi Password" class="modal-input"><button class="toggle-password" data-target="confirmPass">👁️</button></div>
+            <button id="changePassBtn" class="modal-btn modal-btn-primary">Update Password</button>
+        </div>
+        <div class="card">
+            <div class="card-title">👥 Akses Bersama</div>
+            <div style="display:flex; gap:8px; margin-bottom:16px">
+                <input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1">
+                <select id="accessLevel" class="modal-select" style="width:100px">
+                    <option value="view">Lihat</option>
+                    <option value="edit">Edit</option>
+                </select>
+                <button id="addSharedBtn" style="background:#3b82f6; border:none; border-radius:40px; padding:0 16px; color:white;">Tambah</button>
+            </div>
+            <div id="sharedList"></div>
         </div>
     `;
-    document.body.appendChild(modal);
-    setupRupiahInput('modalJum');
-    document.getElementById("saveTransaksi").onclick=async()=>{
-        const desc=document.getElementById("modalDesk").value.trim();
-        const amount=parseRupiah(document.getElementById("modalJum").value);
-        const type=document.getElementById("modalTipe").value;
-        const catId=document.getElementById("modalKat").value;
-        const isFixed=document.getElementById("modalFixed").checked;
-        if(!desc||!amount) return alert("Isi dengan benar");
-        const data={user_id:currentUser.id,description:desc,amount,type,is_fixed_expense:isFixed};
-        if(catId) data.category_id=catId;
-        const {error}=await sb.from("transactions").insert(data);
+    document.getElementById("appContainer").innerHTML = html;
+    document.getElementById("logoutBtn")?.addEventListener("click",logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ currentNav="settings"; updateNav(); renderSettings(); });
+    document.getElementById("changePassBtn")?.addEventListener("click",async()=>{
+        const old=document.getElementById("oldPass").value, newp=document.getElementById("newPass").value, conf=document.getElementById("confirmPass").value;
+        if(!old||!newp) return alert("Isi semua field");
+        if(newp.length<6) return alert("Password baru minimal 6 karakter");
+        if(newp!==conf) return alert("Konfirmasi password tidak cocok");
+        const {error}=await sb.auth.updateUser({password:newp});
         if(error) alert(error.message);
-        else { showToast("Transaksi ditambahkan"); modal.remove(); await loadTransactions(); renderCurrentView(); }
-    };
-    document.getElementById("closeModal").onclick=()=>modal.remove();
+        else showToast("Password berhasil diubah");
+    });
+    document.getElementById("addSharedBtn")?.addEventListener("click",async()=>{
+        const email=document.getElementById("sharedEmail").value.trim();
+        const level=document.getElementById("accessLevel").value;
+        if(!email) return alert("Email harus diisi");
+        const {error}=await sb.from("shared_access").insert({owner_id:currentUser.id,shared_email:email,access_level:level});
+        if(error) alert(error.message);
+        else { showToast(`Akses diberikan ke ${email}`); renderSettings(); }
+    });
+    const {data:shared}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
+    const sharedDiv=document.getElementById("sharedList");
+    if(!shared?.length) sharedDiv.innerHTML='<div class="empty-state">Belum ada akses bersama</div>';
+    else sharedDiv.innerHTML=shared.map(s=>`<div class="transaction-item"><div>📧 ${escapeHtml(s.shared_email)}</div><div><span style="font-size:11px; background:#e2e8f0; padding:2px 8px; border-radius:20px">${s.access_level==='edit'?'✏️ Edit':'👁️ Lihat'}</span><button class="remove-shared" data-id="${s.id}" style="margin-left:12px; background:none; border:none;">🗑️</button></div></div>`).join('');
+    document.querySelectorAll(".remove-shared").forEach(btn=>btn.onclick=async()=>{await sb.from("shared_access").delete().eq("id",btn.dataset.id); showToast("Dihapus"); renderSettings();});
+    document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{const inp=document.getElementById(btn.dataset.target); if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁️';}});
 }
-
-function openCategoryManageModal(editId=null){ /* sama */ }
-function openDebtModal(){ /* sama */ }
 
 // Navigation
 function renderCurrentView() {
