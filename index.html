@@ -6,6 +6,7 @@
     <title>Keuangan Keluarga</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -20,14 +21,12 @@
             padding-bottom: 70px;
         }
 
-        /* Container */
         .app-container {
             max-width: 450px;
             margin: 0 auto;
             padding: 16px;
         }
 
-        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -44,21 +43,36 @@
             color: #1e293b;
         }
         .logout-btn {
-            background: none;
+            background: #ef4444;
+            color: white;
             border: none;
-            font-size: 24px;
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
-            padding: 8px;
         }
 
-        /* Kartu Saldo */
         .balance-card {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border-radius: 32px;
-            padding: 24px 20px;
+            padding: 20px;
             margin-bottom: 20px;
             color: white;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .balance-eye {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 30px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
         }
         .balance-label {
             font-size: 14px;
@@ -66,7 +80,7 @@
             letter-spacing: 0.5px;
         }
         .balance-amount {
-            font-size: 36px;
+            font-size: 32px;
             font-weight: 700;
             margin: 8px 0 4px;
             letter-spacing: -0.5px;
@@ -93,7 +107,59 @@
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
 
-        /* Bottom Navigation */
+        .quick-add {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .btn-income {
+            flex: 1;
+            background: #10b981;
+            border: none;
+            border-radius: 60px;
+            padding: 14px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-expense {
+            flex: 1;
+            background: #ef4444;
+            border: none;
+            border-radius: 60px;
+            padding: 14px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -116,10 +182,10 @@
             gap: 4px;
             background: none;
             border: none;
-            font-size: 12px;
+            font-size: 11px;
             color: #94a3b8;
             cursor: pointer;
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 40px;
             transition: all 0.2s;
             font-weight: 500;
@@ -132,108 +198,51 @@
             background: #eff6ff;
         }
 
-        /* Quick Add Buttons */
-        .quick-add {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
+        .password-wrapper {
+            position: relative;
         }
-        .btn-income {
-            flex: 1;
-            background: #10b981;
+        .password-wrapper input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
             border: none;
-            border-radius: 60px;
-            padding: 14px;
-            color: white;
-            font-weight: 600;
-            font-size: 15px;
+            font-size: 20px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-expense {
-            flex: 1;
-            background: #ef4444;
-            border: none;
-            border-radius: 60px;
-            padding: 14px;
-            color: white;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            color: #94a3b8;
         }
 
-        /* Card Umum */
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 16px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .card-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* Ringkasan Hutang */
-        .debt-summary {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .debt-box {
-            flex: 1;
-            background: #f1f5f9;
-            border-radius: 20px;
-            padding: 14px;
-            text-align: center;
-        }
-        .debt-box.piutang { background: #d1fae5; }
-        .debt-box.hutang { background: #fee2e2; }
-        .debt-box .label { font-size: 12px; margin-bottom: 6px; }
-        .debt-box .amount { font-size: 18px; font-weight: 700; }
-        .debt-box.piutang .amount { color: #10b981; }
-        .debt-box.hutang .amount { color: #ef4444; }
-
-        /* List Transaksi */
-        .transaction-list {
+        .transaction-list, .savings-list, .reminders-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        .transaction-item {
+        .transaction-item, .savings-item, .reminder-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 0;
             border-bottom: 1px solid #f0f2f5;
         }
-        .transaction-info {
+        .transaction-info, .savings-info, .reminder-info {
             flex: 1;
         }
-        .transaction-desc {
+        .transaction-desc, .savings-name, .reminder-title {
             font-weight: 500;
             font-size: 15px;
             color: #1e293b;
         }
-        .transaction-meta {
+        .transaction-meta, .savings-meta, .reminder-meta {
             display: flex;
             gap: 8px;
             margin-top: 4px;
         }
-        .transaction-date {
+        .transaction-date, .reminder-date {
             font-size: 11px;
             color: #94a3b8;
         }
@@ -244,53 +253,59 @@
             border-radius: 30px;
             color: #475569;
         }
-        .transaction-amount {
+        .transaction-amount, .savings-amount {
             font-weight: 600;
-            font-size: 16px;
+            font-size: 15px;
         }
         .transaction-amount.income { color: #10b981; }
         .transaction-amount.expense { color: #ef4444; }
-        .delete-btn {
+        .delete-btn, .edit-btn, .action-btn {
             background: none;
             border: none;
             font-size: 18px;
             cursor: pointer;
             padding: 8px;
-            color: #cbd5e1;
+            color: #94a3b8;
         }
 
-        /* Month Selector */
-        .month-selector {
+        .top-expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .top-expense-rank {
+            width: 28px;
+            height: 28px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            color: #475569;
+        }
+
+        .month-selector, .period-selector {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: white;
             border-radius: 60px;
-            padding: 8px 16px;
+            padding: 8px 12px;
             margin-bottom: 16px;
         }
-        .month-selector button {
+        .month-selector button, .period-selector button {
             background: none;
             border: none;
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
             padding: 8px 12px;
             color: #3b82f6;
         }
-        .month-selector span {
-            font-weight: 600;
-            font-size: 16px;
-            color: #1e293b;
-        }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #94a3b8;
-        }
-
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -356,7 +371,6 @@
             color: white;
         }
 
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 80px;
@@ -371,21 +385,80 @@
             white-space: nowrap;
         }
 
-        /* Hidden */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            background: white;
+            border-radius: 60px;
+            padding: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 40px;
+            background: #e2e8f0;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: #0f172a;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
         .hidden {
             display: none;
+        }
+
+        .reminder-urgent {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        .reminder-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
         }
     </style>
 </head>
 <body>
 <div class="app-container" id="appContainer"></div>
 
-<!-- Modal Login -->
 <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">Masuk / Daftar</div>
         <input type="email" id="emailInput" class="modal-input" placeholder="Email">
-        <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
+        <div class="password-wrapper">
+            <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
+            <button type="button" class="toggle-password" id="toggleLoginPassword">👁️</button>
+        </div>
         <button id="submitLoginBtn" class="modal-btn modal-btn-primary">Masuk</button>
         <div id="switchText" style="text-align:center; margin:12px 0; color:#3b82f6; cursor:pointer;">Belum punya akun? Daftar</div>
         <button id="guestBtn" class="modal-btn modal-btn-secondary">Lanjut sebagai Tamu</button>
@@ -403,11 +476,30 @@ let currentUser = null;
 let categories = [];
 let transactions = [];
 let debts = [];
+let savings = [];
+let reminders = [];
+let sharedUsers = [];
 let chart = null;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let currentNav = "home";
 let isLoginMode = true;
+let isBalanceHidden = false;
+let currentPeriod = "weekly";
+let transaksiFilter = "all";
+let reminderFilter = "all";
+
+// Helper functions
+function togglePasswordVisibility(inputId) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        if (input.type === 'password') {
+            input.type = 'text';
+        } else {
+            input.type = 'password';
+        }
+    }
+}
 
 function showToast(msg) {
     let toast = document.querySelector('.toast');
@@ -433,7 +525,6 @@ function getCategoryById(id) {
     return categories.find(c => c.id === id);
 }
 
-// Hitung total saldo
 function hitungTotalSaldo() {
     let pemasukan = 0, pengeluaran = 0;
     for (const t of transactions) {
@@ -443,23 +534,77 @@ function hitungTotalSaldo() {
     return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
 }
 
-// Render Beranda
+function hitungTotalTabungan() {
+    let total = 0;
+    for (const s of savings) {
+        total += s.current_amount;
+    }
+    return total;
+}
+
+async function transferToSavings(savingsId, amount) {
+    if (amount <= 0) return;
+    const savingsItem = savings.find(s => s.id === savingsId);
+    if (!savingsItem) return;
+    
+    const { error: transError } = await sb.from("transactions").insert({
+        user_id: currentUser.id,
+        description: `Transfer ke tabungan: ${savingsItem.name}`,
+        amount: amount,
+        type: "pengeluaran",
+        is_fixed_expense: false
+    });
+    if (transError) return;
+    
+    const newAmount = savingsItem.current_amount + amount;
+    await sb.from("savings").update({ current_amount: newAmount }).eq("id", savingsId);
+    showToast(`Rp ${formatRupiah(amount)} ditransfer ke ${savingsItem.name}`);
+    await loadSavings();
+    await loadTransactions();
+}
+
+async function transferFromSavings(savingsId, amount) {
+    if (amount <= 0) return;
+    const savingsItem = savings.find(s => s.id === savingsId);
+    if (!savingsItem || savingsItem.current_amount < amount) return;
+    
+    const { error: transError } = await sb.from("transactions").insert({
+        user_id: currentUser.id,
+        description: `Ambil dari tabungan: ${savingsItem.name}`,
+        amount: amount,
+        type: "pemasukan",
+        is_fixed_expense: false
+    });
+    if (transError) return;
+    
+    const newAmount = savingsItem.current_amount - amount;
+    await sb.from("savings").update({ current_amount: newAmount }).eq("id", savingsId);
+    showToast(`Rp ${formatRupiah(amount)} diambil dari ${savingsItem.name}`);
+    await loadSavings();
+    await loadTransactions();
+}
+
+// Render functions (simplified - same as before but with fixes)
 async function renderHome() {
     const totals = hitungTotalSaldo();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const totalSavings = hitungTotalTabungan();
     
-    // Transaksi bulan ini
     const bulanIni = transactions.filter(t => {
         const d = new Date(t.created_at);
-        return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear();
+        return d.getMonth() === new Date().getMonth() && d.getFullYear() === new Date().getFullYear() && t.type === "pengeluaran" && !t.is_fixed_expense;
     });
-    let pemasukanBulan = 0, pengeluaranBulan = 0;
-    for (const t of bulanIni) {
-        if (t.type === "pemasukan") pemasukanBulan += t.amount;
-        else pengeluaranBulan += t.amount;
-    }
+    const topExpenses = [...bulanIni].sort((a,b) => b.amount - a.amount).slice(0,3);
     
-    // Hutang piutang
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0,0,0,0);
+    const mingguIni = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d >= startOfWeek && t.type === "pengeluaran" && !t.is_fixed_expense;
+    });
+    const topWeekly = [...mingguIni].sort((a,b) => b.amount - a.amount).slice(0,3);
+    
     let totalPiutang = 0, totalHutang = 0;
     for (const d of debts) {
         if (d.status === 'lunas') continue;
@@ -467,28 +612,38 @@ async function renderHome() {
         else totalHutang += d.amount;
     }
     
-    // 5 transaksi terakhir
+    const upcomingReminders = reminders.filter(r => !r.is_done && new Date(r.due_date) >= new Date()).sort((a,b) => new Date(a.due_date) - new Date(b.due_date)).slice(0,3);
     const recent = [...transactions].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
     
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
-            <button id="logoutBtn" class="logout-btn">🚪</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
         </div>
         
         <div class="balance-card">
+            <button id="toggleBalanceBtn" class="balance-eye">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
             <div class="balance-label">Total Saldo</div>
-            <div class="balance-amount">Rp ${formatRupiah(totals.saldo)}</div>
+            <div class="balance-amount">${isBalanceHidden ? '••••••' : `Rp ${formatRupiah(totals.saldo)}`}</div>
             <div class="balance-stats">
                 <div class="stat-item">
                     <div class="stat-label">Pemasukan</div>
-                    <div class="stat-value income">+Rp ${formatRupiah(totals.pemasukan)}</div>
+                    <div class="stat-value income">${isBalanceHidden ? '••••' : `+Rp ${formatRupiah(totals.pemasukan)}`}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">Pengeluaran</div>
-                    <div class="stat-value expense">-Rp ${formatRupiah(totals.pengeluaran)}</div>
+                    <div class="stat-value expense">${isBalanceHidden ? '••••' : `-Rp ${formatRupiah(totals.pengeluaran)}`}</div>
                 </div>
             </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>💰 Tabungan</span>
+                <span style="font-size:14px; color:#10b981">Rp ${formatRupiah(totalSavings)}</span>
+            </div>
+            <div class="savings-list" id="savingsPreviewList"></div>
+            <button id="viewAllSavings" style="margin-top:12px; background:none; border:none; color:#3b82f6; font-size:13px; cursor:pointer;">Lihat semua tabungan →</button>
         </div>
         
         <div class="quick-add">
@@ -496,34 +651,133 @@ async function renderHome() {
             <button id="quickExpense" class="btn-expense">- Pengeluaran</button>
         </div>
         
-        <div class="debt-summary">
-            <div class="debt-box piutang">
-                <div class="label">💰 Piutang</div>
-                <div class="amount">Rp ${formatRupiah(totalPiutang)}</div>
+        <div class="debt-summary" style="display:flex; gap:12px; margin-bottom:20px;">
+            <div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center;">
+                <div style="font-size:12px">💰 Piutang</div>
+                <div style="font-size:18px; font-weight:700; color:#10b981">Rp ${formatRupiah(totalPiutang)}</div>
             </div>
-            <div class="debt-box hutang">
-                <div class="label">💸 Hutang</div>
-                <div class="amount">Rp ${formatRupiah(totalHutang)}</div>
+            <div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center;">
+                <div style="font-size:12px">💸 Hutang</div>
+                <div style="font-size:18px; font-weight:700; color:#ef4444">Rp ${formatRupiah(totalHutang)}</div>
             </div>
         </div>
         
         <div class="card">
+            <div class="card-title">
+                <span>📊 Pengeluaran Teratas</span>
+                <div class="period-selector" style="margin:0; padding:0; background:none;">
+                    <button id="periodWeekly" style="background:${currentPeriod === 'weekly' ? '#3b82f6' : '#e2e8f0'}; color:${currentPeriod === 'weekly' ? 'white' : '#475569'}; border-radius:30px; padding:6px 12px; font-size:12px;">Minggu Ini</button>
+                    <button id="periodMonthly" style="background:${currentPeriod === 'monthly' ? '#3b82f6' : '#e2e8f0'}; color:${currentPeriod === 'monthly' ? 'white' : '#475569'}; border-radius:30px; padding:6px 12px; font-size:12px;">Bulan Ini</button>
+                </div>
+            </div>
+            <div id="topExpensesList"></div>
+        </div>
+        
+        ${upcomingReminders.length > 0 ? `
+        <div class="card">
+            <div class="card-title">⏰ Pengingat Mendatang</div>
+            <div class="reminders-list" id="reminderPreviewList"></div>
+            <button id="viewAllReminders" style="margin-top:12px; background:none; border:none; color:#3b82f6; font-size:13px; cursor:pointer;">Lihat semua pengingat →</button>
+        </div>
+        ` : ''}
+        
+        <div class="card">
             <div class="card-title">📋 Transaksi Terbaru</div>
-            <div class="transaction-list">
+            <div class="transaction-list" id="recentTransactionsList"></div>
+        </div>
     `;
     
-    if (recent.length === 0) {
-        html += `<div class="empty-state">Belum ada transaksi</div>`;
+    document.getElementById("appContainer").innerHTML = html;
+    
+    // Preview savings
+    const savingsPreview = document.getElementById("savingsPreviewList");
+    if (savingsPreview) {
+        if (savings.length === 0) {
+            savingsPreview.innerHTML = '<div class="empty-state" style="padding:12px">Belum ada tabungan</div>';
+        } else {
+            let sHtml = "";
+            for (const s of savings.slice(0,2)) {
+                const percent = s.target_amount > 0 ? (s.current_amount / s.target_amount * 100).toFixed(0) : 0;
+                sHtml += `
+                    <div style="margin-bottom:12px">
+                        <div style="display:flex; justify-content:space-between; font-size:13px">
+                            <span>${escapeHtml(s.name)}</span>
+                            <span>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</span>
+                        </div>
+                        <div style="background:#e2e8f0; border-radius:10px; height:6px; margin-top:4px">
+                            <div style="background:#10b981; width:${percent}%; height:6px; border-radius:10px"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            savingsPreview.innerHTML = sHtml;
+        }
+    }
+    
+    // Top expenses
+    const topContainer = document.getElementById("topExpensesList");
+    const topData = currentPeriod === "weekly" ? topWeekly : topExpenses;
+    if (topData.length === 0) {
+        topContainer.innerHTML = '<div class="empty-state" style="padding:12px">Belum ada pengeluaran</div>';
     } else {
+        let tHtml = "";
+        for (let i = 0; i < topData.length; i++) {
+            const t = topData[i];
+            const cat = getCategoryById(t.category_id);
+            tHtml += `
+                <div class="top-expense-item">
+                    <div style="display:flex; align-items:center; gap:12px">
+                        <div class="top-expense-rank">${i+1}</div>
+                        <div>
+                            <div style="font-weight:500">${escapeHtml(t.description)}</div>
+                            <div style="font-size:11px; color:#94a3b8">${cat ? `${cat.icon} ${cat.name}` : 'Tanpa kategori'}</div>
+                        </div>
+                    </div>
+                    <div style="color:#ef4444; font-weight:600">-Rp ${formatRupiah(t.amount)}</div>
+                </div>
+            `;
+        }
+        topContainer.innerHTML = tHtml;
+    }
+    
+    // Reminder preview
+    const reminderPreview = document.getElementById("reminderPreviewList");
+    if (reminderPreview && upcomingReminders.length > 0) {
+        let rHtml = "";
+        for (const r of upcomingReminders.slice(0,2)) {
+            const daysLeft = Math.ceil((new Date(r.due_date) - new Date()) / (1000 * 60 * 60 * 24));
+            const isUrgent = daysLeft <= 7;
+            rHtml += `
+                <div class="reminder-item" style="border-bottom:1px solid #f0f2f5; padding:10px 0">
+                    <div class="reminder-info">
+                        <div class="reminder-title">${escapeHtml(r.title)}</div>
+                        <div class="reminder-meta">
+                            <span class="reminder-date">📅 ${new Date(r.due_date).toLocaleDateString("id-ID")}</span>
+                            <span style="font-size:11px; color:${isUrgent ? '#ef4444' : '#f59e0b'}">${isUrgent ? '⚠️ Segera' : `⏰ ${daysLeft} hari lagi`}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        reminderPreview.innerHTML = rHtml;
+    }
+    
+    // Recent transactions
+    const recentContainer = document.getElementById("recentTransactionsList");
+    if (recent.length === 0) {
+        recentContainer.innerHTML = '<div class="empty-state" style="padding:12px">Belum ada transaksi</div>';
+    } else {
+        let rHtml = "";
         for (const t of recent) {
             const cat = getCategoryById(t.category_id);
-            html += `
+            rHtml += `
                 <div class="transaction-item">
                     <div class="transaction-info">
                         <div class="transaction-desc">${escapeHtml(t.description)}</div>
                         <div class="transaction-meta">
                             <span class="transaction-date">${new Date(t.created_at).toLocaleDateString("id-ID")}</span>
                             ${cat ? `<span class="transaction-cat">${cat.icon} ${escapeHtml(cat.name)}</span>` : ''}
+                            ${t.is_fixed_expense ? `<span class="transaction-cat">🔄 Tetap</span>` : ''}
                         </div>
                     </div>
                     <div class="transaction-amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">
@@ -532,37 +786,309 @@ async function renderHome() {
                 </div>
             `;
         }
+        recentContainer.innerHTML = rHtml;
     }
-    
-    html += `</div></div>
-    <div class="card">
-        <div class="card-title">📅 Bulan Ini</div>
-        <div style="display:flex; justify-content:space-between; text-align:center;">
-            <div style="flex:1"><div style="font-size:12px; color:#64748b">Pemasukan</div><div style="font-size:18px; font-weight:600; color:#10b981">+Rp ${formatRupiah(pemasukanBulan)}</div></div>
-            <div style="flex:1"><div style="font-size:12px; color:#64748b">Pengeluaran</div><div style="font-size:18px; font-weight:600; color:#ef4444">-Rp ${formatRupiah(pengeluaranBulan)}</div></div>
-            <div style="flex:1"><div style="font-size:12px; color:#64748b">Saldo</div><div style="font-size:18px; font-weight:600">Rp ${formatRupiah(pemasukanBulan - pengeluaranBulan)}</div></div>
-        </div>
-    </div>`;
-    
-    document.getElementById("appContainer").innerHTML = html;
     
     document.getElementById("quickIncome")?.addEventListener("click", () => openTransaksiModal("pemasukan"));
     document.getElementById("quickExpense")?.addEventListener("click", () => openTransaksiModal("pengeluaran"));
     document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("toggleBalanceBtn")?.addEventListener("click", () => {
+        isBalanceHidden = !isBalanceHidden;
+        renderHome();
+    });
+    document.getElementById("viewAllSavings")?.addEventListener("click", () => {
+        currentNav = "savings";
+        updateBottomNavActive();
+        renderSavings();
+    });
+    if (document.getElementById("viewAllReminders")) {
+        document.getElementById("viewAllReminders")?.addEventListener("click", () => {
+            currentNav = "reminders";
+            updateBottomNavActive();
+            renderReminders();
+        });
+    }
+    document.getElementById("periodWeekly")?.addEventListener("click", () => {
+        currentPeriod = "weekly";
+        renderHome();
+    });
+    document.getElementById("periodMonthly")?.addEventListener("click", () => {
+        currentPeriod = "monthly";
+        renderHome();
+    });
 }
 
-// Render Transaksi
+async function renderSavings() {
+    let html = `
+        <div class="header">
+            <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+        <button id="addSavingsBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Tabungan</button>
+        <div class="card">
+            <div class="card-title">💰 Daftar Tabungan</div>
+            <div class="savings-list" id="savingsList"></div>
+        </div>
+    `;
+    document.getElementById("appContainer").innerHTML = html;
+    
+    document.getElementById("addSavingsBtn")?.addEventListener("click", () => openSavingsModal());
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    
+    const container = document.getElementById("savingsList");
+    if (savings.length === 0) {
+        container.innerHTML = '<div class="empty-state">Belum ada tabungan</div>';
+    } else {
+        let sHtml = "";
+        for (const s of savings) {
+            const percent = s.target_amount > 0 ? (s.current_amount / s.target_amount * 100).toFixed(0) : 0;
+            sHtml += `
+                <div class="savings-item">
+                    <div class="savings-info" style="flex:1">
+                        <div class="savings-name">${escapeHtml(s.name)}</div>
+                        <div class="savings-meta">
+                            <span style="font-size:13px">Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</span>
+                        </div>
+                        <div style="background:#e2e8f0; border-radius:10px; height:6px; margin-top:8px">
+                            <div style="background:#10b981; width:${percent}%; height:6px; border-radius:10px"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px">
+                        <button class="transfer-in-btn" data-id="${s.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:11px; cursor:pointer;">+ Tambah</button>
+                        <button class="transfer-out-btn" data-id="${s.id}" style="background:#f59e0b; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:11px; cursor:pointer;">Ambil</button>
+                        <button class="edit-savings" data-id="${s.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">✏️</button>
+                        <button class="delete-savings" data-id="${s.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = sHtml;
+    }
+    
+    for (const btn of document.querySelectorAll(".transfer-in-btn")) {
+        btn.onclick = () => openTransferModal(btn.dataset.id, "in");
+    }
+    for (const btn of document.querySelectorAll(".transfer-out-btn")) {
+        btn.onclick = () => openTransferModal(btn.dataset.id, "out");
+    }
+    for (const btn of document.querySelectorAll(".edit-savings")) {
+        btn.onclick = () => editSavings(btn.dataset.id);
+    }
+    for (const btn of document.querySelectorAll(".delete-savings")) {
+        btn.onclick = async () => {
+            if (confirm("Hapus tabungan?")) {
+                await sb.from("savings").delete().eq("id", btn.dataset.id);
+                showToast("Tabungan dihapus");
+                await loadSavings();
+                renderSavings();
+            }
+        };
+    }
+}
+
+async function renderReminders() {
+    const now = new Date();
+    const sortedReminders = [...reminders].sort((a,b) => new Date(a.due_date) - new Date(b.due_date));
+    
+    let html = `
+        <div class="header">
+            <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+        <button id="addReminderBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Pengingat</button>
+        <div class="filter">
+            <button class="filter-btn ${reminderFilter === 'all' ? 'active' : ''}" data-filter="all">Semua</button>
+            <button class="filter-btn ${reminderFilter === 'active' ? 'active' : ''}" data-filter="active">Belum</button>
+            <button class="filter-btn ${reminderFilter === 'done' ? 'active' : ''}" data-filter="done">Selesai</button>
+        </div>
+        <div class="card">
+            <div class="card-title">⏰ Daftar Pengingat</div>
+            <div class="reminders-list" id="remindersList"></div>
+        </div>
+    `;
+    document.getElementById("appContainer").innerHTML = html;
+    
+    document.getElementById("addReminderBtn")?.addEventListener("click", () => openReminderModal());
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    
+    let filtered = [...reminders];
+    if (reminderFilter === "active") filtered = reminders.filter(r => !r.is_done);
+    if (reminderFilter === "done") filtered = reminders.filter(r => r.is_done);
+    
+    const container = document.getElementById("remindersList");
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state">Belum ada pengingat</div>';
+    } else {
+        let rHtml = "";
+        for (const r of filtered) {
+            const daysLeft = Math.ceil((new Date(r.due_date) - new Date()) / (1000 * 60 * 60 * 24));
+            const isUrgent = daysLeft <= 7 && daysLeft >= 0 && !r.is_done;
+            const isOverdue = daysLeft < 0 && !r.is_done;
+            let statusClass = "";
+            let statusText = "";
+            if (isOverdue) { statusClass = "reminder-urgent"; statusText = "⚠️ TERLEWAT"; }
+            else if (isUrgent) { statusClass = "reminder-warning"; statusText = `⏰ ${daysLeft} hari lagi`; }
+            else if (r.is_done) { statusText = "✅ Selesai"; }
+            else { statusText = `📅 ${Math.abs(daysLeft)} hari lagi`; }
+            
+            rHtml += `
+                <div class="reminder-item ${statusClass}" style="border-bottom:1px solid #f0f2f5; padding:12px 0; border-radius:12px; margin-bottom:8px; padding:12px">
+                    <div class="reminder-info">
+                        <div class="reminder-title" style="font-weight:600">${escapeHtml(r.title)}</div>
+                        <div class="reminder-meta" style="margin-top:4px">
+                            <span class="reminder-date">📅 ${new Date(r.due_date).toLocaleDateString("id-ID")}</span>
+                            <span style="font-size:11px; color:${isOverdue ? '#ef4444' : (isUrgent ? '#f59e0b' : '#64748b')}">${statusText}</span>
+                        </div>
+                        ${r.description ? `<div style="font-size:12px; color:#64748b; margin-top:4px">${escapeHtml(r.description)}</div>` : ''}
+                        ${r.amount ? `<div style="font-size:12px; color:#10b981; margin-top:4px">Estimasi: Rp ${formatRupiah(r.amount)}</div>` : ''}
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:8px">
+                        ${!r.is_done ? `<button class="done-reminder" data-id="${r.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:11px; cursor:pointer;">✓ Tandai Selesai</button>` : ''}
+                        <button class="edit-reminder" data-id="${r.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:11px; cursor:pointer;">✏️ Edit</button>
+                        <button class="delete-reminder" data-id="${r.id}" style="background:#ef4444; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:11px; cursor:pointer;">🗑️ Hapus</button>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = rHtml;
+    }
+    
+    for (const btn of document.querySelectorAll(".done-reminder")) {
+        btn.onclick = async () => {
+            await sb.from("reminders").update({ is_done: true }).eq("id", btn.dataset.id);
+            showToast("Pengingat ditandai selesai");
+            await loadReminders();
+            renderReminders();
+        };
+    }
+    for (const btn of document.querySelectorAll(".edit-reminder")) {
+        btn.onclick = () => editReminder(btn.dataset.id);
+    }
+    for (const btn of document.querySelectorAll(".delete-reminder")) {
+        btn.onclick = async () => {
+            if (confirm("Hapus pengingat?")) {
+                await sb.from("reminders").delete().eq("id", btn.dataset.id);
+                showToast("Pengingat dihapus");
+                await loadReminders();
+                renderReminders();
+            }
+        };
+    }
+    for (const btn of document.querySelectorAll(".filter-btn")) {
+        btn.onclick = () => {
+            reminderFilter = btn.dataset.filter;
+            renderReminders();
+        };
+    }
+}
+
+async function renderSettings() {
+    let html = `
+        <div class="header">
+            <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+        <div class="card">
+            <div class="card-title">🔐 Ubah Password</div>
+            <div class="password-wrapper">
+                <input type="password" id="oldPassword" class="modal-input" placeholder="Password Lama">
+                <button type="button" class="toggle-password" data-target="oldPassword">👁️</button>
+            </div>
+            <div class="password-wrapper">
+                <input type="password" id="newPassword" class="modal-input" placeholder="Password Baru (min 6)">
+                <button type="button" class="toggle-password" data-target="newPassword">👁️</button>
+            </div>
+            <div class="password-wrapper">
+                <input type="password" id="confirmPassword" class="modal-input" placeholder="Konfirmasi Password Baru">
+                <button type="button" class="toggle-password" data-target="confirmPassword">👁️</button>
+            </div>
+            <button id="changePasswordBtn" class="modal-btn modal-btn-primary" style="margin-top:8px">Update Password</button>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">👥 Akses Bersama</div>
+            <div style="display:flex; gap:8px; margin-bottom:16px">
+                <input type="email" id="sharedEmail" class="modal-input" placeholder="Email pengguna lain" style="flex:1">
+                <select id="accessLevel" class="modal-select" style="width:100px">
+                    <option value="view">Lihat</option>
+                    <option value="edit">Edit</option>
+                </select>
+                <button id="addSharedUserBtn" style="background:#3b82f6; border:none; border-radius:40px; padding:0 16px; color:white; font-weight:600; cursor:pointer;">Tambah</button>
+            </div>
+            <div id="sharedUsersList"></div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📄 Laporan PDF</div>
+            <button id="exportPdfBtn" class="btn-income" style="background:#6366f1">📑 Export Laporan Bulanan ke PDF</button>
+        </div>
+    `;
+    document.getElementById("appContainer").innerHTML = html;
+    
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("changePasswordBtn")?.addEventListener("click", changePassword);
+    document.getElementById("addSharedUserBtn")?.addEventListener("click", addSharedUser);
+    document.getElementById("exportPdfBtn")?.addEventListener("click", exportToPDF);
+    
+    // Setup toggle password buttons
+    for (const btn of document.querySelectorAll(".toggle-password")) {
+        btn.addEventListener("click", () => {
+            const targetId = btn.getAttribute("data-target");
+            const input = document.getElementById(targetId);
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    btn.textContent = '🙈';
+                } else {
+                    input.type = 'password';
+                    btn.textContent = '👁️';
+                }
+            }
+        });
+    }
+    
+    // Load shared users
+    const { data: shared } = await sb.from("shared_access").select("*").eq("owner_id", currentUser.id);
+    sharedUsers = shared || [];
+    const sharedContainer = document.getElementById("sharedUsersList");
+    if (sharedUsers.length === 0) {
+        sharedContainer.innerHTML = '<div class="empty-state" style="padding:12px">Belum ada akses bersama</div>';
+    } else {
+        let sHtml = "";
+        for (const su of sharedUsers) {
+            sHtml += `
+                <div class="transaction-item">
+                    <div>📧 ${escapeHtml(su.shared_email)}</div>
+                    <div style="display:flex; gap:8px; align-items:center">
+                        <span class="transaction-cat">${su.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat'}</span>
+                        <button class="remove-shared" data-id="${su.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }
+        sharedContainer.innerHTML = sHtml;
+    }
+    
+    for (const btn of document.querySelectorAll(".remove-shared")) {
+        btn.onclick = async () => {
+            await sb.from("shared_access").delete().eq("id", btn.dataset.id);
+            showToast("Akses dihapus");
+            renderSettings();
+        };
+    }
+}
+
 async function renderTransaksi() {
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
-            <button id="logoutBtn" class="logout-btn">🚪</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
         </div>
         <button id="addTransaksiBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Transaksi</button>
-        <div class="filter" style="display:flex; gap:8px; margin-bottom:16px;">
-            <button class="filter-btn ${currentNavFilter === 'semua' ? 'active' : ''}" data-filter="semua" style="flex:1; padding:10px; border:none; border-radius:40px; background:${currentNavFilter === 'semua' ? '#3b82f6' : '#e2e8f0'}; color:${currentNavFilter === 'semua' ? 'white' : '#475569'}">Semua</button>
-            <button class="filter-btn ${currentNavFilter === 'pemasukan' ? 'active' : ''}" data-filter="pemasukan" style="flex:1; padding:10px; border:none; border-radius:40px; background:${currentNavFilter === 'pemasukan' ? '#10b981' : '#e2e8f0'}; color:${currentNavFilter === 'pemasukan' ? 'white' : '#475569'}">Pemasukan</button>
-            <button class="filter-btn ${currentNavFilter === 'pengeluaran' ? 'active' : ''}" data-filter="pengeluaran" style="flex:1; padding:10px; border:none; border-radius:40px; background:${currentNavFilter === 'pengeluaran' ? '#ef4444' : '#e2e8f0'}; color:${currentNavFilter === 'pengeluaran' ? 'white' : '#475569'}">Pengeluaran</button>
+        <div class="filter">
+            <button class="filter-btn ${transaksiFilter === 'all' ? 'active' : ''}" data-filter="all">Semua</button>
+            <button class="filter-btn ${transaksiFilter === 'income' ? 'active' : ''}" data-filter="income">Pemasukan</button>
+            <button class="filter-btn ${transaksiFilter === 'expense' ? 'active' : ''}" data-filter="expense">Pengeluaran</button>
         </div>
         <div class="card">
             <div class="transaction-list" id="transaksiListContainer"></div>
@@ -574,13 +1100,13 @@ async function renderTransaksi() {
     document.getElementById("logoutBtn")?.addEventListener("click", logout);
     
     let data = [...transactions];
-    if (currentNavFilter === "pemasukan") data = data.filter(t => t.type === "pemasukan");
-    if (currentNavFilter === "pengeluaran") data = data.filter(t => t.type === "pengeluaran");
+    if (transaksiFilter === "income") data = data.filter(t => t.type === "pemasukan");
+    if (transaksiFilter === "expense") data = data.filter(t => t.type === "pengeluaran");
     data.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     
     const container = document.getElementById("transaksiListContainer");
     if (data.length === 0) {
-        container.innerHTML = `<div class="empty-state">Tidak ada transaksi</div>`;
+        container.innerHTML = '<div class="empty-state">Tidak ada transaksi</div>';
     } else {
         let listHtml = "";
         for (const t of data) {
@@ -592,6 +1118,7 @@ async function renderTransaksi() {
                         <div class="transaction-meta">
                             <span class="transaction-date">${new Date(t.created_at).toLocaleDateString("id-ID")}</span>
                             ${cat ? `<span class="transaction-cat">${cat.icon} ${escapeHtml(cat.name)}</span>` : ''}
+                            ${t.is_fixed_expense ? `<span class="transaction-cat">🔄 Tetap</span>` : ''}
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px">
@@ -612,19 +1139,18 @@ async function renderTransaksi() {
                 await sb.from("transactions").delete().eq("id", btn.dataset.id);
                 showToast("Transaksi dihapus");
                 await loadTransactions();
-                renderCurrentView();
+                renderTransaksi();
             }
         };
     }
     for (const btn of document.querySelectorAll(".filter-btn")) {
         btn.onclick = () => {
-            currentNavFilter = btn.dataset.filter;
+            transaksiFilter = btn.dataset.filter;
             renderTransaksi();
         };
     }
 }
 
-// Render Laporan
 async function renderLaporan() {
     const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     
@@ -642,7 +1168,6 @@ async function renderLaporan() {
         catTotals[catId] = (catTotals[catId] || 0) + t.amount;
     }
     
-    // Chart data
     const labels = [], chartData = [], colors = [];
     for (const [id, val] of Object.entries(catTotals)) {
         if (id === "uncategorized") {
@@ -661,7 +1186,7 @@ async function renderLaporan() {
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
-            <button id="logoutBtn" class="logout-btn">🚪</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
         </div>
         <div class="month-selector">
             <button id="prevMonth">◀</button>
@@ -686,7 +1211,6 @@ async function renderLaporan() {
     `;
     document.getElementById("appContainer").innerHTML = html;
     
-    // Chart
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
     if (ctx && chartData.length > 0) {
         if (window.laporanChart) window.laporanChart.destroy();
@@ -697,7 +1221,6 @@ async function renderLaporan() {
         });
     }
     
-    // Detail transaksi per tanggal
     const grouped = {};
     for (const t of filtered) {
         const date = new Date(t.created_at).toLocaleDateString("id-ID");
@@ -735,7 +1258,6 @@ async function renderLaporan() {
     document.getElementById("logoutBtn")?.addEventListener("click", logout);
 }
 
-// Render Hutang Piutang
 async function renderHutang() {
     let totalPiutang = 0, totalHutang = 0;
     for (const d of debts) {
@@ -747,16 +1269,16 @@ async function renderHutang() {
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
-            <button id="logoutBtn" class="logout-btn">🚪</button>
+            <button id="logoutBtn" class="logout-btn">Logout</button>
         </div>
-        <div class="debt-summary">
-            <div class="debt-box piutang">
-                <div class="label">💰 Piutang</div>
-                <div class="amount">Rp ${formatRupiah(totalPiutang)}</div>
+        <div class="debt-summary" style="display:flex; gap:12px; margin-bottom:16px;">
+            <div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center;">
+                <div style="font-size:12px">💰 Piutang</div>
+                <div style="font-size:18px; font-weight:700; color:#10b981">Rp ${formatRupiah(totalPiutang)}</div>
             </div>
-            <div class="debt-box hutang">
-                <div class="label">💸 Hutang</div>
-                <div class="amount">Rp ${formatRupiah(totalHutang)}</div>
+            <div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center;">
+                <div style="font-size:12px">💸 Hutang</div>
+                <div style="font-size:18px; font-weight:700; color:#ef4444">Rp ${formatRupiah(totalHutang)}</div>
             </div>
         </div>
         <button id="addDebtBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Hutang/Piutang</button>
@@ -771,7 +1293,7 @@ async function renderHutang() {
     
     const container = document.getElementById("debtListContainer");
     if (debts.length === 0) {
-        container.innerHTML = `<div class="empty-state">Belum ada data hutang/piutang</div>`;
+        container.innerHTML = '<div class="empty-state">Belum ada data hutang/piutang</div>';
     } else {
         let listHtml = "";
         for (const d of debts) {
@@ -791,7 +1313,7 @@ async function renderHutang() {
                         <div class="transaction-amount ${isPiutang ? 'income' : 'expense'}">
                             ${isPiutang ? '+' : '-'} Rp ${formatRupiah(d.amount)}
                         </div>
-                        ${d.status !== 'lunas' ? `<button class="lunas-debt" data-id="${d.id}" style="background:none; border:none; font-size:16px; cursor:pointer;">✅</button>` : ''}
+                        ${d.status !== 'lunas' ? `<button class="lunas-debt" data-id="${d.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:11px; cursor:pointer;">✓ Lunas</button>` : ''}
                         <button class="delete-debt" data-id="${d.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">🗑️</button>
                     </div>
                 </div>
@@ -822,97 +1344,6 @@ async function renderHutang() {
     }
 }
 
-// Render Pengaturan (Kategori)
-async function renderPengaturan() {
-    let html = `
-        <div class="header">
-            <div class="user-info">${currentUser?.email ? currentUser.email.slice(0,20) : 'Tamu'}</div>
-            <button id="logoutBtn" class="logout-btn">🚪</button>
-        </div>
-        <button id="addCategoryBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Kategori</button>
-        <div class="card">
-            <div class="card-title">🏷️ Daftar Kategori</div>
-            <div class="transaction-list" id="categoryListContainer"></div>
-        </div>
-    `;
-    document.getElementById("appContainer").innerHTML = html;
-    
-    document.getElementById("addCategoryBtn")?.addEventListener("click", () => openCategoryModal());
-    document.getElementById("logoutBtn")?.addEventListener("click", logout);
-    
-    const container = document.getElementById("categoryListContainer");
-    if (categories.length === 0) {
-        container.innerHTML = `<div class="empty-state">Belum ada kategori</div>`;
-    } else {
-        let listHtml = "";
-        for (const c of categories) {
-            listHtml += `
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <div class="transaction-desc"><span style="font-size:20px">${c.icon}</span> ${escapeHtml(c.name)}</div>
-                        <div class="transaction-meta">
-                            <span class="transaction-cat">${c.type === "pemasukan" ? "💵 Pemasukan" : "💸 Pengeluaran"}</span>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:8px">
-                        <span class="color-preview" style="display:inline-block; width:24px; height:24px; border-radius:12px; background:${c.color}"></span>
-                        <button class="edit-category" data-id="${c.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">✏️</button>
-                        <button class="delete-category" data-id="${c.id}" style="background:none; border:none; font-size:18px; cursor:pointer;">🗑️</button>
-                    </div>
-                </div>
-            `;
-        }
-        container.innerHTML = listHtml;
-    }
-    
-    for (const btn of document.querySelectorAll(".edit-category")) {
-        btn.onclick = () => editCategory(btn.dataset.id);
-    }
-    for (const btn of document.querySelectorAll(".delete-category")) {
-        btn.onclick = async () => {
-            if (confirm("Hapus kategori?")) {
-                await sb.from("categories").delete().eq("id", btn.dataset.id);
-                showToast("Kategori dihapus");
-                await loadCategories();
-                renderPengaturan();
-            }
-        };
-    }
-}
-
-// Navigation
-let currentNavFilter = "semua";
-function renderCurrentView() {
-    if (currentNav === "home") renderHome();
-    else if (currentNav === "transaksi") renderTransaksi();
-    else if (currentNav === "laporan") renderLaporan();
-    else if (currentNav === "hutang") renderHutang();
-    else if (currentNav === "pengaturan") renderPengaturan();
-}
-
-// Bottom Navigation
-function addBottomNav() {
-    const navHtml = `
-        <div class="bottom-nav">
-            <button class="nav-item ${currentNav === 'home' ? 'active' : ''}" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
-            <button class="nav-item ${currentNav === 'transaksi' ? 'active' : ''}" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
-            <button class="nav-item ${currentNav === 'laporan' ? 'active' : ''}" data-nav="laporan"><span class="nav-icon">📅</span><span>Laporan</span></button>
-            <button class="nav-item ${currentNav === 'hutang' ? 'active' : ''}" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
-            <button class="nav-item ${currentNav === 'pengaturan' ? 'active' : ''}" data-nav="pengaturan"><span class="nav-icon">⚙️</span><span>Atur</span></button>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', navHtml);
-    
-    for (const btn of document.querySelectorAll('.nav-item')) {
-        btn.onclick = () => {
-            currentNav = btn.dataset.nav;
-            for (const b of document.querySelectorAll('.nav-item')) b.classList.remove('active');
-            btn.classList.add('active');
-            renderCurrentView();
-        };
-    }
-}
-
 // Modal Functions
 function openTransaksiModal(predefinedType = null) {
     const modalHtml = `
@@ -926,6 +1357,9 @@ function openTransaksiModal(predefinedType = null) {
                     <option value="pengeluaran" ${predefinedType === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
                 </select>
                 <select id="modalKategori" class="modal-select"><option value="">Pilih Kategori</option></select>
+                <label style="display:flex; align-items:center; gap:8px; margin:8px 0">
+                    <input type="checkbox" id="modalIsFixed"> Pengeluaran Tetap (tidak masuk statistik pengeluaran teratas)
+                </label>
                 <button id="saveTransaksiBtn" class="modal-btn modal-btn-primary">Simpan</button>
                 <button id="closeTransaksiModal" class="modal-btn modal-btn-secondary">Batal</button>
             </div>
@@ -933,7 +1367,6 @@ function openTransaksiModal(predefinedType = null) {
     `;
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // Isi dropdown kategori
     const catSelect = document.getElementById("modalKategori");
     let options = '<option value="">Tanpa Kategori</option>';
     for (const c of categories) {
@@ -946,10 +1379,11 @@ function openTransaksiModal(predefinedType = null) {
         const amount = parseInt(document.getElementById("modalJumlah").value);
         const type = document.getElementById("modalTipe").value;
         const catId = document.getElementById("modalKategori").value;
+        const isFixed = document.getElementById("modalIsFixed").checked;
         if (!desc) return alert("Deskripsi harus diisi");
         if (isNaN(amount) || amount <= 0) return alert("Jumlah harus > 0");
         
-        const data = { user_id: currentUser.id, description: desc, amount, type };
+        const data = { user_id: currentUser.id, description: desc, amount, type, is_fixed_expense: isFixed };
         if (catId) data.category_id = catId;
         
         const { error } = await sb.from("transactions").insert(data);
@@ -962,6 +1396,128 @@ function openTransaksiModal(predefinedType = null) {
         }
     };
     document.getElementById("closeTransaksiModal").onclick = () => document.getElementById("transaksiModal")?.remove();
+}
+
+function openSavingsModal(editId = null) {
+    const isEdit = !!editId;
+    const savingsItem = isEdit ? savings.find(s => s.id === editId) : null;
+    
+    const modalHtml = `
+        <div id="savingsModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">${isEdit ? 'Edit Tabungan' : 'Tambah Tabungan'}</div>
+                <input type="text" id="savingsName" class="modal-input" placeholder="Nama Tabungan" value="${isEdit ? escapeHtml(savingsItem.name) : ''}">
+                <input type="number" id="savingsTarget" class="modal-input" placeholder="Target (Rp)" value="${isEdit ? savingsItem.target_amount : ''}">
+                <input type="number" id="savingsCurrent" class="modal-input" placeholder="Jumlah Awal (Rp)" value="${isEdit ? savingsItem.current_amount : '0'}">
+                <input type="hidden" id="savingsId" value="${editId || ''}">
+                <button id="saveSavingsBtn" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeSavingsModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    document.getElementById("saveSavingsBtn").onclick = async () => {
+        const name = document.getElementById("savingsName").value.trim();
+        const target = parseInt(document.getElementById("savingsTarget").value) || 0;
+        const current = parseInt(document.getElementById("savingsCurrent").value) || 0;
+        const id = document.getElementById("savingsId").value;
+        
+        if (!name) return alert("Nama tabungan harus diisi");
+        
+        if (id) {
+            await sb.from("savings").update({ name, target_amount: target, current_amount: current }).eq("id", id);
+            showToast("Tabungan diupdate");
+        } else {
+            await sb.from("savings").insert({ user_id: currentUser.id, name, target_amount: target, current_amount: current });
+            showToast("Tabungan ditambahkan");
+        }
+        document.getElementById("savingsModal")?.remove();
+        await loadSavings();
+        renderSavings();
+    };
+    document.getElementById("closeSavingsModal").onclick = () => document.getElementById("savingsModal")?.remove();
+}
+
+function editSavings(id) {
+    openSavingsModal(id);
+}
+
+function openTransferModal(savingsId, direction) {
+    const savingsItem = savings.find(s => s.id === savingsId);
+    const modalHtml = `
+        <div id="transferModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">${direction === 'in' ? 'Tambah ke' : 'Ambil dari'} ${escapeHtml(savingsItem.name)}</div>
+                <input type="number" id="transferAmount" class="modal-input" placeholder="Jumlah (Rp)">
+                <button id="confirmTransferBtn" class="modal-btn modal-btn-primary">Transfer</button>
+                <button id="closeTransferModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    document.getElementById("confirmTransferBtn").onclick = async () => {
+        const amount = parseInt(document.getElementById("transferAmount").value);
+        if (isNaN(amount) || amount <= 0) return alert("Jumlah harus > 0");
+        
+        if (direction === 'in') {
+            await transferToSavings(savingsId, amount);
+        } else {
+            await transferFromSavings(savingsId, amount);
+        }
+        document.getElementById("transferModal")?.remove();
+        renderSavings();
+    };
+    document.getElementById("closeTransferModal").onclick = () => document.getElementById("transferModal")?.remove();
+}
+
+function openReminderModal(editId = null) {
+    const isEdit = !!editId;
+    const reminderItem = isEdit ? reminders.find(r => r.id === editId) : null;
+    
+    const modalHtml = `
+        <div id="reminderModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-title">${isEdit ? 'Edit Pengingat' : 'Tambah Pengingat'}</div>
+                <input type="text" id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit ? escapeHtml(reminderItem.title) : ''}">
+                <textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit ? escapeHtml(reminderItem.description || '') : ''}</textarea>
+                <input type="date" id="reminderDueDate" class="modal-input" value="${isEdit ? reminderItem.due_date.slice(0,10) : ''}">
+                <input type="number" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya (opsional)" value="${isEdit ? reminderItem.amount || '' : ''}">
+                <input type="hidden" id="reminderId" value="${editId || ''}">
+                <button id="saveReminderBtn" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeReminderModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    document.getElementById("saveReminderBtn").onclick = async () => {
+        const title = document.getElementById("reminderTitle").value.trim();
+        const desc = document.getElementById("reminderDesc").value;
+        const dueDate = document.getElementById("reminderDueDate").value;
+        const amount = parseInt(document.getElementById("reminderAmount").value) || null;
+        const id = document.getElementById("reminderId").value;
+        
+        if (!title) return alert("Judul harus diisi");
+        if (!dueDate) return alert("Tanggal harus diisi");
+        
+        if (id) {
+            await sb.from("reminders").update({ title, description: desc, due_date: dueDate, amount }).eq("id", id);
+            showToast("Pengingat diupdate");
+        } else {
+            await sb.from("reminders").insert({ user_id: currentUser.id, title, description: desc, due_date: dueDate, amount });
+            showToast("Pengingat ditambahkan");
+        }
+        document.getElementById("reminderModal")?.remove();
+        await loadReminders();
+        renderReminders();
+    };
+    document.getElementById("closeReminderModal").onclick = () => document.getElementById("reminderModal")?.remove();
+}
+
+function editReminder(id) {
+    openReminderModal(id);
 }
 
 function openDebtModal() {
@@ -1010,61 +1566,105 @@ function openDebtModal() {
     document.getElementById("closeDebtModal").onclick = () => document.getElementById("debtModal")?.remove();
 }
 
-function openCategoryModal(editId = null) {
-    const modalHtml = `
-        <div id="categoryModal" class="modal-overlay">
-            <div class="modal-content">
-                <div class="modal-title">${editId ? 'Edit Kategori' : 'Tambah Kategori'}</div>
-                <input type="text" id="categoryName" class="modal-input" placeholder="Nama Kategori">
-                <input type="text" id="categoryIcon" class="modal-input" placeholder="Icon (🍔, 🚗)" value="📁">
-                <select id="categoryType" class="modal-select">
-                    <option value="pengeluaran">💸 Pengeluaran</option>
-                    <option value="pemasukan">💵 Pemasukan</option>
-                </select>
-                <input type="color" id="categoryColor" class="modal-input" value="#3b82f6">
-                <input type="hidden" id="categoryId" value="${editId || ''}">
-                <button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button>
-                <button id="closeCategoryModal" class="modal-btn modal-btn-secondary">Batal</button>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+// Password change
+async function changePassword() {
+    const oldPassword = document.getElementById("oldPassword").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
     
-    if (editId) {
-        const cat = categories.find(c => c.id === editId);
-        if (cat) {
-            document.getElementById("categoryName").value = cat.name;
-            document.getElementById("categoryIcon").value = cat.icon;
-            document.getElementById("categoryType").value = cat.type;
-            document.getElementById("categoryColor").value = cat.color;
-        }
+    if (!oldPassword || !newPassword) return alert("Password lama dan baru harus diisi");
+    if (newPassword.length < 6) return alert("Password baru minimal 6 karakter");
+    if (newPassword !== confirmPassword) return alert("Konfirmasi password tidak cocok");
+    
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if (error) alert("Error: " + error.message);
+    else {
+        showToast("Password berhasil diubah");
+        document.getElementById("oldPassword").value = "";
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
     }
-    
-    document.getElementById("saveCategoryBtn").onclick = async () => {
-        const name = document.getElementById("categoryName").value.trim();
-        const icon = document.getElementById("categoryIcon").value.trim() || "📁";
-        const type = document.getElementById("categoryType").value;
-        const color = document.getElementById("categoryColor").value;
-        const id = document.getElementById("categoryId").value;
-        
-        if (!name) return alert("Nama kategori harus diisi");
-        
-        if (id) {
-            await sb.from("categories").update({ name, icon, type, color }).eq("id", id);
-            showToast("Kategori diupdate");
-        } else {
-            await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
-            showToast("Kategori ditambahkan");
-        }
-        document.getElementById("categoryModal")?.remove();
-        await loadCategories();
-        renderPengaturan();
-    };
-    document.getElementById("closeCategoryModal").onclick = () => document.getElementById("categoryModal")?.remove();
 }
 
-function editCategory(id) {
-    openCategoryModal(id);
+// Shared user
+async function addSharedUser() {
+    const email = document.getElementById("sharedEmail").value.trim();
+    const accessLevel = document.getElementById("accessLevel").value;
+    if (!email) return alert("Email harus diisi");
+    
+    const { error } = await sb.from("shared_access").insert({
+        owner_id: currentUser.id,
+        shared_email: email,
+        access_level: accessLevel
+    });
+    if (error) alert("Error: " + error.message);
+    else {
+        showToast(`Akses diberikan ke ${email}`);
+        document.getElementById("sharedEmail").value = "";
+        renderSettings();
+    }
+}
+
+// Export to PDF
+async function exportToPDF() {
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const filtered = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+    
+    let pemasukan = 0, pengeluaran = 0;
+    for (const t of filtered) {
+        if (t.type === "pemasukan") pemasukan += t.amount;
+        else pengeluaran += t.amount;
+    }
+    
+    const reportHtml = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="text-align: center;">Laporan Keuangan</h2>
+            <h3 style="text-align: center;">${monthNames[currentMonth]} ${currentYear}</h3>
+            <hr>
+            <div style="display: flex; justify-content: space-between; margin: 20px 0;">
+                <div><strong>Total Pemasukan:</strong> Rp ${formatRupiah(pemasukan)}</div>
+                <div><strong>Total Pengeluaran:</strong> Rp ${formatRupiah(pengeluaran)}</div>
+                <div><strong>Saldo:</strong> Rp ${formatRupiah(pemasukan - pengeluaran)}</div>
+            </div>
+            <h4>Detail Transaksi:</h4>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #f1f5f9;">
+                    <th style="padding: 8px; text-align: left;">Tanggal</th>
+                    <th style="padding: 8px; text-align: left;">Deskripsi</th>
+                    <th style="padding: 8px; text-align: left;">Kategori</th>
+                    <th style="padding: 8px; text-align: right;">Jumlah</th>
+                </tr>
+                ${filtered.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).map(t => {
+                    const cat = getCategoryById(t.category_id);
+                    return `
+                        <tr>
+                            <td style="padding: 8px;">${new Date(t.created_at).toLocaleDateString("id-ID")}</td>
+                            <td style="padding: 8px;">${escapeHtml(t.description)}</td>
+                            <td style="padding: 8px;">${cat ? `${cat.icon} ${cat.name}` : '-'}</td>
+                            <td style="padding: 8px; text-align: right; color: ${t.type === 'pemasukan' ? '#10b981' : '#ef4444'}">
+                                ${t.type === 'pemasukan' ? '+' : '-'} Rp ${formatRupiah(t.amount)}
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
+            </table>
+            <hr>
+            <p style="text-align: center; font-size: 12px;">Dibuat pada: ${new Date().toLocaleString()}</p>
+        </div>
+    `;
+    
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `laporan_keuangan_${currentYear}_${currentMonth+1}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(reportHtml).save();
+    showToast("Laporan PDF sedang diproses");
 }
 
 // Load Data Functions
@@ -1084,6 +1684,18 @@ async function loadDebts() {
     if (!currentUser) return;
     const { data } = await sb.from("debts").select("*").eq("user_id", currentUser.id);
     debts = data || [];
+}
+
+async function loadSavings() {
+    if (!currentUser) return;
+    const { data } = await sb.from("savings").select("*").eq("user_id", currentUser.id);
+    savings = data || [];
+}
+
+async function loadReminders() {
+    if (!currentUser) return;
+    const { data } = await sb.from("reminders").select("*").eq("user_id", currentUser.id);
+    reminders = data || [];
 }
 
 async function processRecurring() {
@@ -1106,6 +1718,49 @@ async function processRecurring() {
         if (r.category_id) insertData.category_id = r.category_id;
         await sb.from("transactions").insert(insertData);
         await sb.from("recurring_transactions").update({ last_processed_date: `${currentYear}-${currentMonth+1}-${currentDay}` }).eq("id", r.id);
+    }
+}
+
+// Navigation
+function renderCurrentView() {
+    if (currentNav === "home") renderHome();
+    else if (currentNav === "transaksi") renderTransaksi();
+    else if (currentNav === "laporan") renderLaporan();
+    else if (currentNav === "hutang") renderHutang();
+    else if (currentNav === "savings") renderSavings();
+    else if (currentNav === "reminders") renderReminders();
+    else if (currentNav === "settings") renderSettings();
+}
+
+function updateBottomNavActive() {
+    const navItems = document.querySelectorAll('.nav-item');
+    if (navItems.length) {
+        for (const item of navItems) {
+            if (item.dataset.nav === currentNav) item.classList.add('active');
+            else item.classList.remove('active');
+        }
+    }
+}
+
+function addBottomNav() {
+    const navHtml = `
+        <div class="bottom-nav">
+            <button class="nav-item ${currentNav === 'home' ? 'active' : ''}" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
+            <button class="nav-item ${currentNav === 'transaksi' ? 'active' : ''}" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
+            <button class="nav-item ${currentNav === 'laporan' ? 'active' : ''}" data-nav="laporan"><span class="nav-icon">📅</span><span>Laporan</span></button>
+            <button class="nav-item ${currentNav === 'hutang' ? 'active' : ''}" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
+            <button class="nav-item ${currentNav === 'settings' ? 'active' : ''}" data-nav="settings"><span class="nav-icon">⚙️</span><span>Atur</span></button>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', navHtml);
+    
+    for (const btn of document.querySelectorAll('.nav-item')) {
+        btn.onclick = () => {
+            currentNav = btn.dataset.nav;
+            for (const b of document.querySelectorAll('.nav-item')) b.classList.remove('active');
+            btn.classList.add('active');
+            renderCurrentView();
+        };
     }
 }
 
@@ -1151,6 +1806,8 @@ async function onAuthSuccess(user) {
     await loadCategories();
     await loadTransactions();
     await loadDebts();
+    await loadSavings();
+    await loadReminders();
     await processRecurring();
     await loadTransactions();
     
@@ -1174,6 +1831,20 @@ async function checkSession() {
         document.getElementById("loginModal").style.display = "flex";
     }
 }
+
+// Setup toggle password for login
+document.getElementById("toggleLoginPassword")?.addEventListener("click", () => {
+    const input = document.getElementById("passwordInput");
+    if (input) {
+        if (input.type === 'password') {
+            input.type = 'text';
+            document.getElementById("toggleLoginPassword").textContent = '🙈';
+        } else {
+            input.type = 'password';
+            document.getElementById("toggleLoginPassword").textContent = '👁️';
+        }
+    }
+});
 
 // Event Listeners Login
 document.getElementById("submitLoginBtn").onclick = handleLogin;
