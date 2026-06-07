@@ -48,8 +48,8 @@
         .nav-item .nav-icon { font-size: 22px; }
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
         
-        .transaction-list, .task-list, .savings-list, .reminders-list { display: flex; flex-direction: column; gap: 8px; }
-        .transaction-item, .task-item, .savings-item, .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
+        .transaction-list, .task-list, .savings-list, .reminders-list, .shared-list { display: flex; flex-direction: column; gap: 8px; }
+        .transaction-item, .task-item, .savings-item, .reminder-item, .shared-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
         .task-check { margin-right: 12px; transform: scale(1.2); cursor: pointer; }
         .task-title { font-weight: 500; flex: 1; }
         .task-completed { text-decoration: line-through; color: #94a3b8; }
@@ -66,6 +66,7 @@
         .modal-btn { width: 100%; padding: 14px; border-radius: 40px; border: none; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 8px; }
         .modal-btn-primary { background: #3b82f6; color: white; }
         .modal-btn-secondary { background: #e2e8f0; color: #475569; }
+        .modal-btn-success { background: #10b981; color: white; }
         
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 13px; z-index: 300; white-space: nowrap; }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
@@ -81,6 +82,8 @@
         .detail-value { color: #1e293b; }
         .debt-urgent { background: #fee2e2; border-radius: 12px; padding: 8px; margin-bottom: 8px; }
         .edit-detail-btn { background: #3b82f6; color: white; border: none; border-radius: 30px; padding: 6px 12px; font-size: 12px; margin-top: 12px; cursor: pointer; }
+        .pending-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+        .accepted-badge { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -115,6 +118,7 @@ let savings = [];
 let reminders = [];
 let tasks = [];
 let recurringList = [];
+let sharedAccess = []; // Daftar akses bersama
 let chart = null;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
@@ -182,6 +186,15 @@ async function loadSavings() { if(currentUser) { const {data}=await sb.from("sav
 async function loadReminders() { if(currentUser) { const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); if(data) reminders=data; } }
 async function loadTasks() { if(currentUser) { const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); if(data) tasks=data; } }
 async function loadRecurring() { if(currentUser) { const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); if(data) recurringList=data; } }
+async function loadSharedAccess() { 
+    if(currentUser) { 
+        // Akses yang dibuat oleh user (sebagai owner)
+        const {data: asOwner}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
+        // Akses yang ditujukan ke email user (sebagai penerima)
+        const {data: asReceiver}=await sb.from("shared_access").select("*").eq("shared_email",currentUser.email);
+        sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
+    } 
+}
 
 // Process recurring
 async function processRecurring() {
@@ -261,6 +274,7 @@ function renderRunningText() {
 
 // ==================== RENDER FUNGSI ====================
 
+// HOME
 async function renderHome() {
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
@@ -330,6 +344,7 @@ async function renderHome() {
     });
 }
 
+// TRANSAKSI
 async function renderTransaksi() {
     let html = `
         <div class="header">
@@ -376,6 +391,7 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
+// Modal Transaksi
 function openTransaksiModal(predefinedType=null){
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
@@ -408,6 +424,7 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
+// Transaksi Berulang
 function openRecurringModal(editId=null){
     const isEdit = !!editId;
     const r = isEdit ? recurringList.find(x=>x.id===editId) : null;
@@ -465,6 +482,7 @@ function openRecurringModal(editId=null){
     document.getElementById("closeRecurring").onclick = () => modal.remove();
 }
 
+// Kelola Kategori
 function openCategoryManageModal(editId=null) {
     const isEdit = !!editId;
     const cat = isEdit ? categories.find(c=>c.id===editId) : null;
@@ -506,7 +524,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG - dengan paid_date yang benar (tanggal saat klik lunas)
+// HUTANG
 async function renderHutang() {
     let piutang=0, hutang=0;
     debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
@@ -537,7 +555,7 @@ async function renderHutang() {
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
     else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}" data-debt-id="${d.id}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div></div>`).join('');
     
-    // PERBAIKAN: Event tombol lunas - mencatat tanggal hari ini sebagai paid_date
+    // Event lunas
     document.querySelectorAll(".lunas-debt").forEach(btn => {
         btn.onclick = async function(e) {
             e.preventDefault();
@@ -545,20 +563,14 @@ async function renderHutang() {
             const id = this.getAttribute("data-id");
             if(confirm("Tandai sebagai lunas?")){
                 try {
-                    // Dapatkan tanggal hari ini dalam format YYYY-MM-DD
                     const today = new Date();
                     const paidDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-                    
-                    const { error } = await sb.from("debts").update({ 
-                        status: 'lunas', 
-                        paid_date: paidDate 
-                    }).eq("id", id);
+                    const { error } = await sb.from("debts").update({ status: 'lunas', paid_date: paidDate }).eq("id", id);
                     if (error) throw error;
-                    showToast("Ditandai lunas dengan tanggal " + paidDate);
+                    showToast("Ditandai lunas");
                     await loadDebts();
                     renderHutang();
                 } catch(err) {
-                    console.error("Error:", err);
                     alert("Gagal update: " + err.message);
                 }
             }
@@ -861,7 +873,7 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// PENGATURAN
+// PENGATURAN - dengan akses bersama yang benar
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -881,13 +893,16 @@ async function renderSettings() {
         </div>
         <div class="card">
             <div class="card-title">👥 Akses Bersama</div>
-            <div style="display:flex; gap:8px; margin-bottom:16px">
-                <input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1">
-                <select id="accessLevel" class="modal-select" style="width:100px">
-                    <option value="view">Lihat</option>
-                    <option value="edit">Edit</option>
-                </select>
-                <button id="addSharedBtn" style="background:#3b82f6; border:none; border-radius:40px; padding:0 16px; color:white;">Tambah</button>
+            <div style="margin-bottom:12px">
+                <p style="font-size:12px; color:#64748b; margin-bottom:12px">Bagikan akses ke pengguna lain. Pengguna yang diundang harus login dengan email yang sama.</p>
+                <div style="display:flex; gap:8px; margin-bottom:16px">
+                    <input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1">
+                    <select id="accessLevel" class="modal-select" style="width:100px">
+                        <option value="view">👁️ Lihat</option>
+                        <option value="edit">✏️ Edit</option>
+                    </select>
+                    <button id="addSharedBtn" style="background:#3b82f6; border:none; border-radius:40px; padding:0 16px; color:white; font-weight:600;">Kirim</button>
+                </div>
             </div>
             <div id="sharedList"></div>
         </div>
@@ -916,20 +931,74 @@ async function renderSettings() {
         if(error) alert(error.message);
         else showToast("Password berhasil diubah");
     });
+    
+    // Kirim undangan akses bersama
     document.getElementById("addSharedBtn")?.addEventListener("click",async()=>{
-        const email=document.getElementById("sharedEmail").value.trim();
-        const level=document.getElementById("accessLevel").value;
+        const email = document.getElementById("sharedEmail").value.trim();
+        const level = document.getElementById("accessLevel").value;
         if(!email) return alert("Email harus diisi");
-        const {error}=await sb.from("shared_access").insert({owner_id:currentUser.id,shared_email:email,access_level:level});
+        if(email === currentUser.email) return alert("Tidak bisa membagikan akses ke diri sendiri");
+        
+        // Cek apakah sudah pernah diundang
+        const {data: existing} = await sb.from("shared_access").select("*").eq("owner_id",currentUser.id).eq("shared_email",email);
+        if(existing && existing.length > 0) {
+            return alert("Email ini sudah pernah diundang sebelumnya");
+        }
+        
+        const {error} = await sb.from("shared_access").insert({
+            owner_id: currentUser.id,
+            shared_email: email,
+            access_level: level,
+            status: 'pending'
+        });
         if(error) alert(error.message);
-        else { showToast(`Akses diberikan ke ${email}`); renderSettings(); }
+        else {
+            showToast(`Undangan akses dikirim ke ${email}. Pengguna harus login dengan email tersebut.`);
+            document.getElementById("sharedEmail").value = "";
+            await loadSharedAccess();
+            renderSettings();
+        }
     });
-    const {data:shared}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
-    const sharedDiv=document.getElementById("sharedList");
-    if(!shared?.length) sharedDiv.innerHTML='<div class="empty-state">Belum ada akses bersama</div>';
-    else sharedDiv.innerHTML=shared.map(s=>`<div class="transaction-item"><div>📧 ${escapeHtml(s.shared_email)}</div><div><span style="font-size:11px; background:#e2e8f0; padding:2px 8px; border-radius:20px">${s.access_level==='edit'?'✏️ Edit':'👁️ Lihat'}</span><button class="remove-shared" data-id="${s.id}" style="margin-left:12px; background:none; border:none;">🗑️</button></div></div>`).join('');
-    document.querySelectorAll(".remove-shared").forEach(btn=>btn.onclick=async()=>{await sb.from("shared_access").delete().eq("id",btn.getAttribute("data-id")); showToast("Dihapus"); renderSettings();});
-    document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{const inp=document.getElementById(btn.getAttribute("data-target")); if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁️';}});
+    
+    // Tampilkan daftar akses bersama
+    await loadSharedAccess();
+    const sharedDiv = document.getElementById("sharedList");
+    const ownerAccess = sharedAccess.filter(s => s.owner_id === currentUser.id);
+    const receiverAccess = sharedAccess.filter(s => s.shared_email === currentUser.email && s.owner_id !== currentUser.id);
+    
+    if(ownerAccess.length === 0 && receiverAccess.length === 0) {
+        sharedDiv.innerHTML = '<div class="empty-state">Belum ada akses bersama</div>';
+    } else {
+        let html = '';
+        if(ownerAccess.length > 0) {
+            html += `<div style="margin-bottom:12px"><strong>📤 Undangan yang Anda kirim:</strong></div>`;
+            ownerAccess.forEach(s => {
+                const statusText = s.status === 'pending' ? '⏳ Menunggu' : (s.status === 'accepted' ? '✅ Diterima' : '❌ Ditolak');
+                html += `<div class="shared-item"><div>📧 ${escapeHtml(s.shared_email)}<br><small>${s.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat'} • ${statusText}</small></div><button class="remove-shared" data-id="${s.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div>`;
+            });
+        }
+        if(receiverAccess.length > 0) {
+            html += `<div style="margin-top:12px; margin-bottom:12px"><strong>📥 Akses yang diterima:</strong></div>`;
+            receiverAccess.forEach(s => {
+                html += `<div class="shared-item"><div>👤 ${escapeHtml(s.owner_id?.slice(0,8)||'User')}<br><small>${s.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat'}</small></div></div>`;
+            });
+        }
+        sharedDiv.innerHTML = html;
+    }
+    
+    document.querySelectorAll(".remove-shared").forEach(btn=>btn.onclick=async()=>{
+        if(confirm("Hapus akses ini?")){
+            await sb.from("shared_access").delete().eq("id",btn.getAttribute("data-id"));
+            showToast("Akses dihapus");
+            renderSettings();
+        }
+    });
+    
+    document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{
+        const inp=document.getElementById(btn.getAttribute("data-target"));
+        if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+        else{inp.type='password';btn.textContent='👁️';}
+    });
 }
 
 // Navigation
@@ -1009,6 +1078,7 @@ async function onAuthSuccess(user) {
     await loadReminders(); 
     await loadTasks(); 
     await loadRecurring();
+    await loadSharedAccess();
     await processRecurring();
     await loadTransactions();
     addBottomNav();
