@@ -160,22 +160,19 @@ function getCategoryById(id) {
     return categories.find(c => c.id === id); 
 }
 
-// PERBAIKAN: Fungsi hitung total saldo yang benar
 function hitungTotalSaldo() { 
     let totalPemasukan = 0; 
     let totalPengeluaran = 0; 
     
-    transactions.forEach(t => {
+    for (const t of transactions) {
         if (t.type === 'pemasukan') {
             totalPemasukan += Number(t.amount) || 0;
         } else if (t.type === 'pengeluaran') {
             totalPengeluaran += Number(t.amount) || 0;
         }
-    });
+    }
     
     const saldo = totalPemasukan - totalPengeluaran;
-    
-    console.log("Perhitungan Saldo:", { totalPemasukan, totalPengeluaran, saldo, totalTransaksi: transactions.length });
     
     return { 
         pemasukan: totalPemasukan, 
@@ -185,7 +182,11 @@ function hitungTotalSaldo() {
 }
 
 function hitungTotalTabungan() { 
-    return savings.reduce((a,b)=>a + (Number(b.current_amount) || 0), 0); 
+    let total = 0;
+    for (const s of savings) {
+        total += Number(s.current_amount) || 0;
+    }
+    return total;
 }
 
 function setupRupiahInput(inputId) {
@@ -214,10 +215,6 @@ async function loadTransactions() {
             if(data) {
                 transactions = data;
                 console.log("Loaded transactions:", transactions.length);
-                // Debug: tampilkan beberapa transaksi
-                if(transactions.length > 0) {
-                    console.log("Sample transaction:", transactions[0]);
-                }
             }
         } catch(e) { console.error("Load transactions error:", e); }
     } 
@@ -273,13 +270,13 @@ async function loadSharedAccess() {
     } 
 }
 
-// PERBAIKAN: Fungsi untuk membuat transaksi otomatis dari recurring
-async function generateTransactionsFromRecurring(recurring) {
-    if (!currentUser) return [];
-    if (!recurring.is_active) return [];
+// Fungsi untuk membuat transaksi otomatis dari recurring (langsung insert ke database)
+async function generateAndSaveTransactionsFromRecurring(recurring) {
+    if (!currentUser) return 0;
+    if (!recurring.is_active) return 0;
     
     const today = new Date();
-    const transactionsCreated = [];
+    let createdCount = 0;
     const maxMonths = 12; // Generate untuk 12 bulan ke depan
     
     for (let i = 0; i <= maxMonths; i++) {
@@ -290,21 +287,24 @@ async function generateTransactionsFromRecurring(recurring) {
         // Handle tanggal yang tidak valid (misal 31 di bulan Februari)
         let validDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDay);
         if (validDate.getMonth() !== targetDate.getMonth()) {
-            // Jika tanggal tidak valid, skip
             continue;
         }
         
         // Cek apakah transaksi sudah ada (berdasarkan recurring_id dan tanggal)
-        const existingTransaction = transactions.find(t => {
-            if (!t.created_at) return false;
-            if (t.recurring_id !== recurring.id) return false;
+        let alreadyExists = false;
+        for (const t of transactions) {
+            if (!t.created_at) continue;
+            if (t.recurring_id !== recurring.id) continue;
             const tDate = new Date(t.created_at);
-            return tDate.getFullYear() === validDate.getFullYear() && 
-                   tDate.getMonth() === validDate.getMonth() && 
-                   tDate.getDate() === targetDay;
-        });
+            if (tDate.getFullYear() === validDate.getFullYear() && 
+                tDate.getMonth() === validDate.getMonth() && 
+                tDate.getDate() === targetDay) {
+                alreadyExists = true;
+                break;
+            }
+        }
         
-        if (!existingTransaction) {
+        if (!alreadyExists) {
             // Buat transaksi baru
             const insertData = {
                 user_id: currentUser.id,
@@ -318,20 +318,20 @@ async function generateTransactionsFromRecurring(recurring) {
             };
             if (recurring.category_id) insertData.category_id = recurring.category_id;
             
-            const { data: newTransaction, error } = await sb.from("transactions").insert(insertData).select();
+            const { error } = await sb.from("transactions").insert(insertData);
             if (error) {
                 console.error("Error generating transaction:", error);
-            } else if (newTransaction && newTransaction.length > 0) {
-                transactionsCreated.push(newTransaction[0]);
-                console.log(`Created auto transaction: ${recurring.description} for ${validDate.toLocaleDateString()}`);
+            } else {
+                createdCount++;
+                console.log(`Created transaction: ${recurring.description} for ${validDate.toLocaleDateString()}`);
             }
         }
     }
     
-    return transactionsCreated;
+    return createdCount;
 }
 
-// PERBAIKAN: Proses semua transaksi berulang
+// Proses semua transaksi berulang
 async function processAllRecurringTransactions() {
     if (!currentUser) return 0;
     
@@ -340,8 +340,8 @@ async function processAllRecurringTransactions() {
     
     for (const recurring of recurringList) {
         if (recurring.is_active) {
-            const created = await generateTransactionsFromRecurring(recurring);
-            totalCreated += created.length;
+            const created = await generateAndSaveTransactionsFromRecurring(recurring);
+            totalCreated += created;
         }
     }
     
@@ -358,8 +358,8 @@ function getRunningText() {
     const today = new Date();
     const messages = [];
     
-    debts.forEach(d => {
-        if (d.status === 'lunas') return;
+    for (const d of debts) {
+        if (d.status === 'lunas') continue;
         if (d.due_date) {
             const due = new Date(d.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
@@ -367,10 +367,10 @@ function getRunningText() {
                 messages.push(`⚠️ ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
-    });
+    }
     
-    tasks.forEach(t => {
-        if (t.is_completed) return;
+    for (const t of tasks) {
+        if (t.is_completed) continue;
         if (t.due_date) {
             const due = new Date(t.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
@@ -378,10 +378,10 @@ function getRunningText() {
                 messages.push(`📋 Tugas "${escapeHtml(t.title)}" ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
-    });
+    }
     
-    reminders.forEach(r => {
-        if (r.is_done) return;
+    for (const r of reminders) {
+        if (r.is_done) continue;
         if (r.due_date) {
             const due = new Date(r.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
@@ -389,7 +389,7 @@ function getRunningText() {
                 messages.push(`⏰ ${escapeHtml(r.title)} ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
-    });
+    }
     
     return messages;
 }
@@ -406,24 +406,30 @@ function renderRunningText() {
 async function renderHome() {
     // Pastikan data transaksi terbaru
     await loadTransactions();
+    await loadRecurring();
     
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
     
-    const bulanIni = transactions.filter(t => { 
-        const d = new Date(t.created_at); 
-        return d.getMonth() === new Date().getMonth() && 
-               d.getFullYear() === new Date().getFullYear() && 
-               t.type === 'pengeluaran'; 
-    });
-    const topExpenses = [...bulanIni].sort((a,b)=>b.amount-a.amount).slice(0,3);
-    let piutang=0, hutang=0;
-    debts.forEach(d => { if(d.status!=='lunas') d.type==='piutang'? piutang+=Number(d.amount) : hutang+=Number(d.amount); });
-    const recent = [...transactions].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+    const now = new Date();
+    const bulanIni = [];
+    for (const t of transactions) {
+        const d = new Date(t.created_at);
+        if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'pengeluaran') {
+            bulanIni.push(t);
+        }
+    }
+    const topExpenses = [...bulanIni].sort((a,b)=>b.amount - a.amount).slice(0,3);
     
-    // Hitung total recurring aktif
-    const activeRecurring = recurringList.filter(r => r.is_active);
-    const totalRecurringMonthly = activeRecurring.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    let piutang = 0, hutang = 0;
+    for (const d of debts) {
+        if (d.status !== 'lunas') {
+            if (d.type === 'piutang') piutang += Number(d.amount) || 0;
+            else hutang += Number(d.amount) || 0;
+        }
+    }
+    
+    const recent = [...transactions].sort((a,b)=>new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
     
     let html = `
         <div class="header">
@@ -443,14 +449,6 @@ async function renderHome() {
                 <div class="stat-item"><div class="stat-label">Total Pengeluaran</div><div class="stat-value expense">${isBalanceHidden?'••••':`-Rp ${formatRupiah(totals.pengeluaran)}`}</div></div>
             </div>
         </div>
-        ${activeRecurring.length > 0 ? `
-        <div class="card" style="background:#f0f9ff; border:1px solid #bae6fd;">
-            <div class="card-title">🔄 Ringkasan Transaksi Berulang</div>
-            <div style="font-size:13px">Total ${activeRecurring.length} transaksi aktif</div>
-            <div style="font-weight:700; margin-top:5px; color:#8b5cf6">Rp ${formatRupiah(totalRecurringMonthly)} / bulan</div>
-            <div style="font-size:11px; color:#64748b; margin-top:5px">✅ Sudah termasuk dalam perhitungan saldo di atas</div>
-        </div>
-        ` : ''}
         <div class="card">
             <div class="card-title"><span>💰 Tabungan</span><span style="color:#10b981">Rp ${formatRupiah(totalSavings)}</span></div>
             <div id="savingsPreview"></div>
@@ -512,7 +510,7 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
-        <button id="processNowBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">⚡ Generate Semua Transaksi Berulang</button>
+        <button id="processNowBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">⚡ Generate Transaksi Berulang</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
@@ -670,9 +668,6 @@ async function openRecurringModal(editId=null){
             <label style="display:flex; align-items:center; gap:8px; margin:8px 0">
                 <input type="checkbox" id="recurringActive" ${isEdit ? (r?.is_active ? 'checked' : '') : 'checked'}> Aktif
             </label>
-            <div style="font-size:12px; color:#64748b; margin-top:8px; padding:8px; background:#f0f9ff; border-radius:12px;">
-                💡 Setelah disimpan, sistem akan otomatis membuat transaksi untuk bulan ini dan 12 bulan ke depan.
-            </div>
             <input type="hidden" id="recurringId" value="${editId || ''}">
             <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
             <button id="closeRecurring" class="modal-btn modal-btn-secondary">Batal</button>
@@ -739,9 +734,9 @@ async function openRecurringModal(editId=null){
                 const newRecurring = recurringList.find(r => r.id === recurringId);
                 if (newRecurring) {
                     showToast("Membuat transaksi otomatis...");
-                    const created = await generateTransactionsFromRecurring(newRecurring);
+                    const created = await generateAndSaveTransactionsFromRecurring(newRecurring);
                     await loadTransactions();
-                    showToast(`Selesai! ${created.length} transaksi otomatis ditambahkan`);
+                    showToast(`Selesai! ${created} transaksi otomatis ditambahkan`);
                 }
             }
             
@@ -802,7 +797,12 @@ function openCategoryManageModal(editId=null) {
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
-    debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=Number(d.amount) : hutang+=Number(d.amount);});
+    for (const d of debts) {
+        if (d.status !== 'lunas') {
+            if (d.type === 'piutang') piutang += Number(d.amount) || 0;
+            else hutang += Number(d.amount) || 0;
+        }
+    }
     let html=`
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
@@ -1109,14 +1109,14 @@ async function renderLaporan() {
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
     let pemasukan=0,pengeluaran=0,catTotals={};
-    filtered.forEach(t=>{
+    for (const t of filtered) {
         if(t.type==='pemasukan') pemasukan+=Number(t.amount); 
         else pengeluaran+=Number(t.amount); 
         const cid=t.category_id||'uncategorized'; 
         catTotals[cid]=(catTotals[cid]||0)+Number(t.amount);
-    });
+    }
     const labels=[],data=[],colors=[];
-    Object.entries(catTotals).forEach(([id,val])=>{
+    for (const [id,val] of Object.entries(catTotals)) {
         if(id==='uncategorized'){
             labels.push('📁 Tanpa Kategori');
             colors.push('#94a3b8');
@@ -1128,7 +1128,7 @@ async function renderLaporan() {
             }
         }
         data.push(val);
-    });
+    }
     let html=`
         <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="openSettingsBtn" class="settings-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
         ${renderRunningText()}
@@ -1152,16 +1152,20 @@ async function renderLaporan() {
     }
     
     const grouped = {};
-    filtered.forEach(t=>{const d=new Date(t.created_at).toLocaleDateString(); if(!grouped[d]) grouped[d]=[]; grouped[d].push(t);});
+    for (const t of filtered) {
+        const d=new Date(t.created_at).toLocaleDateString(); 
+        if(!grouped[d]) grouped[d]=[]; 
+        grouped[d].push(t);
+    }
     let detail='';
-    Object.entries(grouped).forEach(([date,items])=>{
+    for (const [date,items] of Object.entries(grouped)) {
         let total=items.reduce((s,i)=>s+(i.type==='pemasukan'?Number(i.amount):-Number(i.amount)),0); 
         detail+=`<div style="margin-top:12px"><strong>📌 ${date}</strong> <span style="color:${total>=0?'#10b981':'#ef4444'}">${total>=0?'+':'-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`; 
-        items.forEach(i=>{
+        for (const i of items) {
             const cat=getCategoryById(i.category_id); 
             detail+=`<div style="padding-left:16px; margin:4px 0">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`;
-        });
-    });
+        }
+    }
     document.getElementById("detailTransaksi").innerHTML=detail||'<div class="empty-state">Tidak ada transaksi</div>';
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
