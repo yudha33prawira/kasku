@@ -82,8 +82,9 @@
         .detail-value { color: #1e293b; }
         .debt-urgent { background: #fee2e2; border-radius: 12px; padding: 8px; margin-bottom: 8px; }
         .edit-detail-btn { background: #3b82f6; color: white; border: none; border-radius: 30px; padding: 6px 12px; font-size: 12px; margin-top: 12px; cursor: pointer; }
-        .pending-badge { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
-        .accepted-badge { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+        .recurring-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        .recurring-active { color: #10b981; font-size: 12px; }
+        .recurring-inactive { color: #ef4444; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -178,22 +179,7 @@ function setupRupiahInput(inputId) {
     });
 }
 
-// Clear session on auth error
-async function clearAndLogout() {
-    try {
-        await sb.auth.signOut();
-    } catch(e) {}
-    localStorage.removeItem('sb-dttupsimbwsffyylfpax-auth-token');
-    currentUser = null;
-    document.querySelector(".bottom-nav")?.remove();
-    document.getElementById("appContainer").innerHTML = "";
-    document.getElementById("loginModal").style.display = "flex";
-    document.getElementById("emailInput").value = "";
-    document.getElementById("passwordInput").value = "";
-    showToast("Sesi habis, silakan login kembali");
-}
-
-// Load Data dengan error handling
+// Load Data
 async function loadCategories() { 
     if(currentUser) { 
         try {
@@ -247,6 +233,7 @@ async function loadRecurring() {
         try {
             const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); 
             if(data) recurringList=data; 
+            console.log("Loaded recurring:", recurringList);
         } catch(e) { console.error("Load recurring error:", e); }
     } 
 }
@@ -410,6 +397,9 @@ async function renderHome() {
 
 // TRANSAKSI
 async function renderTransaksi() {
+    // Load recurring data first
+    await loadRecurring();
+    
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
@@ -424,6 +414,12 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
+        
+        <div class="card">
+            <div class="card-title">🔄 Daftar Transaksi Berulang</div>
+            <div id="recurringList"></div>
+        </div>
+        
         <div class="filter">
             <button class="filter-btn ${transaksiFilter==='all'?'active':''}" data-filter="all">Semua</button>
             <button class="filter-btn ${transaksiFilter==='income'?'active':''}" data-filter="income">Pemasukan</button>
@@ -432,6 +428,27 @@ async function renderTransaksi() {
         <div class="card"><div id="transaksiList"></div></div>
     `;
     document.getElementById("appContainer").innerHTML = html;
+    
+    // Tampilkan daftar transaksi berulang
+    const recurringContainer = document.getElementById("recurringList");
+    if(recurringList.length === 0) {
+        recurringContainer.innerHTML = '<div class="empty-state">Belum ada transaksi berulang</div>';
+    } else {
+        recurringContainer.innerHTML = recurringList.map(r => `
+            <div class="recurring-item">
+                <div>
+                    <div><strong>${escapeHtml(r.description)}</strong></div>
+                    <div style="font-size:12px">${r.type === 'pemasukan' ? '💵 Pemasukan' : '💸 Pengeluaran'} • Rp ${formatRupiah(r.amount)} • Tiap tgl ${r.day_of_month}</div>
+                    <div class="${r.is_active ? 'recurring-active' : 'recurring-inactive'}">${r.is_active ? '✅ Aktif' : '❌ Nonaktif'}</div>
+                </div>
+                <div>
+                    <button class="edit-recurring" data-id="${r.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:5px;">✏️</button>
+                    <button class="delete-recurring" data-id="${r.id}" style="background:#ef4444; border:none; border-radius:30px; padding:6px 12px; color:white;">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
     document.getElementById("addTransaksiBtn")?.addEventListener("click",()=>openTransaksiModal());
     document.getElementById("addRecurringBtn")?.addEventListener("click",()=>openRecurringModal());
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
@@ -441,6 +458,28 @@ async function renderTransaksi() {
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
+    });
+    
+    // Edit recurring
+    document.querySelectorAll(".edit-recurring").forEach(btn => {
+        btn.onclick = () => openRecurringModal(btn.getAttribute("data-id"));
+    });
+    
+    // Delete recurring
+    document.querySelectorAll(".delete-recurring").forEach(btn => {
+        btn.onclick = async () => {
+            if(confirm("Hapus transaksi berulang?")){
+                const id = btn.getAttribute("data-id");
+                const { error } = await sb.from("recurring_transactions").delete().eq("id", id);
+                if(error) {
+                    alert("Gagal hapus: " + error.message);
+                } else {
+                    showToast("Transaksi berulang dihapus");
+                    await loadRecurring();
+                    renderTransaksi();
+                }
+            }
+        };
     });
     
     let data = [...transactions];
@@ -488,27 +527,38 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// Transaksi Berulang
-function openRecurringModal(editId=null){
+// Transaksi Berulang - FIXED VERSION
+async function openRecurringModal(editId=null){
     const isEdit = !!editId;
-    const r = isEdit ? recurringList.find(x=>x.id===editId) : null;
-    const modal = document.createElement('div'); modal.className='modal-overlay';
+    let r = null;
+    if(isEdit) {
+        await loadRecurring();
+        r = recurringList.find(x => x.id === editId);
+    }
+    
+    const modal = document.createElement('div'); 
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? 'Edit Transaksi Berulang' : '➕ Transaksi Berulang'}</div>
-            <input type="text" id="recurringDesc" class="modal-input" placeholder="Deskripsi" value="${isEdit?escapeHtml(r.description):''}">
-            <input type="text" id="recurringAmount" class="modal-input" placeholder="Jumlah" value="${isEdit?formatRupiah(r.amount):''}">
+            <input type="text" id="recurringDesc" class="modal-input" placeholder="Deskripsi" value="${isEdit ? escapeHtml(r?.description || '') : ''}">
+            <input type="text" id="recurringAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(r?.amount || 0) : ''}">
             <select id="recurringType" class="modal-select">
-                <option value="pemasukan" ${isEdit && r.type==='pemasukan'?'selected':''}>💵 Pemasukan</option>
-                <option value="pengeluaran" ${isEdit && r.type==='pengeluaran'?'selected':''}>💸 Pengeluaran</option>
+                <option value="pemasukan" ${isEdit && r?.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
+                <option value="pengeluaran" ${isEdit && r?.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
             </select>
             <select id="recurringDay" class="modal-select">
                 <option value="">Pilih Tanggal (1-31)</option>
-                ${Array.from({length:31}, (_,i)=>i+1).map(d=>`<option value="${d}" ${isEdit && r.day_of_month===d?'selected':''}>Tanggal ${d}</option>`).join('')}
+                ${Array.from({length:31}, (_,i)=>i+1).map(d => `<option value="${d}" ${isEdit && r?.day_of_month === d ? 'selected' : ''}>Tanggal ${d}</option>`).join('')}
             </select>
-            <select id="recurringCat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}" ${isEdit && r.category_id===c.id?'selected':''}>${c.icon} ${c.name}</option>`).join('')}</select>
-            <label style="display:flex; align-items:center; gap:8px; margin:8px 0"><input type="checkbox" id="recurringActive" ${isEdit? (r.is_active?'checked':'') :'checked'}> Aktif</label>
-            <input type="hidden" id="recurringId" value="${editId||''}">
+            <select id="recurringCat" class="modal-select">
+                <option value="">Pilih Kategori</option>
+                ${categories.map(c => `<option value="${c.id}" ${isEdit && r?.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+            </select>
+            <label style="display:flex; align-items:center; gap:8px; margin:8px 0">
+                <input type="checkbox" id="recurringActive" ${isEdit ? (r?.is_active ? 'checked' : '') : 'checked'}> Aktif
+            </label>
+            <input type="hidden" id="recurringId" value="${editId || ''}">
             <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
             <button id="closeRecurring" class="modal-btn modal-btn-secondary">Batal</button>
         </div>
@@ -525,24 +575,51 @@ function openRecurringModal(editId=null){
         const isActive = document.getElementById("recurringActive").checked;
         const id = document.getElementById("recurringId").value;
         
-        if (!desc) return alert("Deskripsi harus diisi");
-        if (!amount || amount <= 0) return alert("Jumlah harus > 0");
-        if (!day) return alert("Pilih tanggal");
+        // Validasi
+        if (!desc) {
+            alert("Deskripsi harus diisi");
+            return;
+        }
+        if (!amount || amount <= 0) {
+            alert("Jumlah harus lebih dari 0");
+            return;
+        }
+        if (!day || day < 1 || day > 31) {
+            alert("Pilih tanggal yang valid (1-31)");
+            return;
+        }
         
-        const data = { description: desc, amount, type, day_of_month: day, is_active: isActive };
+        const data = { 
+            description: desc, 
+            amount: amount, 
+            type: type, 
+            day_of_month: day, 
+            is_active: isActive,
+            user_id: currentUser.id
+        };
         if (catId) data.category_id = catId;
         
-        if (id) {
-            await sb.from("recurring_transactions").update(data).eq("id", id);
-            showToast("Transaksi berulang diupdate");
-        } else {
-            await sb.from("recurring_transactions").insert({ user_id: currentUser.id, ...data });
-            showToast("Transaksi berulang ditambahkan");
+        try {
+            if (id) {
+                // Update existing
+                const { error } = await sb.from("recurring_transactions").update(data).eq("id", id);
+                if (error) throw error;
+                showToast("Transaksi berulang diupdate");
+            } else {
+                // Insert new
+                const { error } = await sb.from("recurring_transactions").insert(data);
+                if (error) throw error;
+                showToast("Transaksi berulang ditambahkan");
+            }
+            modal.remove();
+            await loadRecurring();
+            renderTransaksi();
+        } catch(err) {
+            console.error("Error saving recurring:", err);
+            alert("Gagal menyimpan: " + err.message);
         }
-        modal.remove();
-        await loadRecurring();
-        renderTransaksi();
     };
+    
     document.getElementById("closeRecurring").onclick = () => modal.remove();
 }
 
@@ -1163,7 +1240,6 @@ async function checkSession() {
     try {
         const { data, error } = await sb.auth.getSession();
         if (error) {
-            // If session error, clear storage and show login
             console.error("Session error:", error);
             localStorage.removeItem('sb-dttupsimbwsffyylfpax-auth-token');
             document.getElementById("loginModal").style.display = "flex";
