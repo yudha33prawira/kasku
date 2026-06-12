@@ -24,7 +24,7 @@
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         
         .balance-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 32px; padding: 20px; margin-bottom: 20px; color: white; position: relative; cursor: pointer; }
-        .balance-eye { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 6px 12px; color: white; font-size: 14px; cursor: pointer; z-index: 10; }
+        .balance-eye { position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 30px; padding: 6px 12px; color: white; font-size: 14px; cursor: pointer; }
         .balance-label { font-size: 14px; opacity: 0.7; }
         .balance-amount { font-size: 32px; font-weight: 700; margin: 8px 0 4px; }
         .balance-stats { display: flex; gap: 16px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); }
@@ -40,24 +40,17 @@
         .btn-secondary { background: #64748b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         .btn-recurring { background: #8b5cf6; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         
-        .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.1s; }
+        .card:active { transform: scale(0.98); }
+        .card-title { font-size: 16px; font-weight: 600; color: #1e293b; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 8px 16px 20px; border-top: 1px solid #eef2f6; max-width: 450px; margin: 0 auto; z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 11px; color: #94a3b8; cursor: pointer; padding: 8px 10px; border-radius: 40px; transition: all 0.2s; font-weight: 500; }
         .nav-item .nav-icon { font-size: 22px; }
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
         
-        .transaction-item, .task-item, .savings-item, .reminder-item, .shared-item, .debt-item { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 12px 0; 
-            border-bottom: 1px solid #f0f2f5;
-            cursor: pointer;
-        }
-        .debt-item { cursor: pointer; }
-        .task-check { margin-right: 12px; transform: scale(1.2); cursor: pointer; }
+        .transaction-item, .debt-item, .task-item, .savings-item, .reminder-item, .shared-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; cursor: pointer; }
+        .task-check { margin-right: 12px; transform: scale(1.2); cursor: pointer; pointer-events: auto; }
         .task-title { font-weight: 500; flex: 1; }
         .task-completed { text-decoration: line-through; color: #94a3b8; }
         .task-date { font-size: 10px; color: #94a3b8; margin-top: 2px; }
@@ -75,31 +68,23 @@
         .modal-btn-secondary { background: #e2e8f0; color: #475569; }
         .modal-btn-success { background: #10b981; color: white; }
         .modal-btn-danger { background: #ef4444; color: white; }
+        .modal-btn-warning { background: #f59e0b; color: white; }
         
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 20px; border-radius: 40px; font-size: 13px; z-index: 300; white-space: nowrap; }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
         .progress-bar { background: #e2e8f0; border-radius: 10px; height: 6px; margin-top: 8px; }
         .progress-fill { background: #10b981; height: 6px; border-radius: 10px; }
         .month-selector { display: flex; justify-content: space-between; background: white; border-radius: 60px; padding: 8px 16px; margin-bottom: 16px; }
-        .top-expense-item { display: flex; justify-content: space-between; padding: 8px 0; cursor: pointer; }
+        .top-expense-item { display: flex; justify-content: space-between; padding: 8px 0; }
         .password-wrapper { position: relative; }
         .password-wrapper input { padding-right: 50px; }
         .toggle-password { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 20px; cursor: pointer; }
         .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
         .detail-label { font-weight: 500; color: #475569; }
         .detail-value { color: #1e293b; }
-        .debt-urgent { background: #fee2e2; border-radius: 12px; padding: 8px; margin-bottom: 8px; }
-        .edit-detail-btn { background: #3b82f6; color: white; border: none; border-radius: 30px; padding: 6px 12px; font-size: 12px; margin-top: 12px; cursor: pointer; }
-        .recurring-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #e2e8f0; }
-        .recurring-active { color: #10b981; font-size: 12px; }
-        .recurring-inactive { color: #ef4444; font-size: 12px; }
         .badge-auto { background: #8b5cf6; color: white; font-size: 10px; padding: 2px 6px; border-radius: 20px; margin-left: 8px; }
-        .btn-warning { background: #f59e0b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
-        .transaction-actions { display: flex; gap: 8px; align-items: center; }
-        .edit-transaction-btn { background: #3b82f6; border: none; border-radius: 30px; padding: 4px 10px; color: white; font-size: 12px; cursor: pointer; }
-        .clickable { cursor: pointer; }
-        .recurring-month-list { margin-top: 8px; padding-left: 12px; border-left: 2px solid #8b5cf6; }
-        .recurring-month-item { font-size: 11px; color: #64748b; padding: 2px 0; }
+        .button-group { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .button-group .modal-btn { flex: 1; margin-top: 0; }
     </style>
 </head>
 <body>
@@ -180,11 +165,10 @@ function formatDate(dateString) {
     return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
 }
 
-function formatDateLong(dateString) {
-    if (!dateString) return '-';
+function formatDateInput(dateString) {
+    if (!dateString) return '';
     const d = new Date(dateString);
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function hitungTotalSaldo() { 
@@ -322,14 +306,14 @@ async function createSingleRecurringTransaction(recurring, targetDate) {
     return true;
 }
 
-// Generate transaksi untuk recurring tertentu (semua bulan)
-async function generateTransactionsForRecurring(recurring) {
+// Generate transaksi untuk recurring tertentu
+async function generateTransactionsForRecurring(recurring, startDate) {
     if (!currentUser || !recurring.is_active) return 0;
     
     await loadTransactions();
     
     let createdCount = 0;
-    const today = new Date();
+    const start = new Date(startDate);
     const maxMonths = 12;
     
     // Buat set ID transaksi yang sudah ada untuk cek duplikat
@@ -343,8 +327,8 @@ async function generateTransactionsForRecurring(recurring) {
     }
     
     for (let i = 0; i <= maxMonths; i++) {
-        const targetDate = new Date(today);
-        targetDate.setMonth(today.getMonth() + i);
+        const targetDate = new Date(start);
+        targetDate.setMonth(start.getMonth() + i);
         
         let targetDay = recurring.day_of_month;
         let validDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDay);
@@ -374,8 +358,8 @@ async function generateAllRecurringTransactions() {
     let totalCreated = 0;
     
     for (const recurring of recurringList) {
-        if (recurring.is_active) {
-            const created = await generateTransactionsForRecurring(recurring);
+        if (recurring.is_active && recurring.start_date) {
+            const created = await generateTransactionsForRecurring(recurring, recurring.start_date);
             totalCreated += created;
             if (created > 0) {
                 console.log(`Generated ${created} transactions for recurring: ${recurring.description}`);
@@ -390,37 +374,48 @@ async function generateAllRecurringTransactions() {
     return totalCreated;
 }
 
-// Show Transaction Detail Popup
-async function showTransactionDetail(transactionId) {
-    const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return;
-    
-    const category = getCategoryById(transaction.category_id);
+// ==================== MODAL DETAIL ====================
+
+// Detail Transaksi
+async function showTransactionDetail(transaction) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
+    const cat = getCategoryById(transaction.category_id);
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail Transaksi</div>
             <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
-            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type === 'pemasukan' ? '#10b981' : '#ef4444'}; font-weight:600">${transaction.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(transaction.amount)}</span></div>
-            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDateLong(transaction.created_at)}</span></div>
-            <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${category ? `${category.icon} ${category.name}` : '-'}</span></div>
-            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type === 'pemasukan' ? '💵 Pemasukan' : '💸 Pengeluaran'}</span></div>
-            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${transaction.is_auto_generated ? '🤖 Transaksi Otomatis' : '✏️ Transaksi Manual'}</span></div>
-            <button id="editFromDetail" class="modal-btn modal-btn-primary" style="margin-top:16px">✏️ Edit Transaksi</button>
-            <button id="closeDetail" class="modal-btn modal-btn-secondary">Tutup</button>
+            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
+            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
+            <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${cat ? `${cat.icon} ${cat.name}` : '-'}</span></div>
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${transaction.is_auto_generated ? '🤖 Transaksi Otomatis' : '✏️ Manual'}</span></div>
+            <div class="button-group">
+                <button id="editTransaksiBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                <button id="deleteTransaksiBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
+                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
     
-    document.getElementById("editFromDetail").onclick = () => {
+    document.getElementById("editTransaksiBtn").onclick = () => {
         modal.remove();
-        openEditTransactionModal(transactionId);
+        openEditTransactionModal(transaction.id);
     };
-    document.getElementById("closeDetail").onclick = () => modal.remove();
+    document.getElementById("deleteTransaksiBtn").onclick = async () => {
+        if(confirm("Hapus transaksi ini?")){
+            await sb.from("transactions").delete().eq("id", transaction.id);
+            showToast("Transaksi dihapus");
+            modal.remove();
+            await loadTransactions();
+            renderCurrentView();
+        }
+    };
+    document.getElementById("closeDetailBtn").onclick = () => modal.remove();
 }
 
-// Edit Transaksi
+// Edit Transaksi Modal
 async function openEditTransactionModal(transactionId) {
     const transaction = transactions.find(t => t.id === transactionId);
     if (!transaction) return;
@@ -436,7 +431,7 @@ async function openEditTransactionModal(transactionId) {
                 <option value="pemasukan" ${transaction.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
                 <option value="pengeluaran" ${transaction.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
             </select>
-            <input type="date" id="editTanggal" class="modal-input" value="${transaction.created_at ? transaction.created_at.slice(0,10) : ''}">
+            <input type="date" id="editTanggal" class="modal-input" value="${formatDateInput(transaction.created_at)}">
             <select id="editKat" class="modal-select">
                 <option value="">Pilih Kategori</option>
                 ${categories.map(c => `<option value="${c.id}" ${transaction.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
@@ -444,9 +439,10 @@ async function openEditTransactionModal(transactionId) {
             <label style="display:flex; align-items:center; gap:8px; margin:8px 0">
                 <input type="checkbox" id="editFixed" ${transaction.is_fixed_expense ? 'checked' : ''}> Pengeluaran Tetap
             </label>
-            <input type="hidden" id="editId" value="${transaction.id}">
-            <button id="saveEditTransaksi" class="modal-btn modal-btn-primary">Simpan Perubahan</button>
-            <button id="closeEditModal" class="modal-btn modal-btn-secondary">Batal</button>
+            <div class="button-group">
+                <button id="saveEditTransaksi" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="cancelEditModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
@@ -459,7 +455,6 @@ async function openEditTransactionModal(transactionId) {
         const tanggal = document.getElementById("editTanggal").value;
         const catId = document.getElementById("editKat").value;
         const isFixed = document.getElementById("editFixed").checked;
-        const id = document.getElementById("editId").value;
         
         if (!desc || !amount) {
             alert("Deskripsi dan jumlah harus diisi");
@@ -475,7 +470,7 @@ async function openEditTransactionModal(transactionId) {
         if (catId) updateData.category_id = catId;
         if (tanggal) updateData.created_at = new Date(tanggal).toISOString();
         
-        const { error } = await sb.from("transactions").update(updateData).eq("id", id);
+        const { error } = await sb.from("transactions").update(updateData).eq("id", transactionId);
         if (error) {
             alert("Gagal update: " + error.message);
         } else {
@@ -486,14 +481,11 @@ async function openEditTransactionModal(transactionId) {
         }
     };
     
-    document.getElementById("closeEditModal").onclick = () => modal.remove();
+    document.getElementById("cancelEditModal").onclick = () => modal.remove();
 }
 
-// Show Debt Detail (klik card langsung)
-async function showDebtDetail(debtId) {
-    const debt = debts.find(d => d.id === debtId);
-    if (!debt) return;
-    
+// Detail Hutang
+async function showDebtDetail(debt) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
@@ -501,64 +493,56 @@ async function showDebtDetail(debtId) {
             <div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
             <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">${escapeHtml(debt.contact_name)}</span></div>
             <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value">Rp ${formatRupiah(debt.amount)}</span></div>
-            <div class="detail-row"><span class="detail-label">Tanggal Dibuat</span><span class="detail-value">${formatDateLong(debt.created_at)}</span></div>
-            <div class="detail-row" id="dueDateRow">
-                <span class="detail-label">Jatuh Tempo</span>
-                <span class="detail-value" id="dueDateValue">${debt.due_date ? formatDateLong(debt.due_date) : '-'}</span>
-                <button id="editDueDateBtn" class="edit-detail-btn" style="margin-left:8px;">✏️ Edit</button>
-            </div>
-            ${debt.paid_date ? `<div class="detail-row"><span class="detail-label">Tanggal Lunas</span><span class="detail-value">${formatDateLong(debt.paid_date)}</span></div>` : ''}
+            <div class="detail-row"><span class="detail-label">Tanggal Dibuat</span><span class="detail-value">${formatDate(debt.created_at)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jatuh Tempo</span><span class="detail-value">${debt.due_date ? formatDate(debt.due_date) : '-'}</span></div>
             ${debt.description ? `<div class="detail-row"><span class="detail-label">Catatan</span><span class="detail-value">${escapeHtml(debt.description)}</span></div>` : ''}
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:${debt.status === 'lunas' ? '#10b981' : '#ef4444'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></div>
-            ${debt.status !== 'lunas' ? `<button id="markLunasBtn" class="modal-btn modal-btn-success" style="margin-top:12px">✓ Tandai Lunas</button>` : ''}
-            <button id="closeDetail" class="modal-btn modal-btn-secondary" style="margin-top:8px">Tutup</button>
+            <div class="button-group">
+                ${debt.status !== 'lunas' ? `<button id="lunasDebtBtn" class="modal-btn modal-btn-success">✓ Tandai Lunas</button>` : ''}
+                <button id="editDebtDateBtn" class="modal-btn modal-btn-warning">📅 Edit Jatuh Tempo</button>
+                <button id="deleteDebtBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
+                <button id="closeDebtDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
     
     if (debt.status !== 'lunas') {
-        document.getElementById("markLunasBtn")?.addEventListener("click", async () => {
-            if (confirm("Tandai sebagai lunas?")) {
+        document.getElementById("lunasDebtBtn").onclick = async () => {
+            if(confirm("Tandai sebagai lunas?")){
                 const today = new Date();
                 const paidDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-                const { error } = await sb.from("debts").update({ status: 'lunas', paid_date: paidDate }).eq("id", debt.id);
-                if (!error) {
-                    showToast("Ditandai lunas");
-                    modal.remove();
-                    await loadDebts();
-                    renderCurrentView();
-                }
-            }
-        });
-    }
-    
-    const editBtn = document.getElementById("editDueDateBtn");
-    if (editBtn) {
-        editBtn.onclick = () => {
-            const currentDate = debt.due_date ? debt.due_date.slice(0,10) : '';
-            const dueDateRow = document.getElementById("dueDateRow");
-            dueDateRow.innerHTML = `
-                <span class="detail-label">Jatuh Tempo</span>
-                <input type="date" id="editDueDateInput" class="modal-input" style="width:auto; margin:0;" value="${currentDate}">
-                <button id="saveDueDateBtn" class="edit-detail-btn" style="margin-left:8px;">💾 Simpan</button>
-                <button id="cancelDueDateBtn" class="edit-detail-btn" style="margin-left:4px;">✖️ Batal</button>
-            `;
-            document.getElementById("saveDueDateBtn").onclick = async () => {
-                const newDate = document.getElementById("editDueDateInput").value;
-                await sb.from("debts").update({ due_date: newDate || null }).eq("id", debt.id);
-                showToast("Tanggal jatuh tempo diupdate");
+                await sb.from("debts").update({ status: 'lunas', paid_date: paidDate }).eq("id", debt.id);
+                showToast("Ditandai lunas");
                 modal.remove();
                 await loadDebts();
-                renderHutang();
-            };
-            document.getElementById("cancelDueDateBtn").onclick = () => {
-                modal.remove();
-                showDebtDetail(debt.id);
-            };
+                renderCurrentView();
+            }
         };
     }
     
-    document.getElementById("closeDetail").onclick = () => modal.remove();
+    document.getElementById("editDebtDateBtn").onclick = async () => {
+        const newDate = prompt("Masukkan tanggal jatuh tempo baru (YYYY-MM-DD):", debt.due_date ? debt.due_date.slice(0,10) : "");
+        if (newDate) {
+            await sb.from("debts").update({ due_date: newDate }).eq("id", debt.id);
+            showToast("Tanggal jatuh tempo diupdate");
+            modal.remove();
+            await loadDebts();
+            renderCurrentView();
+        }
+    };
+    
+    document.getElementById("deleteDebtBtn").onclick = async () => {
+        if(confirm("Hapus hutang/piutang ini?")){
+            await sb.from("debts").delete().eq("id", debt.id);
+            showToast("Dihapus");
+            modal.remove();
+            await loadDebts();
+            renderCurrentView();
+        }
+    };
+    
+    document.getElementById("closeDebtDetailBtn").onclick = () => modal.remove();
 }
 
 // Running text
@@ -658,25 +642,24 @@ async function renderHome() {
         <div class="card">
             <div class="card-title"><span>💰 Tabungan</span><span style="color:#10b981">Rp ${formatRupiah(totalSavings)}</span></div>
             <div id="savingsPreview"></div>
-            <button id="viewAllSavings" class="btn-secondary" style="margin-top:8px; width:100%">Lihat semua tabungan →</button>
         </div>
         <div style="display:flex; gap:12px; margin-bottom:20px">
             <button id="quickIncome" class="btn-income">+ Pemasukan</button>
             <button id="quickExpense" class="btn-expense">- Pengeluaran</button>
         </div>
         <div style="display:flex; gap:12px; margin-bottom:20px">
-            <div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center; cursor:pointer" id="piutangCard"><div>💰 Total Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div>
-            <div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center; cursor:pointer" id="hutangCard"><div>💸 Total Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div>
+            <div class="card" style="flex:1; text-align:center; padding:12px; cursor:pointer" id="piutangCard"><div>💰 Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div>
+            <div class="card" style="flex:1; text-align:center; padding:12px; cursor:pointer" id="hutangCard"><div>💸 Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div>
         </div>
-        <div class="card"><div class="card-title">📊 Pengeluaran Teratas Bulan Ini</div>${topExpenses.map((t,i)=>`<div class="top-expense-item clickable" data-id="${t.id}"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran bulan ini</div>'}</div>
-        <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div class="transaction-item clickable" data-id="${t.id}"><div style="flex:1"><div>${escapeHtml(t.description)}${t.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''}</div><div style="font-size:11px; color:#64748b">📅 ${formatDate(t.created_at)}</div></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div><button class="edit-transaction-btn" data-id="${t.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:4px 10px; color:white; font-size:12px; margin-left:8px;">✏️</button></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
+        <div class="card"><div class="card-title">📊 Pengeluaran Teratas Bulan Ini</div>${topExpenses.map((t,i)=>`<div class="top-expense-item"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran bulan ini</div>'}</div>
+        <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div class="transaction-item" data-id="${t.id}"><div>${escapeHtml(t.description)}${t.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''}<br><small>${formatDate(t.created_at)}</small></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
     `;
     document.getElementById("appContainer").innerHTML = html;
     
     const previewDiv = document.getElementById("savingsPreview");
     if(previewDiv) {
         if(savings.length===0) previewDiv.innerHTML='<div class="empty-state" style="padding:12px">Belum ada tabungan</div>';
-        else previewDiv.innerHTML = savings.slice(0,2).map(s=>`<div class="clickable" data-id="${s.id}"><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (Number(s.current_amount)/Number(s.target_amount)*100).toFixed(0):0}%"></div></div></div>`).join('');
+        else previewDiv.innerHTML = savings.slice(0,2).map(s=>`<div class="savings-item" data-id="${s.id}"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (Number(s.current_amount)/Number(s.target_amount)*100).toFixed(0):0}%"></div></div></div></div>`).join('');
     }
     
     document.getElementById("quickIncome")?.addEventListener("click",()=>openTransaksiModal("pemasukan"));
@@ -689,26 +672,24 @@ async function renderHome() {
         renderSettings(); 
     });
     document.getElementById("toggleBalanceBtn")?.addEventListener("click",(e)=>{ e.stopPropagation(); isBalanceHidden=!isBalanceHidden; renderHome(); });
-    document.getElementById("viewAllSavings")?.addEventListener("click",()=>{ 
-        previousNav = currentNav;
-        currentNav = "savings"; 
-        updateNav(); 
-        renderSavings(); 
-    });
-    document.getElementById("piutangCard")?.addEventListener("click",()=>{ currentNav = "hutang"; updateNav(); renderHutang(); });
-    document.getElementById("hutangCard")?.addEventListener("click",()=>{ currentNav = "hutang"; updateNav(); renderHutang(); });
+    document.getElementById("piutangCard")?.addEventListener("click",()=>{ currentNav="hutang"; updateNav(); renderHutang(); });
+    document.getElementById("hutangCard")?.addEventListener("click",()=>{ currentNav="hutang"; updateNav(); renderHutang(); });
     
-    // Clickable transactions
-    document.querySelectorAll(".transaction-item.clickable").forEach(el => {
-        el.onclick = (e) => { if(!e.target.classList.contains('edit-transaction-btn')) showTransactionDetail(el.getAttribute("data-id")); };
-    });
-    document.querySelectorAll(".top-expense-item.clickable").forEach(el => {
-        el.onclick = () => showTransactionDetail(el.getAttribute("data-id"));
+    // Klik transaksi untuk detail
+    document.querySelectorAll(".transaction-item").forEach(el => {
+        el.onclick = () => {
+            const id = el.getAttribute("data-id");
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction) showTransactionDetail(transaction);
+        };
     });
     
-    // Edit buttons
-    document.querySelectorAll(".edit-transaction-btn").forEach(btn => {
-        btn.onclick = (e) => { e.stopPropagation(); openEditTransactionModal(btn.getAttribute("data-id")); };
+    // Klik tabungan untuk detail
+    document.querySelectorAll(".savings-item").forEach(el => {
+        el.onclick = () => {
+            const id = el.getAttribute("data-id");
+            openSavingsModal(id);
+        };
     });
 }
 
@@ -716,15 +697,6 @@ async function renderHome() {
 async function renderTransaksi() {
     await loadRecurring();
     await loadTransactions();
-    
-    // Kelompokkan transaksi berdasarkan bulan untuk menampilkan recurring dengan jelas
-    const transactionsByMonth = {};
-    for (const t of transactions) {
-        const d = new Date(t.created_at);
-        const monthKey = `${d.getFullYear()}-${d.getMonth()+1}`;
-        if (!transactionsByMonth[monthKey]) transactionsByMonth[monthKey] = [];
-        transactionsByMonth[monthKey].push(t);
-    }
     
     let html = `
         <div class="header">
@@ -740,7 +712,7 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
-        <button id="generateRecurringBtn" class="btn-warning" style="margin-bottom:16px; width:100%;">⚡ Generate Transaksi Berulang Sekarang</button>
+        <button id="generateRecurringBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#f59e0b">⚡ Generate Transaksi Berulang</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
@@ -756,40 +728,21 @@ async function renderTransaksi() {
     `;
     document.getElementById("appContainer").innerHTML = html;
     
-    // Tampilkan daftar transaksi berulang dengan informasi bulan yang akan digenerate
+    // Tampilkan daftar transaksi berulang
     const recurringContainer = document.getElementById("recurringList");
     if(recurringList.length === 0) {
         recurringContainer.innerHTML = '<div class="empty-state">Belum ada transaksi berulang</div>';
     } else {
-        recurringContainer.innerHTML = recurringList.map(r => {
-            // Hitung bulan-bulan yang akan digenerate
-            const today = new Date();
-            const months = [];
-            for (let i = 0; i <= 3; i++) {
-                const targetDate = new Date(today);
-                targetDate.setMonth(today.getMonth() + i);
-                let validDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), r.day_of_month);
-                if (validDate.getMonth() === targetDate.getMonth()) {
-                    months.push(`${validDate.getMonth()+1}/${validDate.getFullYear()}`);
-                }
-            }
-            return `
-            <div class="recurring-item">
-                <div>
+        recurringContainer.innerHTML = recurringList.map(r => `
+            <div class="recurring-item" data-id="${r.id}">
+                <div style="flex:1">
                     <div><strong>${escapeHtml(r.description)}</strong></div>
                     <div style="font-size:12px">${r.type === 'pemasukan' ? '💵 Pemasukan' : '💸 Pengeluaran'} • Rp ${formatRupiah(r.amount)} • Tiap tgl ${r.day_of_month}</div>
+                    <div style="font-size:11px; color:#64748b">📅 Mulai: ${formatDate(r.start_date)}</div>
                     <div class="${r.is_active ? 'recurring-active' : 'recurring-inactive'}">${r.is_active ? '✅ Aktif' : '❌ Nonaktif'}</div>
-                    <div class="recurring-month-list">
-                        ${months.map(m => `<div class="recurring-month-item">📅 Akan dibuat: tgl ${r.day_of_month} bulan ${m}</div>`).join('')}
-                        ${months.length < 4 ? '<div class="recurring-month-item">... dan seterusnya</div>' : ''}
-                    </div>
                 </div>
-                <div>
-                    <button class="edit-recurring" data-id="${r.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:5px;">✏️</button>
-                    <button class="delete-recurring" data-id="${r.id}" style="background:#ef4444; border:none; border-radius:30px; padding:6px 12px; color:white;">🗑️</button>
-                </div>
-            </div>`;
-        }).join('');
+            </div>
+        `).join('');
     }
     
     // Tampilkan daftar transaksi
@@ -800,17 +753,13 @@ async function renderTransaksi() {
     const container = document.getElementById("transaksiList");
     if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
     else container.innerHTML = data.map(t=>`
-        <div class="transaction-item clickable" data-id="${t.id}">
+        <div class="transaction-item" data-id="${t.id}">
             <div style="flex:1">
                 <div>${escapeHtml(t.description)}${t.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''}</div>
                 <div style="font-size:11px; color:#64748b">📅 ${formatDate(t.created_at)}</div>
                 <div style="font-size:11px; color:#64748b">${t.category_id ? `• ${getCategoryById(t.category_id)?.icon || ''} ${getCategoryById(t.category_id)?.name || ''}` : ''}</div>
             </div>
             <div style="font-weight:600; color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
-            <div class="transaction-actions">
-                <button class="edit-transaction" data-id="${t.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; font-size:12px;">✏️</button>
-                <button class="delete-transaksi" data-id="${t.id}" style="background:none; border:none; font-size:18px;">🗑️</button>
-            </div>
         </div>
     `).join('');
     
@@ -821,7 +770,7 @@ async function renderTransaksi() {
     document.getElementById("generateRecurringBtn")?.addEventListener("click", async () => {
         showToast("Memproses transaksi berulang...");
         const created = await generateAllRecurringTransactions();
-        showToast(`Selesai! ${created} transaksi baru ditambahkan ke daftar transaksi`);
+        showToast(`Selesai! ${created} transaksi baru ditambahkan`);
         await loadTransactions();
         renderTransaksi();
         if (currentNav === 'home') renderHome();
@@ -834,46 +783,28 @@ async function renderTransaksi() {
         renderSettings(); 
     });
     
-    // Edit recurring
-    document.querySelectorAll(".edit-recurring").forEach(btn => {
-        btn.onclick = () => openRecurringModal(btn.getAttribute("data-id"));
-    });
-    
-    // Delete recurring
-    document.querySelectorAll(".delete-recurring").forEach(btn => {
-        btn.onclick = async () => {
-            if(confirm("Hapus transaksi berulang? Transaksi yang sudah dibuat akan tetap tersimpan.")){
-                const id = btn.getAttribute("data-id");
-                const { error } = await sb.from("recurring_transactions").delete().eq("id", id);
-                if(error) {
-                    alert("Gagal hapus: " + error.message);
-                } else {
-                    showToast("Transaksi berulang dihapus");
-                    await loadRecurring();
-                    renderTransaksi();
-                }
-            }
+    // Klik recurring untuk edit
+    document.querySelectorAll(".recurring-item").forEach(el => {
+        el.onclick = () => {
+            const id = el.getAttribute("data-id");
+            openRecurringModal(id);
         };
     });
     
-    // Click transaction for detail
-    document.querySelectorAll(".transaction-item.clickable").forEach(el => {
-        el.onclick = (e) => { if(!e.target.classList.contains('edit-transaction') && !e.target.classList.contains('delete-transaksi')) showTransactionDetail(el.getAttribute("data-id")); };
+    // Klik transaksi untuk detail
+    document.querySelectorAll(".transaction-item").forEach(el => {
+        el.onclick = () => {
+            const id = el.getAttribute("data-id");
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction) showTransactionDetail(transaction);
+        };
     });
-    
-    // Edit transaksi biasa
-    document.querySelectorAll(".edit-transaction").forEach(btn => {
-        btn.onclick = (e) => { e.stopPropagation(); openEditTransactionModal(btn.getAttribute("data-id")); };
-    });
-    
-    // Delete transaksi biasa
-    document.querySelectorAll(".delete-transaksi").forEach(btn=>btn.onclick=async(e)=>{ e.stopPropagation(); if(confirm("Hapus transaksi?")){await sb.from("transactions").delete().eq("id",btn.getAttribute("data-id")); showToast("Dihapus"); await loadTransactions(); renderTransaksi();}});
     
     // Filter
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
-// Modal Transaksi (dengan tanggal)
+// Modal Transaksi Manual
 function openTransaksiModal(predefinedType=null){
     const today = new Date().toISOString().slice(0,10);
     const modal=document.createElement('div');modal.className='modal-overlay';
@@ -886,8 +817,10 @@ function openTransaksiModal(predefinedType=null){
             <input type="date" id="modalTanggal" class="modal-input" value="${today}">
             <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select>
             <label style="display:flex; align-items:center; gap:8px; margin:8px 0"><input type="checkbox" id="modalFixed"> Pengeluaran Tetap</label>
-            <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
-            <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
+            <div class="button-group">
+                <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
@@ -915,7 +848,7 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// Transaksi Berulang
+// Modal Transaksi Berulang (dengan tanggal mulai)
 async function openRecurringModal(editId=null){
     const isEdit = !!editId;
     let r = null;
@@ -923,6 +856,7 @@ async function openRecurringModal(editId=null){
         await loadRecurring();
         r = recurringList.find(x => x.id === editId);
     }
+    const today = new Date().toISOString().slice(0,10);
     
     const modal = document.createElement('div'); 
     modal.className = 'modal-overlay';
@@ -939,6 +873,7 @@ async function openRecurringModal(editId=null){
                 <option value="">Pilih Tanggal (1-31)</option>
                 ${Array.from({length:31}, (_,i)=>i+1).map(d => `<option value="${d}" ${isEdit && r?.day_of_month === d ? 'selected' : ''}>Tanggal ${d}</option>`).join('')}
             </select>
+            <input type="month" id="recurringStartMonth" class="modal-input" value="${isEdit && r?.start_date ? r.start_date.slice(0,7) : today.slice(0,7)}">
             <select id="recurringCat" class="modal-select">
                 <option value="">Pilih Kategori</option>
                 ${categories.map(c => `<option value="${c.id}" ${isEdit && r?.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
@@ -947,12 +882,13 @@ async function openRecurringModal(editId=null){
                 <input type="checkbox" id="recurringActive" ${isEdit ? (r?.is_active ? 'checked' : '') : 'checked'}> Aktif
             </label>
             <div style="font-size:12px; color:#64748b; margin-top:8px; padding:8px; background:#f0f9ff; border-radius:12px;">
-                💡 Transaksi akan otomatis dibuat setiap tanggal ${isEdit ? r?.day_of_month : 'yang dipilih'} setiap bulan.<br>
-                Contoh: Jika pilih tanggal 25, maka transaksi akan dibuat dengan tanggal 25 Januari 2025, 25 Februari 2025, dst.
+                💡 Transaksi akan otomatis dibuat setiap tanggal ${isEdit ? r?.day_of_month : 'yang dipilih'} setiap bulan, dimulai dari bulan dan tahun yang dipilih.
             </div>
-            <input type="hidden" id="recurringId" value="${editId || ''}">
-            <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
-            <button id="closeRecurring" class="modal-btn modal-btn-secondary">Batal</button>
+            <div class="button-group">
+                <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeRecurring" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteRecurringBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
@@ -963,9 +899,9 @@ async function openRecurringModal(editId=null){
         const amount = parseRupiah(document.getElementById("recurringAmount").value);
         const type = document.getElementById("recurringType").value;
         const day = parseInt(document.getElementById("recurringDay").value);
+        const startMonth = document.getElementById("recurringStartMonth").value;
         const catId = document.getElementById("recurringCat").value;
         const isActive = document.getElementById("recurringActive").checked;
-        const id = document.getElementById("recurringId").value;
         
         if (!desc) {
             alert("Deskripsi harus diisi");
@@ -979,44 +915,46 @@ async function openRecurringModal(editId=null){
             alert("Pilih tanggal yang valid (1-31)");
             return;
         }
+        if (!startMonth) {
+            alert("Pilih bulan dan tahun mulai");
+            return;
+        }
+        
+        // Buat tanggal mulai (gunakan tanggal 1 sebagai patokan)
+        const startDate = new Date(startMonth + "-01");
         
         const data = { 
             description: desc, 
             amount: amount, 
             type: type, 
             day_of_month: day, 
+            start_date: startDate.toISOString(),
             is_active: isActive,
             user_id: currentUser.id
         };
         if (catId) data.category_id = catId;
         
         try {
-            let recurringId = id;
-            if (id) {
-                const { error } = await sb.from("recurring_transactions").update(data).eq("id", id);
+            if (isEdit) {
+                const { error } = await sb.from("recurring_transactions").update(data).eq("id", editId);
                 if (error) throw error;
                 showToast("Transaksi berulang diupdate");
-                recurringId = id;
             } else {
-                const { data: newRecurring, error } = await sb.from("recurring_transactions").insert(data).select();
+                const { error } = await sb.from("recurring_transactions").insert(data);
                 if (error) throw error;
                 showToast("Transaksi berulang ditambahkan");
-                if (newRecurring && newRecurring.length > 0) {
-                    recurringId = newRecurring[0].id;
-                }
             }
             
             modal.remove();
             await loadRecurring();
             
-            if (recurringId && isActive) {
-                const newRecurring = recurringList.find(r => r.id === recurringId);
-                if (newRecurring) {
-                    showToast("Membuat transaksi otomatis...");
-                    const created = await generateTransactionsForRecurring(newRecurring);
-                    await loadTransactions();
-                    showToast(`Selesai! ${created} transaksi otomatis ditambahkan (setiap tanggal ${day})`);
-                }
+            // Generate transaksi untuk recurring yang baru
+            const newRecurring = recurringList.find(rr => rr.description === desc && rr.day_of_month === day);
+            if (newRecurring && newRecurring.is_active) {
+                showToast("Membuat transaksi otomatis...");
+                const created = await generateTransactionsForRecurring(newRecurring, startDate);
+                await loadTransactions();
+                showToast(`Selesai! ${created} transaksi otomatis ditambahkan`);
             }
             
             renderTransaksi();
@@ -1026,6 +964,22 @@ async function openRecurringModal(editId=null){
             alert("Gagal menyimpan: " + err.message);
         }
     };
+    
+    if (isEdit) {
+        document.getElementById("deleteRecurringBtn").onclick = async () => {
+            if(confirm("Hapus transaksi berulang? Transaksi yang sudah dibuat akan tetap tersimpan.")){
+                const { error } = await sb.from("recurring_transactions").delete().eq("id", editId);
+                if(error) {
+                    alert("Gagal hapus: " + error.message);
+                } else {
+                    showToast("Transaksi berulang dihapus");
+                    modal.remove();
+                    await loadRecurring();
+                    renderTransaksi();
+                }
+            }
+        };
+    }
     
     document.getElementById("closeRecurring").onclick = () => modal.remove();
 }
@@ -1045,9 +999,11 @@ function openCategoryManageModal(editId=null) {
                 <option value="pemasukan" ${isEdit && cat.type==='pemasukan'?'selected':''}>💵 Pemasukan</option>
             </select>
             <input type="color" id="catColor" class="modal-input" value="${isEdit?cat.color:'#3b82f6'}">
-            <input type="hidden" id="catId" value="${editId||''}">
-            <button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button>
-            <button id="closeCategoryModal" class="modal-btn modal-btn-secondary">Batal</button>
+            <div class="button-group">
+                <button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeCategoryModal" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteCategoryBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
@@ -1056,10 +1012,9 @@ function openCategoryManageModal(editId=null) {
         const icon = document.getElementById("catIcon").value.trim() || "📁";
         const type = document.getElementById("catType").value;
         const color = document.getElementById("catColor").value;
-        const id = document.getElementById("catId").value;
         if(!name) return alert("Nama kategori harus diisi");
-        if(id) {
-            await sb.from("categories").update({name, icon, type, color}).eq("id",id);
+        if(isEdit) {
+            await sb.from("categories").update({name, icon, type, color}).eq("id", editId);
             showToast("Kategori diupdate");
         } else {
             await sb.from("categories").insert({user_id:currentUser.id, name, icon, type, color});
@@ -1069,10 +1024,21 @@ function openCategoryManageModal(editId=null) {
         await loadCategories();
         renderTransaksi();
     };
+    if (isEdit) {
+        document.getElementById("deleteCategoryBtn").onclick = async () => {
+            if(confirm("Hapus kategori ini?")){
+                await sb.from("categories").delete().eq("id", editId);
+                showToast("Kategori dihapus");
+                modal.remove();
+                await loadCategories();
+                renderTransaksi();
+            }
+        };
+    }
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG - klik card langsung muncul detail
+// HUTANG - klik card untuk detail
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1091,7 +1057,10 @@ async function renderHutang() {
             </div>
         </div>
         ${renderRunningText()}
-        <div style="display:flex; gap:12px; margin-bottom:16px"><div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center"><div>💰 Total Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div><div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center"><div>💸 Total Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div></div>
+        <div style="display:flex; gap:12px; margin-bottom:16px">
+            <div class="card" style="flex:1; text-align:center; padding:12px; background:#d1fae5"><div>💰 Total Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div>
+            <div class="card" style="flex:1; text-align:center; padding:12px; background:#fee2e2"><div>💸 Total Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div>
+        </div>
         <button id="addDebtBtn" class="btn-income" style="margin-bottom:16px">+ Tambah Hutang/Piutang</button>
         <div class="card"><div id="debtList"></div></div>
     `;
@@ -1108,54 +1077,43 @@ async function renderHutang() {
     const container=document.getElementById("debtList");
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data hutang/piutang</div>';
     else container.innerHTML=debts.map(d=>`
-        <div class="debt-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}" data-debt-id="${d.id}">
+        <div class="debt-item" data-id="${d.id}" style="${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'background:#fee2e2; border-radius:12px; padding:8px; margin-bottom:8px' : ''}">
             <div>
                 <div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div>
-                <div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${formatDate(d.due_date)}`:''}`}</div>
-            </div>
-            <div>
-                ${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">✓ Lunas</button>`:''}
-                <button class="delete-debt" data-id="${d.id}" style="background:none; border:none; font-size:18px;">🗑️</button>
+                <div class="task-date">Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${formatDate(d.due_date)}`:''}</div>
+                <div class="task-date" style="color:${d.status==='lunas'?'#10b981':'#ef4444'}">${d.status==='lunas'?'✅ Lunas':'⏳ Belum Lunas'}</div>
             </div>
         </div>
     `).join('');
     
-    // Klik card untuk detail
     document.querySelectorAll(".debt-item").forEach(el => {
-        el.onclick = (e) => { 
-            if(!e.target.classList.contains('lunas-debt') && !e.target.classList.contains('delete-debt')) {
-                showDebtDetail(el.getAttribute("data-debt-id"));
-            }
+        el.onclick = () => {
+            const id = el.getAttribute("data-id");
+            const debt = debts.find(d => d.id === id);
+            if (debt) showDebtDetail(debt);
         };
     });
-    
-    document.querySelectorAll(".lunas-debt").forEach(btn => {
-        btn.onclick = async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const id = this.getAttribute("data-id");
-            if(confirm("Tandai sebagai lunas?")){
-                try {
-                    const today = new Date();
-                    const paidDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-                    const { error } = await sb.from("debts").update({ status: 'lunas', paid_date: paidDate }).eq("id", id);
-                    if (error) throw error;
-                    showToast("Ditandai lunas");
-                    await loadDebts();
-                    renderHutang();
-                } catch(err) {
-                    alert("Gagal update: " + err.message);
-                }
-            }
-        };
-    });
-    
-    document.querySelectorAll(".delete-debt").forEach(btn=>btn.onclick=async(e)=>{ e.stopPropagation(); if(confirm("Hapus?")){await sb.from("debts").delete().eq("id",btn.getAttribute("data-id")); await loadDebts(); renderHutang();}});
 }
 
 function openDebtModal(){
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">Tambah Hutang/Piutang</div><input id="debtName" placeholder="Nama orang" class="modal-input"><input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input"><select id="debtType" class="modal-select"><option value="piutang">💰 Piutang (orang berhutang ke saya)</option><option value="hutang">💸 Hutang (saya berhutang ke orang)</option></select><input id="debtDue" type="date" class="modal-input"><textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea><button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button><button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    modal.innerHTML=`
+        <div class="modal-content">
+            <div class="modal-title">Tambah Hutang/Piutang</div>
+            <input id="debtName" placeholder="Nama orang" class="modal-input">
+            <input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input">
+            <select id="debtType" class="modal-select">
+                <option value="piutang">💰 Piutang (orang berhutang ke saya)</option>
+                <option value="hutang">💸 Hutang (saya berhutang ke orang)</option>
+            </select>
+            <input id="debtDue" type="date" class="modal-input">
+            <textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea>
+            <div class="button-group">
+                <button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     setupRupiahInput('debtAmount');
     document.getElementById("saveDebt").onclick=async()=>{
@@ -1199,36 +1157,38 @@ async function renderSavings() {
     
     const container=document.getElementById("savingsList");
     if(!savings.length) container.innerHTML='<div class="empty-state">Belum ada tabungan</div>';
-    else container.innerHTML=savings.map(s=>`<div class="savings-item clickable" data-id="${s.id}"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (Number(s.current_amount)/Number(s.target_amount)*100).toFixed(0):0}%"></div></div></div><div><button class="edit-savings" data-id="${s.id}">✏️</button><button class="delete-savings" data-id="${s.id}">🗑️</button></div></div>`).join('');
-    
-    document.querySelectorAll(".edit-savings").forEach(btn=>btn.onclick=(e)=>{ e.stopPropagation(); openSavingsModal(btn.getAttribute("data-id")); });
-    document.querySelectorAll(".delete-savings").forEach(btn=>btn.onclick=async(e)=>{ e.stopPropagation(); if(confirm("Hapus tabungan?")){await sb.from("savings").delete().eq("id",btn.getAttribute("data-id")); await loadSavings(); renderSavings();}});
-    document.querySelectorAll(".savings-item.clickable").forEach(el=>el.onclick=()=>showSavingsDetail(el.getAttribute("data-id")));
-}
-
-async function showSavingsDetail(id) {
-    const saving = savings.find(s=>s.id===id);
-    if(!saving) return;
-    const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`
-        <div class="modal-content">
-            <div class="modal-title">💰 Detail Tabungan</div>
-            <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">${escapeHtml(saving.name)}</span></div>
-            <div class="detail-row"><span class="detail-label">Target</span><span class="detail-value">Rp ${formatRupiah(saving.target_amount)}</span></div>
-            <div class="detail-row"><span class="detail-label">Terkumpul</span><span class="detail-value">Rp ${formatRupiah(saving.current_amount)}</span></div>
-            <div class="detail-row"><span class="detail-label">Progress</span><span class="detail-value">${saving.target_amount ? ((saving.current_amount/saving.target_amount)*100).toFixed(1) : 0}%</span></div>
-            <button id="closeDetail" class="modal-btn modal-btn-secondary">Tutup</button>
+    else container.innerHTML=savings.map(s=>`
+        <div class="savings-item" data-id="${s.id}">
+            <div style="flex:1">
+                <div>${escapeHtml(s.name)}</div>
+                <div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (Number(s.current_amount)/Number(s.target_amount)*100).toFixed(0):0}%"></div></div>
+            </div>
         </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById("closeDetail").onclick=()=>modal.remove();
+    `).join('');
+    
+    document.querySelectorAll(".savings-item").forEach(el => {
+        el.onclick = () => openSavingsModal(el.getAttribute("data-id"));
+    });
 }
 
 function openSavingsModal(editId=null){
     const isEdit=!!editId;
     const s=isEdit?savings.find(s=>s.id===editId):null;
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Tabungan':'Tambah Tabungan'}</div><input id="savingsName" class="modal-input" placeholder="Nama Tabungan" value="${isEdit?escapeHtml(s.name):''}"><input type="text" id="savingsTarget" class="modal-input" placeholder="Target Tabungan" value="${isEdit?formatRupiah(s.target_amount):''}"><input type="text" id="savingsCurrent" class="modal-input" placeholder="Jumlah Saat Ini" value="${isEdit?formatRupiah(s.current_amount):'0'}"><input id="savingsId" type="hidden" value="${editId||''}"><button id="saveSavings" class="modal-btn modal-btn-primary">Simpan</button><button id="closeSavings" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    modal.innerHTML=`
+        <div class="modal-content">
+            <div class="modal-title">${isEdit?'Edit Tabungan':'Tambah Tabungan'}</div>
+            <input id="savingsName" class="modal-input" placeholder="Nama Tabungan" value="${isEdit?escapeHtml(s.name):''}">
+            <input type="text" id="savingsTarget" class="modal-input" placeholder="Target Tabungan" value="${isEdit?formatRupiah(s.target_amount):''}">
+            <input type="text" id="savingsCurrent" class="modal-input" placeholder="Jumlah Saat Ini" value="${isEdit?formatRupiah(s.current_amount):'0'}">
+            <div class="button-group">
+                <button id="saveSavings" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeSavings" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteSavingsBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     setupRupiahInput('savingsTarget');
     setupRupiahInput('savingsCurrent');
@@ -1236,13 +1196,21 @@ function openSavingsModal(editId=null){
         const name=document.getElementById("savingsName").value.trim();
         const target=parseRupiah(document.getElementById("savingsTarget").value);
         const current=parseRupiah(document.getElementById("savingsCurrent").value);
-        const id=document.getElementById("savingsId").value;
         if(!name) return alert("Nama tabungan harus diisi");
-        if(id) await sb.from("savings").update({name,target_amount:target,current_amount:current}).eq("id",id);
+        if(isEdit) await sb.from("savings").update({name,target_amount:target,current_amount:current}).eq("id",editId);
         else await sb.from("savings").insert({user_id:currentUser.id,name,target_amount:target,current_amount:current});
         showToast(isEdit?"Tabungan diupdate":"Tabungan ditambahkan");
         modal.remove(); await loadSavings(); renderSavings();
     };
+    if(isEdit){
+        document.getElementById("deleteSavingsBtn").onclick=async()=>{
+            if(confirm("Hapus tabungan?")){
+                await sb.from("savings").delete().eq("id",editId);
+                showToast("Tabungan dihapus");
+                modal.remove(); await loadSavings(); renderSavings();
+            }
+        };
+    }
     document.getElementById("closeSavings").onclick=()=>modal.remove();
 }
 
@@ -1273,37 +1241,39 @@ async function renderReminders() {
     
     const container=document.getElementById("remindersList");
     if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
-    else container.innerHTML=reminders.map(r=>`<div class="reminder-item clickable" data-id="${r.id}"><div><div>${escapeHtml(r.title)}</div><div class="task-date">📅 ${formatDateLong(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>${r.description?`<div class="task-date">${escapeHtml(r.description)}</div>`:''}</div><div><button class="edit-reminder" data-id="${r.id}">✏️</button><button class="delete-reminder" data-id="${r.id}">🗑️</button></div></div>`).join('');
-    
-    document.querySelectorAll(".edit-reminder").forEach(btn=>btn.onclick=(e)=>{ e.stopPropagation(); openReminderModal(btn.getAttribute("data-id")); });
-    document.querySelectorAll(".delete-reminder").forEach(btn=>btn.onclick=async(e)=>{ e.stopPropagation(); if(confirm("Hapus pengingat?")){await sb.from("reminders").delete().eq("id",btn.getAttribute("data-id")); await loadReminders(); renderReminders();}});
-    document.querySelectorAll(".reminder-item.clickable").forEach(el=>el.onclick=()=>showReminderDetail(el.getAttribute("data-id")));
-}
-
-async function showReminderDetail(id) {
-    const r = reminders.find(r=>r.id===id);
-    if(!r) return;
-    const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`
-        <div class="modal-content">
-            <div class="modal-title">⏰ Detail Pengingat</div>
-            <div class="detail-row"><span class="detail-label">Judul</span><span class="detail-value">${escapeHtml(r.title)}</span></div>
-            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDateLong(r.due_date)}</span></div>
-            ${r.description?`<div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(r.description)}</span></div>`:''}
-            ${r.amount?`<div class="detail-row"><span class="detail-label">Estimasi Biaya</span><span class="detail-value">Rp ${formatRupiah(r.amount)}</span></div>`:''}
-            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${r.is_done?'✅ Selesai':'⏳ Belum'}</span></div>
-            <button id="closeDetail" class="modal-btn modal-btn-secondary">Tutup</button>
+    else container.innerHTML=reminders.map(r=>`
+        <div class="reminder-item" data-id="${r.id}">
+            <div>
+                <div>${escapeHtml(r.title)}</div>
+                <div class="task-date">📅 ${formatDate(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>
+                ${r.description?`<div class="task-date">${escapeHtml(r.description)}</div>`:''}
+            </div>
         </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById("closeDetail").onclick=()=>modal.remove();
+    `).join('');
+    
+    document.querySelectorAll(".reminder-item").forEach(el => {
+        el.onclick = () => openReminderModal(el.getAttribute("data-id"));
+    });
 }
 
 function openReminderModal(editId=null){
     const isEdit=!!editId;
     const r=isEdit?reminders.find(r=>r.id===editId):null;
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Pengingat':'Tambah Pengingat'}</div><input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}"><textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea><input type="date" id="reminderDue" class="modal-input" value="${isEdit?r.due_date.slice(0,10):''}"><input type="text" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?formatRupiah(r.amount||0):''}"><input id="reminderId" type="hidden" value="${editId||''}"><button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button><button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    modal.innerHTML=`
+        <div class="modal-content">
+            <div class="modal-title">${isEdit?'Edit Pengingat':'Tambah Pengingat'}</div>
+            <input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}">
+            <textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea>
+            <input type="date" id="reminderDue" class="modal-input" value="${isEdit?formatDateInput(r.due_date):''}">
+            <input type="text" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?formatRupiah(r.amount||0):''}">
+            <div class="button-group">
+                <button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteReminderBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     setupRupiahInput('reminderAmount');
     document.getElementById("saveReminder").onclick=async()=>{
@@ -1311,13 +1281,21 @@ function openReminderModal(editId=null){
         const desc=document.getElementById("reminderDesc").value;
         const due=document.getElementById("reminderDue").value;
         const amount=parseRupiah(document.getElementById("reminderAmount").value);
-        const id=document.getElementById("reminderId").value;
         if(!title||!due) return alert("Judul dan tanggal harus diisi");
-        if(id) await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",id);
+        if(isEdit) await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",editId);
         else await sb.from("reminders").insert({user_id:currentUser.id,title,description:desc,due_date:due,amount});
         showToast(isEdit?"Pengingat diupdate":"Pengingat ditambahkan");
         modal.remove(); await loadReminders(); renderReminders();
     };
+    if(isEdit){
+        document.getElementById("deleteReminderBtn").onclick=async()=>{
+            if(confirm("Hapus pengingat?")){
+                await sb.from("reminders").delete().eq("id",editId);
+                showToast("Pengingat dihapus");
+                modal.remove(); await loadReminders(); renderReminders();
+            }
+        };
+    }
     document.getElementById("closeReminder").onclick=()=>modal.remove();
 }
 
@@ -1358,12 +1336,37 @@ async function renderTasks() {
     if(!filtered.length) container.innerHTML='<div class="empty-state">Belum ada tugas</div>';
     else container.innerHTML=filtered.map(t=>{
         const isOverdue = t.due_date && !t.is_completed && new Date(t.due_date) < new Date();
-        return `<div class="task-item" style="${isOverdue?'background:#fee2e2; border-radius:12px; padding:8px; margin-bottom:8px':''}"><div style="display:flex; align-items:center; gap:8px; flex:1"><input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}><div><div class="${t.is_completed?'task-completed':''}" style="font-weight:500">${escapeHtml(t.title)}</div>${t.description?`<div class="task-date">📝 ${escapeHtml(t.description)}</div>`:''}<div class="task-date">📅 ${t.due_date?formatDateLong(t.due_date):'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div></div></div><div><button class="edit-task" data-id="${t.id}" style="background:none; border:none; font-size:18px;">✏️</button><button class="delete-task" data-id="${t.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div></div>`;
+        return `
+            <div class="task-item" data-id="${t.id}" style="${isOverdue?'background:#fee2e2; border-radius:12px; padding:8px; margin-bottom:8px':''}">
+                <div style="display:flex; align-items:center; gap:8px; flex:1">
+                    <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}>
+                    <div>
+                        <div class="${t.is_completed?'task-completed':''}" style="font-weight:500">${escapeHtml(t.title)}</div>
+                        ${t.description?`<div class="task-date">📝 ${escapeHtml(t.description)}</div>`:''}
+                        <div class="task-date">📅 ${t.due_date?formatDate(t.due_date):'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div>
+                    </div>
+                </div>
+            </div>
+        `;
     }).join('');
     
-    document.querySelectorAll(".task-check").forEach(cb=>cb.onclick=async()=>{await sb.from("tasks").update({is_completed:cb.checked}).eq("id",cb.getAttribute("data-id")); await loadTasks(); renderTasks();});
-    document.querySelectorAll(".edit-task").forEach(btn=>btn.onclick=()=>openTaskModal(btn.getAttribute("data-id")));
-    document.querySelectorAll(".delete-task").forEach(btn=>btn.onclick=async()=>{if(confirm("Hapus tugas?")){await sb.from("tasks").delete().eq("id",btn.getAttribute("data-id")); await loadTasks(); renderTasks();}});
+    document.querySelectorAll(".task-check").forEach(cb=>{
+        cb.onclick = async (e) => {
+            e.stopPropagation();
+            await sb.from("tasks").update({is_completed:cb.checked}).eq("id",cb.getAttribute("data-id"));
+            await loadTasks();
+            renderTasks();
+        };
+    });
+    
+    document.querySelectorAll(".task-item").forEach(el => {
+        el.onclick = (e) => {
+            if(e.target.type !== 'checkbox') {
+                openTaskModal(el.getAttribute("data-id"));
+            }
+        };
+    });
+    
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{taskFilter=btn.getAttribute("data-filter"); renderTasks();});
 }
 
@@ -1371,19 +1374,39 @@ function openTaskModal(editId=null){
     const isEdit=!!editId;
     const t=isEdit?tasks.find(t=>t.id===editId):null;
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'Edit Tugas':'Tambah Tugas'}</div><input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}"><textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit?escapeHtml(t.description||''):''}</textarea><input type="date" id="taskDue" class="modal-input" value="${isEdit?t.due_date?.slice(0,10):''}"><input id="taskId" type="hidden" value="${editId||''}"><button id="saveTask" class="modal-btn modal-btn-primary">Simpan</button><button id="closeTask" class="modal-btn modal-btn-secondary">Batal</button></div>`;
+    modal.innerHTML=`
+        <div class="modal-content">
+            <div class="modal-title">${isEdit?'Edit Tugas':'Tambah Tugas'}</div>
+            <input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}">
+            <textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit?escapeHtml(t.description||''):''}</textarea>
+            <input type="date" id="taskDue" class="modal-input" value="${isEdit?formatDateInput(t.due_date):''}">
+            <div class="button-group">
+                <button id="saveTask" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeTask" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteTaskBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     document.getElementById("saveTask").onclick=async()=>{
         const title=document.getElementById("taskTitle").value.trim();
         const desc=document.getElementById("taskDesc").value;
         const due=document.getElementById("taskDue").value;
-        const id=document.getElementById("taskId").value;
         if(!title) return alert("Judul harus diisi");
-        if(id) await sb.from("tasks").update({title,description:desc,due_date:due||null}).eq("id",id);
+        if(isEdit) await sb.from("tasks").update({title,description:desc,due_date:due||null}).eq("id",editId);
         else await sb.from("tasks").insert({user_id:currentUser.id,title,description:desc,due_date:due||null});
         showToast(isEdit?"Tugas diupdate":"Tugas ditambahkan");
         modal.remove(); await loadTasks(); renderTasks();
     };
+    if(isEdit){
+        document.getElementById("deleteTaskBtn").onclick=async()=>{
+            if(confirm("Hapus tugas?")){
+                await sb.from("tasks").delete().eq("id",editId);
+                showToast("Tugas dihapus");
+                modal.remove(); await loadTasks(); renderTasks();
+            }
+        };
+    }
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
@@ -1417,7 +1440,7 @@ async function renderLaporan() {
         <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="openSettingsBtn" class="settings-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
         ${renderRunningText()}
         <div class="month-selector"><button id="prevMonth">◀</button><span>${monthNames[currentMonth]} ${currentYear}</span><button id="nextMonth">▶</button></div>
-        <div class="balance-card" style="cursor:default"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 ${pemasukan-pengeluaran >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(pemasukan-pengeluaran))}</div></div></div>
+        <div class="balance-card" style="padding:16px"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 ${pemasukan-pengeluaran >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(pemasukan-pengeluaran))}</div></div></div>
         <div class="card"><div class="card-title">📊 Statistik Kategori <button id="exportPdfBtn" style="background:#6366f1; border:none; border-radius:30px; padding:8px 16px; color:white; font-size:12px;">📑 Export PDF</button></div><canvas id="laporanChart" style="max-height:180px; width:100%"></canvas></div>
         <div class="card"><div class="card-title">📋 Detail Transaksi</div><div id="detailTransaksi"></div></div>
     `;
@@ -1447,7 +1470,7 @@ async function renderLaporan() {
         detail+=`<div style="margin-top:12px"><strong>📌 ${date}</strong> <span style="color:${total>=0?'#10b981':'#ef4444'}">${total>=0?'+':'-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`; 
         for (const i of items) {
             const cat=getCategoryById(i.category_id); 
-            detail+=`<div style="padding-left:16px; margin:4px 0; cursor:pointer" class="clickable-transaction" data-id="${i.id}">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`;
+            detail+=`<div style="padding-left:16px; margin:4px 0">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`;
         }
     }
     document.getElementById("detailTransaksi").innerHTML=detail||'<div class="empty-state">Tidak ada transaksi</div>';
@@ -1461,8 +1484,6 @@ async function renderLaporan() {
     document.getElementById("prevMonth")?.addEventListener("click",()=>{if(currentMonth===0){currentMonth=11;currentYear--;}else currentMonth--; renderLaporan();});
     document.getElementById("nextMonth")?.addEventListener("click",()=>{if(currentMonth===11){currentMonth=0;currentYear++;}else currentMonth++; renderLaporan();});
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
-    
-    document.querySelectorAll(".clickable-transaction").forEach(el=>el.onclick=()=>showTransactionDetail(el.getAttribute("data-id")));
 }
 
 // PENGATURAN
@@ -1563,7 +1584,7 @@ async function renderSettings() {
             html += `<div style="margin-bottom:12px"><strong>📤 Undangan yang Anda kirim:</strong></div>`;
             ownerAccess.forEach(s => {
                 const statusText = s.status === 'pending' ? '⏳ Menunggu' : (s.status === 'accepted' ? '✅ Diterima' : '❌ Ditolak');
-                html += `<div class="shared-item"><div>📧 ${escapeHtml(s.shared_email)}<br><small>${s.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat'} • ${statusText}</small></div><button class="remove-shared" data-id="${s.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div>`;
+                html += `<div class="shared-item" data-id="${s.id}"><div>📧 ${escapeHtml(s.shared_email)}<br><small>${s.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat'} • ${statusText}</small></div></div>`;
             });
         }
         if(receiverAccess.length > 0) {
@@ -1575,12 +1596,15 @@ async function renderSettings() {
         sharedDiv.innerHTML = html;
     }
     
-    document.querySelectorAll(".remove-shared").forEach(btn=>btn.onclick=async()=>{
-        if(confirm("Hapus akses ini?")){
-            await sb.from("shared_access").delete().eq("id",btn.getAttribute("data-id"));
-            showToast("Akses dihapus");
-            renderSettings();
-        }
+    document.querySelectorAll(".shared-item").forEach(el => {
+        el.onclick = async () => {
+            const id = el.getAttribute("data-id");
+            if(id && confirm("Hapus akses ini?")){
+                await sb.from("shared_access").delete().eq("id", id);
+                showToast("Akses dihapus");
+                renderSettings();
+            }
+        };
     });
     
     document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{
@@ -1668,12 +1692,6 @@ async function onAuthSuccess(user) {
     await loadTasks(); 
     await loadRecurring();
     await loadSharedAccess();
-    
-    // Generate semua transaksi berulang yang belum dibuat
-    const created = await generateAllRecurringTransactions();
-    if (created > 0) {
-        console.log(`Generated ${created} missing recurring transactions`);
-    }
     
     addBottomNav();
     renderCurrentView();
