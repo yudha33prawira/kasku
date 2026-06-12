@@ -118,7 +118,7 @@ let savings = [];
 let reminders = [];
 let tasks = [];
 let recurringList = [];
-let sharedAccess = []; // Daftar akses bersama
+let sharedAccess = [];
 let chart = null;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
@@ -178,21 +178,85 @@ function setupRupiahInput(inputId) {
     });
 }
 
-// Load Data
-async function loadCategories() { if(currentUser) { const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); if(data) categories=data; } }
-async function loadTransactions() { if(currentUser) { const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id); if(data) transactions=data; } }
-async function loadDebts() { if(currentUser) { const {data}=await sb.from("debts").select("*").eq("user_id",currentUser.id); if(data) debts=data; } }
-async function loadSavings() { if(currentUser) { const {data}=await sb.from("savings").select("*").eq("user_id",currentUser.id); if(data) savings=data; } }
-async function loadReminders() { if(currentUser) { const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); if(data) reminders=data; } }
-async function loadTasks() { if(currentUser) { const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); if(data) tasks=data; } }
-async function loadRecurring() { if(currentUser) { const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); if(data) recurringList=data; } }
+// Clear session on auth error
+async function clearAndLogout() {
+    try {
+        await sb.auth.signOut();
+    } catch(e) {}
+    localStorage.removeItem('sb-dttupsimbwsffyylfpax-auth-token');
+    currentUser = null;
+    document.querySelector(".bottom-nav")?.remove();
+    document.getElementById("appContainer").innerHTML = "";
+    document.getElementById("loginModal").style.display = "flex";
+    document.getElementById("emailInput").value = "";
+    document.getElementById("passwordInput").value = "";
+    showToast("Sesi habis, silakan login kembali");
+}
+
+// Load Data dengan error handling
+async function loadCategories() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); 
+            if(data) categories=data; 
+        } catch(e) { console.error("Load categories error:", e); }
+    } 
+}
+async function loadTransactions() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id); 
+            if(data) transactions=data; 
+        } catch(e) { console.error("Load transactions error:", e); }
+    } 
+}
+async function loadDebts() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
+            if(data) debts=data; 
+        } catch(e) { console.error("Load debts error:", e); }
+    } 
+}
+async function loadSavings() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
+            if(data) savings=data; 
+        } catch(e) { console.error("Load savings error:", e); }
+    } 
+}
+async function loadReminders() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
+            if(data) reminders=data; 
+        } catch(e) { console.error("Load reminders error:", e); }
+    } 
+}
+async function loadTasks() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
+            if(data) tasks=data; 
+        } catch(e) { console.error("Load tasks error:", e); }
+    } 
+}
+async function loadRecurring() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); 
+            if(data) recurringList=data; 
+        } catch(e) { console.error("Load recurring error:", e); }
+    } 
+}
 async function loadSharedAccess() { 
     if(currentUser) { 
-        // Akses yang dibuat oleh user (sebagai owner)
-        const {data: asOwner}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
-        // Akses yang ditujukan ke email user (sebagai penerima)
-        const {data: asReceiver}=await sb.from("shared_access").select("*").eq("shared_email",currentUser.email);
-        sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
+        try {
+            const {data: asOwner}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
+            const {data: asReceiver}=await sb.from("shared_access").select("*").eq("shared_email",currentUser.email);
+            sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
+        } catch(e) { console.error("Load shared access error:", e); }
     } 
 }
 
@@ -555,7 +619,6 @@ async function renderHutang() {
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data</div>';
     else container.innerHTML=debts.map(d=>`<div class="transaction-item ${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'debt-urgent' : ''}" data-debt-id="${d.id}"><div><div>${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div><div class="task-date">${d.status==='lunas'?'✅ Lunas':`Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${new Date(d.due_date).toLocaleDateString()}`:''}`}</div></div><div><button class="debt-detail" data-id="${d.id}" style="background:#3b82f6; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">Detail</button>${d.status!=='lunas'?`<button class="lunas-debt" data-id="${d.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white; margin-right:8px;">✓ Lunas</button>`:''}<button class="delete-debt" data-id="${d.id}" style="background:none; border:none; font-size:18px;">🗑️</button></div></div>`).join('');
     
-    // Event lunas
     document.querySelectorAll(".lunas-debt").forEach(btn => {
         btn.onclick = async function(e) {
             e.preventDefault();
@@ -873,7 +936,7 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// PENGATURAN - dengan akses bersama yang benar
+// PENGATURAN
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -932,14 +995,12 @@ async function renderSettings() {
         else showToast("Password berhasil diubah");
     });
     
-    // Kirim undangan akses bersama
     document.getElementById("addSharedBtn")?.addEventListener("click",async()=>{
         const email = document.getElementById("sharedEmail").value.trim();
         const level = document.getElementById("accessLevel").value;
         if(!email) return alert("Email harus diisi");
         if(email === currentUser.email) return alert("Tidak bisa membagikan akses ke diri sendiri");
         
-        // Cek apakah sudah pernah diundang
         const {data: existing} = await sb.from("shared_access").select("*").eq("owner_id",currentUser.id).eq("shared_email",email);
         if(existing && existing.length > 0) {
             return alert("Email ini sudah pernah diundang sebelumnya");
@@ -960,7 +1021,6 @@ async function renderSettings() {
         }
     });
     
-    // Tampilkan daftar akses bersama
     await loadSharedAccess();
     const sharedDiv = document.getElementById("sharedList");
     const ownerAccess = sharedAccess.filter(s => s.owner_id === currentUser.id);
@@ -1101,7 +1161,14 @@ async function logout() {
 
 async function checkSession() {
     try {
-        const { data } = await sb.auth.getSession();
+        const { data, error } = await sb.auth.getSession();
+        if (error) {
+            // If session error, clear storage and show login
+            console.error("Session error:", error);
+            localStorage.removeItem('sb-dttupsimbwsffyylfpax-auth-token');
+            document.getElementById("loginModal").style.display = "flex";
+            return;
+        }
         if (data.session?.user) { 
             await onAuthSuccess(data.session.user); 
         } else { 
