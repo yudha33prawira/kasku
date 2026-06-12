@@ -213,11 +213,31 @@ function setupRupiahInput(inputId) {
     });
 }
 
-// Load Data
+// Clear session and logout
+async function forceLogout() {
+    try {
+        await sb.auth.signOut();
+    } catch(e) {}
+    localStorage.clear();
+    sessionStorage.clear();
+    currentUser = null;
+    document.querySelector(".bottom-nav")?.remove();
+    document.getElementById("appContainer").innerHTML = "";
+    document.getElementById("loginModal").style.display = "flex";
+    document.getElementById("emailInput").value = "";
+    document.getElementById("passwordInput").value = "";
+    showToast("Sesi habis, silakan login kembali");
+}
+
+// Load Data dengan error handling dan auto logout jika session invalid
 async function loadCategories() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); 
+            const {data, error}=await sb.from("categories").select("*").eq("user_id",currentUser.id); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) categories=data; 
         } catch(e) { console.error("Load categories error:", e); }
     } 
@@ -225,7 +245,11 @@ async function loadCategories() {
 async function loadTransactions() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id).order("created_at", { ascending: false }); 
+            const {data, error}=await sb.from("transactions").select("*").eq("user_id",currentUser.id).order("created_at", { ascending: false }); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) {
                 transactions = data;
                 console.log("Loaded transactions:", transactions.length);
@@ -236,7 +260,11 @@ async function loadTransactions() {
 async function loadDebts() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
+            const {data, error}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) debts=data; 
         } catch(e) { console.error("Load debts error:", e); }
     } 
@@ -244,7 +272,11 @@ async function loadDebts() {
 async function loadSavings() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
+            const {data, error}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) savings=data; 
         } catch(e) { console.error("Load savings error:", e); }
     } 
@@ -252,7 +284,11 @@ async function loadSavings() {
 async function loadReminders() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
+            const {data, error}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) reminders=data; 
         } catch(e) { console.error("Load reminders error:", e); }
     } 
@@ -260,7 +296,11 @@ async function loadReminders() {
 async function loadTasks() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
+            const {data, error}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) tasks=data; 
         } catch(e) { console.error("Load tasks error:", e); }
     } 
@@ -268,7 +308,11 @@ async function loadTasks() {
 async function loadRecurring() { 
     if(currentUser) { 
         try {
-            const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); 
+            const {data, error}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); 
+            if(error && error.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             if(data) recurringList=data; 
             console.log("Loaded recurring:", recurringList.length);
         } catch(e) { console.error("Load recurring error:", e); }
@@ -277,14 +321,18 @@ async function loadRecurring() {
 async function loadSharedAccess() { 
     if(currentUser) { 
         try {
-            const {data: asOwner}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
-            const {data: asReceiver}=await sb.from("shared_access").select("*").eq("shared_email",currentUser.email);
+            const {data: asOwner, error: err1}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
+            const {data: asReceiver, error: err2}=await sb.from("shared_access").select("*").eq("shared_email",currentUser.email);
+            if(err1?.message?.includes("Invalid Refresh Token") || err2?.message?.includes("Invalid Refresh Token")) {
+                await forceLogout();
+                return;
+            }
             sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
         } catch(e) { console.error("Load shared access error:", e); }
     } 
 }
 
-// PERBAIKAN: Fungsi untuk membuat transaksi dari recurring (untuk semua bulan dari start_date sampai sekarang)
+// PERBAIKAN: Fungsi untuk membuat transaksi dari recurring
 async function generateTransactionsForRecurring(recurring) {
     if (!currentUser || !recurring.is_active) return 0;
     
@@ -294,11 +342,11 @@ async function generateTransactionsForRecurring(recurring) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Mulai dari start_date
-    let startDate = recurring.start_date ? new Date(recurring.start_date) : new Date();
+    // Mulai dari start_date atau dari awal tahun ini
+    let startDate = recurring.start_date ? new Date(recurring.start_date) : new Date(today.getFullYear(), 0, 1);
     startDate.setHours(0, 0, 0, 0);
     
-    // Generate sampai hari ini + 12 bulan ke depan
+    // Generate sampai 12 bulan ke depan
     const maxDate = new Date(today);
     maxDate.setMonth(today.getMonth() + 12);
     
@@ -343,6 +391,8 @@ async function generateTransactionsForRecurring(recurring) {
                     createdCount++;
                     existingKeys.add(key);
                     console.log(`Created: ${recurring.description} for ${targetDate.toLocaleDateString()}`);
+                } else {
+                    console.error("Error inserting transaction:", error);
                 }
             }
         }
@@ -925,7 +975,6 @@ async function openRecurringModal(editId=null){
             return;
         }
         
-        // Buat tanggal mulai (gunakan tanggal 1 sebagai patokan)
         const startDate = new Date(startMonth + "-01");
         
         const data = { 
@@ -953,7 +1002,7 @@ async function openRecurringModal(editId=null){
             modal.remove();
             await loadRecurring();
             
-            // Generate transaksi untuk recurring yang baru
+            // Generate transaksi
             const newRecurring = recurringList.find(rr => rr.description === desc && rr.day_of_month === day);
             if (newRecurring && newRecurring.is_active) {
                 showToast("Membuat transaksi otomatis...");
@@ -1708,6 +1757,8 @@ async function logout() {
     } catch(e) {
         console.log("Logout error:", e);
     }
+    localStorage.clear();
+    sessionStorage.clear();
     currentUser = null;
     document.querySelector(".bottom-nav")?.remove();
     document.getElementById("appContainer").innerHTML = "";
@@ -1718,10 +1769,12 @@ async function logout() {
 
 async function checkSession() {
     try {
+        // Bersihkan storage yang mungkin rusak
         const { data, error } = await sb.auth.getSession();
-        if (error) {
-            console.error("Session error:", error);
-            localStorage.removeItem('sb-dttupsimbwsffyylfpax-auth-token');
+        if (error && error.message?.includes("Invalid Refresh Token")) {
+            console.log("Session invalid, clearing storage...");
+            localStorage.clear();
+            sessionStorage.clear();
             document.getElementById("loginModal").style.display = "flex";
             return;
         }
