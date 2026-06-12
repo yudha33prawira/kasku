@@ -138,7 +138,7 @@ function showToast(msg) {
     t.className = 'toast'; 
     t.innerText = msg; 
     document.body.appendChild(t); 
-    setTimeout(() => t.remove(), 2000); 
+    setTimeout(() => t.remove(), 3000); 
 }
 
 function formatRupiah(angka) {
@@ -270,8 +270,8 @@ async function loadSharedAccess() {
     } 
 }
 
-// Fungsi untuk membuat transaksi otomatis dari recurring - SIMPLIFIED
-async function createTransactionFromRecurring(recurring, targetDate) {
+// Fungsi untuk membuat transaksi langsung dari recurring
+async function createRecurringTransactionDirect(recurring, targetDate) {
     if (!currentUser) return false;
     
     const insertData = {
@@ -295,50 +295,63 @@ async function createTransactionFromRecurring(recurring, targetDate) {
     return true;
 }
 
-// Generate untuk semua recurring
-async function generateAllRecurringTransactions() {
-    if (!currentUser) return 0;
+// Generate transaksi untuk recurring tertentu
+async function generateTransactionsForRecurring(recurring) {
+    if (!currentUser || !recurring.is_active) return 0;
     
-    await loadRecurring();
     await loadTransactions();
     
-    let totalCreated = 0;
+    let createdCount = 0;
     const today = new Date();
     const maxMonths = 12;
     
     // Buat set ID transaksi yang sudah ada untuk cek duplikat
     const existingKeys = new Set();
     for (const t of transactions) {
-        if (t.recurring_id) {
+        if (t.recurring_id === recurring.id) {
             const tDate = new Date(t.created_at);
-            const key = `${t.recurring_id}_${tDate.getFullYear()}_${tDate.getMonth()}`;
+            const key = `${tDate.getFullYear()}_${tDate.getMonth()}`;
             existingKeys.add(key);
         }
     }
     
-    for (const recurring of recurringList) {
-        if (!recurring.is_active) continue;
+    for (let i = 0; i <= maxMonths; i++) {
+        const targetDate = new Date(today);
+        targetDate.setMonth(today.getMonth() + i);
         
-        for (let i = 0; i <= maxMonths; i++) {
-            const targetDate = new Date(today);
-            targetDate.setMonth(today.getMonth() + i);
-            
-            let targetDay = recurring.day_of_month;
-            let validDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDay);
-            
-            // Skip jika tanggal tidak valid (contoh: 31 di bulan Februari)
-            if (validDate.getMonth() !== targetDate.getMonth()) {
-                continue;
+        let targetDay = recurring.day_of_month;
+        let validDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDay);
+        
+        if (validDate.getMonth() !== targetDate.getMonth()) {
+            continue;
+        }
+        
+        const key = `${validDate.getFullYear()}_${validDate.getMonth()}`;
+        if (!existingKeys.has(key)) {
+            const success = await createRecurringTransactionDirect(recurring, validDate);
+            if (success) {
+                createdCount++;
+                existingKeys.add(key);
             }
-            
-            // Cek duplikat
-            const key = `${recurring.id}_${validDate.getFullYear()}_${validDate.getMonth()}`;
-            if (!existingKeys.has(key)) {
-                const success = await createTransactionFromRecurring(recurring, validDate);
-                if (success) {
-                    totalCreated++;
-                    existingKeys.add(key);
-                }
+        }
+    }
+    
+    return createdCount;
+}
+
+// Generate untuk semua recurring
+async function generateAllRecurringTransactions() {
+    if (!currentUser) return 0;
+    
+    await loadRecurring();
+    let totalCreated = 0;
+    
+    for (const recurring of recurringList) {
+        if (recurring.is_active) {
+            const created = await generateTransactionsForRecurring(recurring);
+            totalCreated += created;
+            if (created > 0) {
+                console.log(`Generated ${created} transactions for recurring: ${recurring.description}`);
             }
         }
     }
@@ -505,7 +518,7 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
-        <button id="generateNowBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">⚡ Generate Semua Transaksi Berulang</button>
+        <button id="refreshRecurringBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">🔄 Refresh Transaksi Berulang</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
@@ -554,7 +567,7 @@ async function renderTransaksi() {
     document.getElementById("addTransaksiBtn")?.addEventListener("click",()=>openTransaksiModal());
     document.getElementById("addRecurringBtn")?.addEventListener("click",()=>openRecurringModal());
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
-    document.getElementById("generateNowBtn")?.addEventListener("click", async () => {
+    document.getElementById("refreshRecurringBtn")?.addEventListener("click", async () => {
         showToast("Memproses transaksi berulang...");
         const created = await generateAllRecurringTransactions();
         showToast(`Selesai! ${created} transaksi baru ditambahkan`);
@@ -637,7 +650,7 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// Transaksi Berulang
+// Transaksi Berulang - LANGSUNG BUAT TRANSAKSI SAAT DISIMPAN
 async function openRecurringModal(editId=null){
     const isEdit = !!editId;
     let r = null;
@@ -669,7 +682,7 @@ async function openRecurringModal(editId=null){
                 <input type="checkbox" id="recurringActive" ${isEdit ? (r?.is_active ? 'checked' : '') : 'checked'}> Aktif
             </label>
             <div style="font-size:12px; color:#64748b; margin-top:8px; padding:8px; background:#f0f9ff; border-radius:12px;">
-                💡 Setelah disimpan, klik tombol "Generate Semua Transaksi Berulang" untuk membuat transaksi otomatis.
+                💡 Setelah disimpan, sistem akan otomatis membuat transaksi untuk bulan ini dan 12 bulan ke depan.
             </div>
             <input type="hidden" id="recurringId" value="${editId || ''}">
             <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
@@ -712,20 +725,39 @@ async function openRecurringModal(editId=null){
         if (catId) data.category_id = catId;
         
         try {
+            let recurringId = id;
             if (id) {
+                // Update existing
                 const { error } = await sb.from("recurring_transactions").update(data).eq("id", id);
                 if (error) throw error;
                 showToast("Transaksi berulang diupdate");
+                recurringId = id;
             } else {
-                const { error } = await sb.from("recurring_transactions").insert(data);
+                // Insert new
+                const { data: newRecurring, error } = await sb.from("recurring_transactions").insert(data).select();
                 if (error) throw error;
                 showToast("Transaksi berulang ditambahkan");
+                if (newRecurring && newRecurring.length > 0) {
+                    recurringId = newRecurring[0].id;
+                }
             }
             
             modal.remove();
             await loadRecurring();
-            renderTransaksi();
             
+            // LANGSUNG GENERATE TRANSAKSI
+            if (recurringId && isActive) {
+                const newRecurring = recurringList.find(r => r.id === recurringId);
+                if (newRecurring) {
+                    showToast("Membuat transaksi otomatis...");
+                    const created = await generateTransactionsForRecurring(newRecurring);
+                    await loadTransactions();
+                    showToast(`Selesai! ${created} transaksi otomatis ditambahkan ke daftar transaksi`);
+                }
+            }
+            
+            renderTransaksi();
+            if (currentNav === 'home') renderHome();
         } catch(err) {
             console.error("Error saving recurring:", err);
             alert("Gagal menyimpan: " + err.message);
@@ -777,7 +809,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG (sama seperti sebelumnya, tidak diubah banyak)
+// HUTANG
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
