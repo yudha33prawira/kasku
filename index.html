@@ -86,6 +86,7 @@
         .recurring-active { color: #10b981; font-size: 12px; }
         .recurring-inactive { color: #ef4444; font-size: 12px; }
         .badge-auto { background: #8b5cf6; color: white; font-size: 10px; padding: 2px 6px; border-radius: 20px; margin-left: 8px; }
+        .btn-warning { background: #f59e0b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -270,8 +271,8 @@ async function loadSharedAccess() {
     } 
 }
 
-// Fungsi untuk membuat transaksi langsung dari recurring
-async function createRecurringTransactionDirect(recurring, targetDate) {
+// Fungsi untuk membuat satu transaksi dari recurring
+async function createSingleRecurringTransaction(recurring, targetDate) {
     if (!currentUser) return false;
     
     const insertData = {
@@ -295,7 +296,7 @@ async function createRecurringTransactionDirect(recurring, targetDate) {
     return true;
 }
 
-// Generate transaksi untuk recurring tertentu
+// Generate transaksi untuk recurring tertentu (semua bulan)
 async function generateTransactionsForRecurring(recurring) {
     if (!currentUser || !recurring.is_active) return 0;
     
@@ -328,7 +329,7 @@ async function generateTransactionsForRecurring(recurring) {
         
         const key = `${validDate.getFullYear()}_${validDate.getMonth()}`;
         if (!existingKeys.has(key)) {
-            const success = await createRecurringTransactionDirect(recurring, validDate);
+            const success = await createSingleRecurringTransaction(recurring, validDate);
             if (success) {
                 createdCount++;
                 existingKeys.add(key);
@@ -339,7 +340,7 @@ async function generateTransactionsForRecurring(recurring) {
     return createdCount;
 }
 
-// Generate untuk semua recurring
+// Generate untuk semua recurring aktif
 async function generateAllRecurringTransactions() {
     if (!currentUser) return 0;
     
@@ -518,7 +519,7 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
-        <button id="refreshRecurringBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">🔄 Refresh Transaksi Berulang</button>
+        <button id="generateRecurringBtn" class="btn-warning" style="margin-bottom:16px; width:100%;">⚡ Generate Transaksi Berulang Sekarang</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
@@ -567,10 +568,10 @@ async function renderTransaksi() {
     document.getElementById("addTransaksiBtn")?.addEventListener("click",()=>openTransaksiModal());
     document.getElementById("addRecurringBtn")?.addEventListener("click",()=>openRecurringModal());
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
-    document.getElementById("refreshRecurringBtn")?.addEventListener("click", async () => {
+    document.getElementById("generateRecurringBtn")?.addEventListener("click", async () => {
         showToast("Memproses transaksi berulang...");
         const created = await generateAllRecurringTransactions();
-        showToast(`Selesai! ${created} transaksi baru ditambahkan`);
+        showToast(`Selesai! ${created} transaksi baru ditambahkan ke daftar transaksi`);
         await loadTransactions();
         renderTransaksi();
         if (currentNav === 'home') renderHome();
@@ -650,7 +651,7 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// Transaksi Berulang - LANGSUNG BUAT TRANSAKSI SAAT DISIMPAN
+// Transaksi Berulang - LANGSUNG GENERATE SAAT DISIMPAN
 async function openRecurringModal(editId=null){
     const isEdit = !!editId;
     let r = null;
@@ -682,7 +683,7 @@ async function openRecurringModal(editId=null){
                 <input type="checkbox" id="recurringActive" ${isEdit ? (r?.is_active ? 'checked' : '') : 'checked'}> Aktif
             </label>
             <div style="font-size:12px; color:#64748b; margin-top:8px; padding:8px; background:#f0f9ff; border-radius:12px;">
-                💡 Setelah disimpan, sistem akan otomatis membuat transaksi untuk bulan ini dan 12 bulan ke depan.
+                💡 Setelah disimpan, sistem akan otomatis membuat transaksi untuk 12 bulan ke depan.
             </div>
             <input type="hidden" id="recurringId" value="${editId || ''}">
             <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
@@ -745,7 +746,7 @@ async function openRecurringModal(editId=null){
             modal.remove();
             await loadRecurring();
             
-            // LANGSUNG GENERATE TRANSAKSI
+            // LANGSUNG GENERATE TRANSAKSI SETELAH DISIMPAN
             if (recurringId && isActive) {
                 const newRecurring = recurringList.find(r => r.id === recurringId);
                 if (newRecurring) {
@@ -809,7 +810,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG
+// HUTANG (sama seperti sebelumnya)
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1398,6 +1399,12 @@ async function onAuthSuccess(user) {
     await loadTasks(); 
     await loadRecurring();
     await loadSharedAccess();
+    
+    // Generate semua transaksi berulang yang belum dibuat
+    const created = await generateAllRecurringTransactions();
+    if (created > 0) {
+        console.log(`Generated ${created} missing recurring transactions`);
+    }
     
     addBottomNav();
     renderCurrentView();
