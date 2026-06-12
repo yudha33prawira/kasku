@@ -162,12 +162,15 @@ function getCategoryById(id) {
 
 function hitungTotalSaldo() { 
     let p=0, k=0; 
-    transactions.forEach(t => t.type==='pemasukan'? p+=t.amount : k+=t.amount); 
+    transactions.forEach(t => {
+        if (t.type === 'pemasukan') p += t.amount;
+        else if (t.type === 'pengeluaran') k += t.amount;
+    });
     return { pemasukan:p, pengeluaran:k, saldo:p-k }; 
 }
 
 function hitungTotalTabungan() { 
-    return savings.reduce((a,b)=>a+b.current_amount,0); 
+    return savings.reduce((a,b)=>a + (b.current_amount || 0), 0); 
 }
 
 function setupRupiahInput(inputId) {
@@ -194,6 +197,7 @@ async function loadTransactions() {
         try {
             const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id); 
             if(data) transactions=data; 
+            console.log("Loaded transactions:", transactions.length);
         } catch(e) { console.error("Load transactions error:", e); }
     } 
 }
@@ -234,7 +238,7 @@ async function loadRecurring() {
         try {
             const {data}=await sb.from("recurring_transactions").select("*").eq("user_id",currentUser.id); 
             if(data) recurringList=data; 
-            console.log("Loaded recurring:", recurringList);
+            console.log("Loaded recurring:", recurringList.length);
         } catch(e) { console.error("Load recurring error:", e); }
     } 
 }
@@ -248,138 +252,83 @@ async function loadSharedAccess() {
     } 
 }
 
-// Process recurring - Generate transaksi otomatis untuk bulan ini dan seterusnya
-async function processRecurring() {
-    if (!currentUser) return;
-    if (recurringList.length === 0) return;
+// Fungsi untuk membuat transaksi otomatis dari recurring
+async function generateTransactionsFromRecurring(recurring) {
+    if (!currentUser) return [];
+    if (!recurring.is_active) return [];
     
     const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-    const currentDay = today.getDate();
+    const transactionsCreated = [];
+    const maxMonths = 6; // Generate untuk 6 bulan ke depan
     
-    // Untuk setiap transaksi berulang
-    for (const r of recurringList) {
-        if (!r.is_active) continue;
+    for (let i = 0; i <= maxMonths; i++) {
+        const targetDate = new Date(today);
+        targetDate.setMonth(today.getMonth() + i);
         
-        const dayOfMonth = r.day_of_month;
-        if (dayOfMonth > currentDay) continue; // Hanya proses tanggal yang sudah lewat
-        
-        // Generate transaksi untuk bulan ini
-        const targetDate = new Date(currentYear, currentMonth, dayOfMonth);
-        
-        // Cek apakah sudah pernah diproses bulan ini
-        const lastProcessed = r.last_processed_date ? new Date(r.last_processed_date) : null;
-        if (lastProcessed && 
-            lastProcessed.getMonth() === currentMonth && 
-            lastProcessed.getFullYear() === currentYear) {
-            continue; // Sudah diproses bulan ini
+        let targetDay = recurring.day_of_month;
+        // Handle tanggal yang tidak valid (misal 31 di bulan Februari)
+        let validDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDay);
+        if (validDate.getMonth() !== targetDate.getMonth()) {
+            // Jika tanggal tidak valid, skip
+            continue;
         }
         
-        // Cek apakah transaksi sudah ada di database untuk tanggal ini
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`;
+        const dateStr = `${validDate.getFullYear()}-${String(validDate.getMonth() + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+        
+        // Cek apakah transaksi sudah ada
         const existingTransaction = transactions.find(t => {
             if (!t.created_at) return false;
+            if (t.recurring_id !== recurring.id) return false;
             const tDate = new Date(t.created_at);
-            return tDate.getFullYear() === currentYear && 
-                   tDate.getMonth() === currentMonth && 
-                   tDate.getDate() === dayOfMonth &&
-                   t.description.includes(r.description);
+            return tDate.getFullYear() === validDate.getFullYear() && 
+                   tDate.getMonth() === validDate.getMonth() && 
+                   tDate.getDate() === targetDay;
         });
         
-        if (!existingTransaction && targetDate <= today) {
-            // Buat transaksi otomatis
+        if (!existingTransaction) {
+            // Buat transaksi baru
             const insertData = {
                 user_id: currentUser.id,
-                description: `${r.description} (otomatis)`,
-                amount: r.amount,
-                type: r.type,
-                is_fixed_expense: r.type === 'pengeluaran',
-                created_at: targetDate.toISOString(),
+                description: recurring.description,
+                amount: recurring.amount,
+                type: recurring.type,
+                is_fixed_expense: recurring.type === 'pengeluaran',
+                created_at: validDate.toISOString(),
                 is_auto_generated: true,
-                recurring_id: r.id
+                recurring_id: recurring.id
             };
-            if (r.category_id) insertData.category_id = r.category_id;
+            if (recurring.category_id) insertData.category_id = recurring.category_id;
             
-            const { error } = await sb.from("transactions").insert(insertData);
+            const { data: newTransaction, error } = await sb.from("transactions").insert(insertData).select();
             if (error) {
-                console.error("Error inserting recurring transaction:", error);
-            } else {
-                console.log(`Auto-generated transaction: ${r.description} for ${dateStr}`);
+                console.error("Error generating transaction:", error);
+            } else if (newTransaction && newTransaction.length > 0) {
+                transactionsCreated.push(newTransaction[0]);
             }
         }
-        
-        // Update last_processed_date
-        await sb.from("recurring_transactions")
-            .update({ last_processed_date: targetDate.toISOString().split('T')[0] })
-            .eq("id", r.id);
     }
+    
+    return transactionsCreated;
 }
 
-// Generate future recurring transactions
-async function generateFutureRecurring() {
+// Proses semua transaksi berulang
+async function processAllRecurringTransactions() {
     if (!currentUser) return;
-    if (recurringList.length === 0) return;
     
-    const today = new Date();
-    const maxMonths = 3; // Generate untuk 3 bulan ke depan
-    
-    for (const r of recurringList) {
-        if (!r.is_active) continue;
-        
-        for (let i = 1; i <= maxMonths; i++) {
-            const futureDate = new Date(today);
-            futureDate.setMonth(today.getMonth() + i);
-            const targetDay = r.day_of_month;
-            
-            // Handle jika tanggal tidak valid (misal 31 di bulan Februari)
-            let validDate = new Date(futureDate.getFullYear(), futureDate.getMonth(), targetDay);
-            if (validDate.getMonth() !== futureDate.getMonth()) {
-                // Tanggal tidak valid, skip
-                continue;
-            }
-            
-            const dateStr = `${validDate.getFullYear()}-${String(validDate.getMonth() + 1).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
-            
-            // Cek apakah sudah ada transaksi untuk tanggal ini
-            const existingTransaction = transactions.find(t => {
-                if (!t.created_at) return false;
-                const tDate = new Date(t.created_at);
-                return tDate.getFullYear() === validDate.getFullYear() && 
-                       tDate.getMonth() === validDate.getMonth() && 
-                       tDate.getDate() === targetDay &&
-                       t.description.includes(r.description);
-            });
-            
-            if (!existingTransaction && validDate > today) {
-                // Buat transaksi di database untuk tanggal yang akan datang
-                const insertData = {
-                    user_id: currentUser.id,
-                    description: `${r.description} (otomatis)`,
-                    amount: r.amount,
-                    type: r.type,
-                    is_fixed_expense: r.type === 'pengeluaran',
-                    created_at: validDate.toISOString(),
-                    is_auto_generated: true,
-                    recurring_id: r.id
-                };
-                if (r.category_id) insertData.category_id = r.category_id;
-                
-                const { error } = await sb.from("transactions").insert(insertData);
-                if (error) {
-                    console.error("Error generating future recurring:", error);
-                }
-            }
-        }
-    }
-}
-
-// Process all recurring when app starts
-async function processAllRecurring() {
     await loadRecurring();
-    await processRecurring();
-    await generateFutureRecurring();
-    await loadTransactions(); // Refresh transactions after generating
+    let totalCreated = 0;
+    
+    for (const recurring of recurringList) {
+        const created = await generateTransactionsFromRecurring(recurring);
+        totalCreated += created.length;
+    }
+    
+    if (totalCreated > 0) {
+        console.log(`Created ${totalCreated} recurring transactions`);
+        await loadTransactions(); // Refresh transaksi
+    }
+    
+    return totalCreated;
 }
 
 // Running text
@@ -420,19 +369,12 @@ function getRunningText() {
         }
     });
     
-    // Tambahkan reminder untuk transaksi berulang yang akan datang
-    recurringList.forEach(r => {
-        if (!r.is_active) return;
-        const targetDate = new Date(today);
-        targetDate.setDate(r.day_of_month);
-        if (targetDate < today) {
-            targetDate.setMonth(today.getMonth() + 1);
-        }
-        const diff = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-        if (diff >= 0 && diff <= 7) {
-            messages.push(`🔄 Transaksi berulang "${escapeHtml(r.description)}" akan diproses ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
-        }
-    });
+    // Hitung total transaksi berulang aktif
+    const activeRecurring = recurringList.filter(r => r.is_active);
+    if (activeRecurring.length > 0) {
+        const totalMonthly = activeRecurring.reduce((sum, r) => sum + r.amount, 0);
+        messages.push(`🔄 Total transaksi berulang aktif: ${activeRecurring.length} item (Rp ${formatRupiah(totalMonthly)}/bulan)`);
+    }
     
     return messages;
 }
@@ -461,6 +403,10 @@ async function renderHome() {
     debts.forEach(d => { if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount; });
     const recent = [...transactions].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
     
+    // Hitung total recurring aktif
+    const activeRecurring = recurringList.filter(r => r.is_active);
+    const totalRecurringMonthly = activeRecurring.reduce((sum, r) => sum + r.amount, 0);
+    
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
@@ -479,6 +425,14 @@ async function renderHome() {
                 <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden?'••••':`-Rp ${formatRupiah(totals.pengeluaran)}`}</div></div>
             </div>
         </div>
+        ${activeRecurring.length > 0 ? `
+        <div class="card" style="background:#f0f9ff; border:1px solid #bae6fd;">
+            <div class="card-title">🔄 Ringkasan Transaksi Berulang</div>
+            <div style="font-size:13px">Total ${activeRecurring.length} transaksi aktif</div>
+            <div style="font-weight:700; margin-top:5px; color:#8b5cf6">Rp ${formatRupiah(totalRecurringMonthly)} / bulan</div>
+            <div style="font-size:11px; color:#64748b; margin-top:5px">Termasuk dalam perhitungan saldo di atas</div>
+        </div>
+        ` : ''}
         <div class="card">
             <div class="card-title"><span>💰 Tabungan</span><span style="color:#10b981">Rp ${formatRupiah(totalSavings)}</span></div>
             <div id="savingsPreview"></div>
@@ -492,7 +446,7 @@ async function renderHome() {
             <div style="flex:1; background:#d1fae5; border-radius:20px; padding:12px; text-align:center"><div>💰 Piutang</div><div style="font-weight:700; color:#10b981">Rp ${formatRupiah(piutang)}</div></div>
             <div style="flex:1; background:#fee2e2; border-radius:20px; padding:12px; text-align:center"><div>💸 Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div>
         </div>
-        <div class="card"><div class="card-title">📊 Pengeluaran Teratas</div>${topExpenses.map((t,i)=>`<div class="top-expense-item"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span></div>`).join('')||'<div class="empty-state">Belum ada</div>'}</div>
+        <div class="card"><div class="card-title">📊 Pengeluaran Teratas Bulan Ini</div>${topExpenses.map((t,i)=>`<div class="top-expense-item"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span></div>`).join('')||'<div class="empty-state">Belum ada</div>'}</div>
         <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div style="display:flex; justify-content:space-between; padding:8px 0"><div>${escapeHtml(t.description)}${t.is_auto_generated ? '<span class="badge-auto">Auto</span>' : ''}<br><small>${new Date(t.created_at).toLocaleDateString()}</small></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
     `;
     document.getElementById("appContainer").innerHTML = html;
@@ -539,7 +493,7 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
-        <button id="processNowBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">⚡ Proses Transaksi Berulang Sekarang</button>
+        <button id="processNowBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#10b981">⚡ Generate Semua Transaksi Berulang</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
@@ -580,8 +534,9 @@ async function renderTransaksi() {
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
     document.getElementById("processNowBtn")?.addEventListener("click", async () => {
         showToast("Memproses transaksi berulang...");
-        await processAllRecurring();
-        showToast("Transaksi berulang selesai diproses");
+        const created = await processAllRecurringTransactions();
+        showToast(`Selesai! ${created} transaksi baru ditambahkan`);
+        await loadTransactions();
         renderTransaksi();
         if (currentNav === 'home') renderHome();
     });
@@ -601,7 +556,7 @@ async function renderTransaksi() {
     // Delete recurring
     document.querySelectorAll(".delete-recurring").forEach(btn => {
         btn.onclick = async () => {
-            if(confirm("Hapus transaksi berulang? Data transaksi otomatis yang sudah dibuat tidak akan terhapus.")){
+            if(confirm("Hapus transaksi berulang? Transaksi yang sudah dibuat akan tetap tersimpan.")){
                 const id = btn.getAttribute("data-id");
                 const { error } = await sb.from("recurring_transactions").delete().eq("id", id);
                 if(error) {
@@ -691,6 +646,9 @@ async function openRecurringModal(editId=null){
             <label style="display:flex; align-items:center; gap:8px; margin:8px 0">
                 <input type="checkbox" id="recurringActive" ${isEdit ? (r?.is_active ? 'checked' : '') : 'checked'}> Aktif
             </label>
+            <div style="font-size:12px; color:#64748b; margin-top:8px; padding:8px; background:#f0f9ff; border-radius:12px;">
+                💡 Setelah disimpan, sistem akan otomatis membuat transaksi untuk bulan ini dan 6 bulan ke depan.
+            </div>
             <input type="hidden" id="recurringId" value="${editId || ''}">
             <button id="saveRecurring" class="modal-btn modal-btn-primary">Simpan</button>
             <button id="closeRecurring" class="modal-btn modal-btn-secondary">Batal</button>
@@ -732,18 +690,37 @@ async function openRecurringModal(editId=null){
         if (catId) data.category_id = catId;
         
         try {
+            let recurringId = id;
             if (id) {
+                // Update existing
                 const { error } = await sb.from("recurring_transactions").update(data).eq("id", id);
                 if (error) throw error;
                 showToast("Transaksi berulang diupdate");
+                recurringId = id;
             } else {
-                const { error } = await sb.from("recurring_transactions").insert(data);
+                // Insert new
+                const { data: newRecurring, error } = await sb.from("recurring_transactions").insert(data).select();
                 if (error) throw error;
                 showToast("Transaksi berulang ditambahkan");
+                if (newRecurring && newRecurring.length > 0) {
+                    recurringId = newRecurring[0].id;
+                }
             }
+            
             modal.remove();
             await loadRecurring();
-            await processAllRecurring(); // Langsung proses setelah tambah/edit
+            
+            // Generate transactions untuk recurring yang baru ditambahkan/diupdate
+            if (recurringId && isActive) {
+                const newRecurring = recurringList.find(r => r.id === recurringId);
+                if (newRecurring) {
+                    showToast("Membuat transaksi otomatis...");
+                    const created = await generateTransactionsFromRecurring(newRecurring);
+                    await loadTransactions();
+                    showToast(`Selesai! ${created.length} transaksi otomatis ditambahkan`);
+                }
+            }
+            
             renderTransaksi();
             if (currentNav === 'home') renderHome();
         } catch(err) {
@@ -797,7 +774,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG (sama seperti sebelumnya, tidak diubah)
+// HUTANG
 async function renderHutang() {
     let piutang=0, hutang=0;
     debts.forEach(d=>{if(d.status!=='lunas') d.type==='piutang'? piutang+=d.amount : hutang+=d.amount;});
@@ -925,7 +902,7 @@ function openDebtModal(){
     document.getElementById("closeDebt").onclick=()=>modal.remove();
 }
 
-// TABUNGAN (sama seperti sebelumnya)
+// TABUNGAN
 async function renderSavings() {
     let html=`
         <div class="header">
@@ -979,7 +956,7 @@ function openSavingsModal(editId=null){
     document.getElementById("closeSavings").onclick=()=>modal.remove();
 }
 
-// PENGINGAT (sama seperti sebelumnya)
+// PENGINGAT
 async function renderReminders() {
     let html=`
         <div class="header">
@@ -1033,7 +1010,7 @@ function openReminderModal(editId=null){
     document.getElementById("closeReminder").onclick=()=>modal.remove();
 }
 
-// TUGAS (sama seperti sebelumnya)
+// TUGAS
 async function renderTasks() {
     let html=`
         <div class="header">
@@ -1098,7 +1075,7 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// LAPORAN (sama seperti sebelumnya)
+// LAPORAN
 async function renderLaporan() {
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
@@ -1145,7 +1122,7 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// PENGATURAN (sama seperti sebelumnya)
+// PENGATURAN
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -1348,8 +1325,11 @@ async function onAuthSuccess(user) {
     await loadTasks(); 
     await loadRecurring();
     await loadSharedAccess();
-    await processAllRecurring(); // Process all recurring transactions
-    await loadTransactions(); // Refresh again after processing
+    
+    // Generate all recurring transactions
+    await processAllRecurringTransactions();
+    await loadTransactions(); // Refresh lagi setelah generate
+    
     addBottomNav();
     renderCurrentView();
 }
