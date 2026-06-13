@@ -67,11 +67,6 @@
             to { opacity: 1; transform: translateX(0); }
         }
         
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
         .header { 
             display: flex; 
             justify-content: space-between; 
@@ -183,7 +178,7 @@
             color: white; 
             position: relative;
             box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
             animation: fadeInUp 0.5s ease-out 0.2s both;
         }
         
@@ -291,6 +286,7 @@
             pointer-events: none;
         }
         
+        /* BOTTOM NAVIGATION DENGAN TOMBOL TENGAH */
         .bottom-nav { 
             position: fixed; 
             bottom: 0; 
@@ -300,7 +296,8 @@
             backdrop-filter: blur(20px);
             display: flex; 
             justify-content: space-around; 
-            padding: 10px 20px 25px; 
+            align-items: center;
+            padding: 8px 16px 20px; 
             border-top: 1px solid rgba(0,0,0,0.05); 
             max-width: 450px; 
             margin: 0 auto; 
@@ -322,6 +319,7 @@
             border-radius: 40px; 
             transition: all 0.2s ease; 
             font-weight: 500;
+            flex: 1;
         }
         
         .nav-item .nav-icon { font-size: 22px; transition: transform 0.2s ease; }
@@ -329,10 +327,13 @@
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
         body.dark .nav-item.active { background: #1e3a5f; }
         
-        .fab-add {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
+        /* TOMBOL TENGAH YANG MENONJOL */
+        .nav-center {
+            flex: 0 0 auto;
+            margin-top: -20px;
+        }
+        
+        .nav-center-btn {
             width: 56px;
             height: 56px;
             border-radius: 28px;
@@ -344,13 +345,14 @@
             cursor: pointer;
             box-shadow: 0 8px 20px rgba(59,130,246,0.4);
             transition: all 0.2s ease;
-            z-index: 90;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .fab-add:active { transform: scale(0.92); }
+        .nav-center-btn:active {
+            transform: scale(0.92);
+        }
         
         .transaction-item, .debt-item, .task-item, .savings-item, .reminder-item, .shared-item, .category-item { 
             display: flex; 
@@ -723,7 +725,6 @@ let taskFilter = "all";
 let isDarkMode = false;
 let navigationHistory = [];
 
-// History management untuk tombol back
 function pushHistory(nav) {
     navigationHistory.push(nav);
 }
@@ -742,7 +743,6 @@ function goBack() {
     return false;
 }
 
-// Mode Dark/Light
 async function loadThemePreference() {
     if (!currentUser) return;
     try {
@@ -775,7 +775,6 @@ function toggleTheme() {
     showToast(isDarkMode ? "Mode Gelap aktif" : "Mode Terang aktif");
 }
 
-// Count overdue reminders
 function getOverdueCount() {
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -1191,12 +1190,10 @@ async function showCategoryDetail(category) {
     document.getElementById("closeCategoryDetailBtn").onclick = () => modal.remove();
 }
 
-// Running text dengan overdue reminders
 function getRunningText() {
     const today = new Date();
     const messages = [];
     
-    // Hutang/piutang overdue
     for (const d of debts) {
         if (d.status === 'lunas') continue;
         if (d.due_date) {
@@ -1210,7 +1207,6 @@ function getRunningText() {
         }
     }
     
-    // Tugas overdue
     for (const t of tasks) {
         if (t.is_completed) continue;
         if (t.due_date) {
@@ -1224,7 +1220,6 @@ function getRunningText() {
         }
     }
     
-    // Pengingat overdue
     for (const r of reminders) {
         if (r.is_done) continue;
         if (r.due_date) {
@@ -1247,7 +1242,6 @@ function renderRunningText() {
     return `<div class="running-text-container"><div class="running-text">${messages.map(m => `<span>🔔 ${m}</span>`).join('')}</div></div>`;
 }
 
-// Show reminders popup
 function showRemindersPopup() {
     const overdue = getRunningText();
     if (overdue.length === 0) {
@@ -1396,7 +1390,6 @@ async function renderTransaksi() {
     `;
     document.getElementById("appContainer").innerHTML = html;
     
-    // Update badge reminder
     const overdueCount = getOverdueCount();
     const reminderBtn = document.getElementById("reminderBtn");
     if (reminderBtn && overdueCount > 0) {
@@ -2279,31 +2272,46 @@ function updateNav() {
 }
 
 function addBottomNav() {
-    const navHtml=`<div class="bottom-nav">
-        <button class="nav-item ${currentNav==='home'?'active':''}" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
-        <button class="nav-item ${currentNav==='transaksi'?'active':''}" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
-        <button class="nav-item ${currentNav==='hutang'?'active':''}" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
-        <button class="nav-item ${currentNav==='tasks'?'active':''}" data-nav="tasks"><span class="nav-icon">✅</span><span>Tugas</span></button>
-    </div>
-    <button id="fabAddTransaksi" class="fab-add">+</button>`;
-    document.body.insertAdjacentHTML('beforeend',navHtml);
+    const navHtml = `
+    <div class="bottom-nav">
+        <button class="nav-item ${currentNav==='home'?'active':''}" data-nav="home">
+            <span class="nav-icon">🏠</span>
+            <span>Beranda</span>
+        </button>
+        <button class="nav-item ${currentNav==='transaksi'?'active':''}" data-nav="transaksi">
+            <span class="nav-icon">📋</span>
+            <span>Transaksi</span>
+        </button>
+        <div class="nav-center">
+            <button id="centerAddBtn" class="nav-center-btn">+</button>
+        </div>
+        <button class="nav-item ${currentNav==='hutang'?'active':''}" data-nav="hutang">
+            <span class="nav-icon">💰</span>
+            <span>Hutang</span>
+        </button>
+        <button class="nav-item ${currentNav==='tasks'?'active':''}" data-nav="tasks">
+            <span class="nav-icon">✅</span>
+            <span>Tugas</span>
+        </button>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', navHtml);
     
-    document.getElementById("fabAddTransaksi")?.addEventListener("click", () => openTransaksiModal());
+    document.getElementById("centerAddBtn")?.addEventListener("click", () => openTransaksiModal());
     
-    document.querySelectorAll('.nav-item').forEach(btn=>btn.onclick=()=>{
-        pushHistory(currentNav);
-        currentNav = btn.getAttribute("data-nav");
-        updateNav();
-        renderCurrentView();
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.onclick = () => {
+            pushHistory(currentNav);
+            currentNav = btn.getAttribute("data-nav");
+            updateNav();
+            renderCurrentView();
+        };
     });
 }
 
-// Handle tombol back HP
 window.addEventListener('popstate', function(event) {
     if (goBack()) {
         event.preventDefault();
     } else {
-        // Jika sudah di halaman awal, biarkan keluar aplikasi
         if (confirm("Keluar dari aplikasi?")) {
             window.close();
         }
@@ -2344,7 +2352,6 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    // Buat tabel user_settings jika belum ada
     try {
         await sb.from("user_settings").select("*").eq("user_id", user.id).single();
     } catch(e) {
@@ -2372,7 +2379,6 @@ async function logout() {
     }
     currentUser = null;
     document.querySelector(".bottom-nav")?.remove();
-    document.getElementById("fabAddTransaksi")?.remove();
     document.getElementById("appContainer").innerHTML = "";
     document.getElementById("loginModal").style.display = "flex";
     document.getElementById("emailInput").value = "";
