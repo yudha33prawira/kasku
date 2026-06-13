@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        /* CSS SAMA SEPERTI SEBELUMNYA - tidak berubah */
+        /* CSS SAMA SEPERTI SEBELUMNYA - ditambah style untuk tombol grid */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root {
@@ -128,18 +128,49 @@
         body.dark .filter-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; animation: fadeInUp 0.2s ease-out; }
-        .modal-content { background: var(--card-bg); border-radius: 32px; padding: 28px 24px; width: 100%; max-width: 340px; max-height: 85vh; overflow-y: auto; animation: scaleIn 0.3s ease-out; color: var(--text-primary); }
-        .modal-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 24px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 14px 18px; margin-bottom: 14px; border: 1.5px solid var(--input-border); border-radius: 60px; font-size: 15px; background: var(--input-bg); transition: all 0.2s ease; color: var(--text-primary); }
-        .modal-input:focus, .modal-select:focus, .modal-textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .modal-btn { width: 100%; padding: 14px; border-radius: 60px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 10px; transition: all 0.2s ease; }
-        .modal-btn:active { transform: scale(0.97); }
-        .modal-btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+        .modal-content { background: var(--card-bg); border-radius: 32px; padding: 24px; width: 100%; max-width: 350px; max-height: 85vh; overflow-y: auto; animation: scaleIn 0.3s ease-out; color: var(--text-primary); }
+        .modal-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        
+        /* TOMBOL GRID - RAPI DAN TERATUR */
+        .modal-button-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 60px;
+            border: none;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .modal-btn:active { transform: scale(0.96); }
+        
+        .modal-btn-full {
+            grid-column: span 2;
+        }
+        
+        .modal-btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
         .modal-btn-secondary { background: #f1f5f9; color: #475569; }
         .modal-btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
         .modal-btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
         .modal-btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .modal-btn-wa { background: #25D366; color: white; }
+        
         body.dark .modal-btn-secondary { background: #334155; color: #94a3b8; }
+        
+        .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 14px 18px; margin-bottom: 14px; border: 1.5px solid var(--input-border); border-radius: 60px; font-size: 15px; background: var(--input-bg); transition: all 0.2s ease; color: var(--text-primary); }
+        .modal-input:focus, .modal-select:focus, .modal-textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         
         .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 60px; font-size: 14px; font-weight: 500; z-index: 300; white-space: nowrap; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); animation: fadeInUp 0.2s ease-out; }
         .empty-state { text-align: center; padding: 50px 20px; color: var(--text-secondary); font-size: 14px; }
@@ -241,8 +272,7 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-// ========== MODE DARK/LIGHT - VERSI SEDERHANA YANG PASTI BEKERJA ==========
-// Fungsi untuk menerapkan tema
+// ========== MODE DARK/LIGHT ==========
 function applyTheme(isDark) {
     if (isDark) {
         document.body.classList.add("dark");
@@ -251,83 +281,35 @@ function applyTheme(isDark) {
     }
 }
 
-// Fungsi untuk menyimpan tema ke database
 async function saveThemeToDatabase(isDark) {
     if (!currentUser) return;
-    
     try {
-        // Cek apakah sudah ada data
         const { data: existing } = await sb.from("user_settings").select("id").eq("user_id", currentUser.id).maybeSingle();
-        
         if (existing) {
-            // Update
             await sb.from("user_settings").update({ dark_mode: isDark, updated_at: new Date().toISOString() }).eq("user_id", currentUser.id);
         } else {
-            // Insert
             await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: isDark });
         }
-        console.log("Theme saved to database:", isDark);
-    } catch(e) {
-        console.error("Save theme error:", e);
-    }
+    } catch(e) { console.error("Save theme error:", e); }
 }
 
-// Fungsi untuk memuat tema dari database
 async function loadThemeFromDatabase() {
     if (!currentUser) return false;
-    
     try {
-        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
-        
-        if (error) {
-            console.error("Load theme error:", error);
-            return null;
-        }
-        
-        if (data && data.dark_mode !== undefined) {
-            console.log("Theme loaded from database:", data.dark_mode);
-            return data.dark_mode;
-        }
+        const { data } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
+        if (data && data.dark_mode !== undefined) return data.dark_mode;
         return null;
-    } catch(e) {
-        console.error("Load theme error:", e);
-        return null;
-    }
+    } catch(e) { return null; }
 }
 
-// Fungsi toggle tema (dipanggil dari switch)
 async function toggleTheme() {
     const isDark = !document.body.classList.contains("dark");
     applyTheme(isDark);
     await saveThemeToDatabase(isDark);
-    
-    // Update switch jika sedang di halaman settings
+    localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
     const darkModeSwitch = document.getElementById("darkModeSwitch");
-    if (darkModeSwitch) {
-        darkModeSwitch.checked = isDark;
-    }
-    
+    if (darkModeSwitch) darkModeSwitch.checked = isDark;
     showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
-}
-
-// Inisialisasi tema saat halaman dimuat
-async function initTheme() {
-    // Cek dari localStorage dulu (cepat)
-    const localTheme = localStorage.getItem('theme_mode');
-    if (localTheme === 'dark') {
-        applyTheme(true);
-    } else if (localTheme === 'light') {
-        applyTheme(false);
-    }
-    
-    // Jika sudah login, ambil dari database
-    if (currentUser) {
-        const dbTheme = await loadThemeFromDatabase();
-        if (dbTheme !== null) {
-            applyTheme(dbTheme);
-            localStorage.setItem('theme_mode', dbTheme ? 'dark' : 'light');
-        }
-    }
 }
 
 function getOverdueCount() {
@@ -486,7 +468,22 @@ function openWhatsApp(phoneNumber, name, amount) {
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">📋 Detail Transaksi</div><div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div><div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div><div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div><div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div><div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${cat ? `${cat.icon} ${cat.name}` : '-'}</span></div><div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div><div class="button-group"><button id="editTransaksiBtn" class="modal-btn modal-btn-primary">✏️ Edit</button><button id="deleteTransaksiBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button><button id="closeDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button></div></div>`;
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">📋 Detail Transaksi</div>
+            <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
+            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
+            <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${cat ? `${cat.icon} ${cat.name}` : '-'}</span></div>
+            <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
+            <div class="modal-button-grid">
+                <button id="editTransaksiBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                <button id="deleteTransaksiBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
+                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     document.getElementById("editTransaksiBtn").onclick = () => { modal.remove(); openEditTransactionModal(transaction.id); };
     document.getElementById("deleteTransaksiBtn").onclick = async () => { if(confirm("Hapus transaksi ini?")){ await sb.from("transactions").delete().eq("id", transaction.id); showToast("Transaksi dihapus"); modal.remove(); await loadTransactions(); renderCurrentView(); } };
@@ -497,7 +494,33 @@ async function openEditTransactionModal(transactionId) {
     const transaction = transactions.find(t => t.id === transactionId);
     if (!transaction) return;
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">✏️ Edit Transaksi</div><input type="text" id="editDesk" class="modal-input" placeholder="Deskripsi" value="${escapeHtml(transaction.description)}"><input type="text" id="editJum" class="modal-input" placeholder="Jumlah" value="${formatRupiah(transaction.amount)}"><select id="editTipe" class="modal-select"><option value="pemasukan" ${transaction.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option><option value="pengeluaran" ${transaction.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option></select><input type="date" id="editTanggal" class="modal-input" value="${formatDateInput(transaction.created_at)}"><select id="editKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c => `<option value="${c.id}" ${transaction.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}</select><div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="editFixed" ${transaction.is_fixed_expense ? 'checked' : ''}> <span>📌 Pengeluaran Tetap</span></label><p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p></div><div class="button-group"><button id="saveEditTransaksi" class="modal-btn modal-btn-primary">💾 Simpan</button><button id="cancelEditModal" class="modal-btn modal-btn-secondary">Batal</button></div></div>`;
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">✏️ Edit Transaksi</div>
+            <input type="text" id="editDesk" class="modal-input" placeholder="Deskripsi" value="${escapeHtml(transaction.description)}">
+            <input type="text" id="editJum" class="modal-input" placeholder="Jumlah" value="${formatRupiah(transaction.amount)}">
+            <select id="editTipe" class="modal-select">
+                <option value="pemasukan" ${transaction.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
+                <option value="pengeluaran" ${transaction.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
+            </select>
+            <input type="date" id="editTanggal" class="modal-input" value="${formatDateInput(transaction.created_at)}">
+            <select id="editKat" class="modal-select">
+                <option value="">Pilih Kategori</option>
+                ${categories.map(c => `<option value="${c.id}" ${transaction.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+            </select>
+            <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="editFixed" ${transaction.is_fixed_expense ? 'checked' : ''}> 
+                    <span>📌 Pengeluaran Tetap</span>
+                </label>
+                <p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p>
+            </div>
+            <div class="modal-button-grid">
+                <button id="saveEditTransaksi" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="cancelEditModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     setupRupiahInput('editJum');
     document.getElementById("saveEditTransaksi").onclick = async () => {
@@ -518,9 +541,28 @@ async function openEditTransactionModal(transactionId) {
     document.getElementById("cancelEditModal").onclick = () => modal.remove();
 }
 
+// PERBAIKAN: Tampilan popup detail hutang dengan tombol grid yang rapi
 async function showDebtDetail(debt) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div><div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">${escapeHtml(debt.contact_name)}</span></div><div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value">Rp ${formatRupiah(debt.amount)}</span></div><div class="detail-row"><span class="detail-label">Tanggal Dibuat</span><span class="detail-value">${formatDate(debt.created_at)}</span></div><div class="detail-row"><span class="detail-label">Jatuh Tempo</span><span class="detail-value">${debt.due_date ? formatDate(debt.due_date) : '-'}</span></div><div class="detail-row"><span class="detail-label">WhatsApp</span><span class="detail-value">${debt.wa_number ? escapeHtml(debt.wa_number) : '-'}</span></div>${debt.description ? `<div class="detail-row"><span class="detail-label">Catatan</span><span class="detail-value">${escapeHtml(debt.description)}</span></div>` : ''}<div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:${debt.status === 'lunas' ? '#10b981' : '#ef4444'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></div><div class="button-group">${debt.status !== 'lunas' ? `<button id="lunasDebtBtn" class="modal-btn modal-btn-success">✓ Tandai Lunas</button>` : ''}${debt.wa_number ? `<button id="waDebtBtn" class="modal-btn modal-btn-success" style="background:#25D366;">💬 Hubungi WhatsApp</button>` : ''}<button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button><button id="deleteDebtBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button><button id="closeDebtDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button></div></div>`;
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
+            <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">${escapeHtml(debt.contact_name)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value">Rp ${formatRupiah(debt.amount)}</span></div>
+            <div class="detail-row"><span class="detail-label">Tanggal Dibuat</span><span class="detail-value">${formatDate(debt.created_at)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jatuh Tempo</span><span class="detail-value">${debt.due_date ? formatDate(debt.due_date) : '-'}</span></div>
+            <div class="detail-row"><span class="detail-label">WhatsApp</span><span class="detail-value">${debt.wa_number ? escapeHtml(debt.wa_number) : '-'}</span></div>
+            ${debt.description ? `<div class="detail-row"><span class="detail-label">Catatan</span><span class="detail-value">${escapeHtml(debt.description)}</span></div>` : ''}
+            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:${debt.status === 'lunas' ? '#10b981' : '#ef4444'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></div>
+            <div class="modal-button-grid">
+                ${debt.status !== 'lunas' ? `<button id="lunasDebtBtn" class="modal-btn modal-btn-success">✓ Tandai Lunas</button>` : ''}
+                ${debt.wa_number ? `<button id="waDebtBtn" class="modal-btn modal-btn-wa">💬 WhatsApp</button>` : ''}
+                <button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                <button id="deleteDebtBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
+                <button id="closeDebtDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     
     if (debt.status !== 'lunas') {
@@ -556,7 +598,24 @@ async function openEditDebtModal(debtId) {
     const debt = debts.find(d => d.id === debtId);
     if (!debt) return;
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">✏️ Edit ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div><input id="editDebtName" class="modal-input" placeholder="Nama orang" value="${escapeHtml(debt.contact_name)}"><input type="text" id="editDebtAmount" class="modal-input" placeholder="Jumlah" value="${formatRupiah(debt.amount)}"><select id="editDebtType" class="modal-select"><option value="piutang" ${debt.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option><option value="hutang" ${debt.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option></select><input id="editDebtDue" type="date" class="modal-input" value="${debt.due_date ? debt.due_date.slice(0,10) : ''}"><input id="editDebtWa" type="tel" placeholder="Nomor WhatsApp (+62...)" class="modal-input" value="${debt.wa_number || ''}"><textarea id="editDebtDesc" placeholder="Catatan" class="modal-textarea">${escapeHtml(debt.description || '')}</textarea><div class="button-group"><button id="saveEditDebt" class="modal-btn modal-btn-primary">💾 Simpan</button><button id="cancelEditDebt" class="modal-btn modal-btn-secondary">Batal</button></div></div>`;
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">✏️ Edit ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
+            <input id="editDebtName" class="modal-input" placeholder="Nama orang" value="${escapeHtml(debt.contact_name)}">
+            <input type="text" id="editDebtAmount" class="modal-input" placeholder="Jumlah" value="${formatRupiah(debt.amount)}">
+            <select id="editDebtType" class="modal-select">
+                <option value="piutang" ${debt.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option>
+                <option value="hutang" ${debt.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option>
+            </select>
+            <input id="editDebtDue" type="date" class="modal-input" value="${debt.due_date ? debt.due_date.slice(0,10) : ''}">
+            <input id="editDebtWa" type="tel" placeholder="Nomor WhatsApp (contoh: 08123456789)" class="modal-input" value="${debt.wa_number || ''}">
+            <textarea id="editDebtDesc" placeholder="Catatan" class="modal-textarea">${escapeHtml(debt.description || '')}</textarea>
+            <div class="modal-button-grid">
+                <button id="saveEditDebt" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="cancelEditDebt" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
     document.body.appendChild(modal);
     setupRupiahInput('editDebtAmount');
     setupWhatsAppInput('editDebtWa');
@@ -621,12 +680,12 @@ function showRemindersPopup() {
     const overdue = getRunningText();
     if (overdue.length === 0) { showToast("Tidak ada peringatan terlewat"); return; }
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">⚠️ Peringatan Terlewat</div><div style="max-height: 400px; overflow-y: auto;">${overdue.map(m => `<div style="padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary);">${m}</div>`).join('')}</div><button id="closeReminderPopup" class="modal-btn modal-btn-primary" style="margin-top: 16px;">Tutup</button></div>`;
+    modal.innerHTML = `<div class="modal-content"><div class="modal-title">⚠️ Peringatan Terlewat</div><div style="max-height: 400px; overflow-y: auto;">${overdue.map(m => `<div style="padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary);">${m}</div>`).join('')}</div><div class="modal-button-grid"><button id="closeReminderPopup" class="modal-btn modal-btn-primary modal-btn-full">Tutup</button></div></div>`;
     document.body.appendChild(modal);
     document.getElementById("closeReminderPopup").onclick = () => modal.remove();
 }
 
-// ========== RENDER FUNCTIONS ==========
+// ========== RENDER FUNCTIONS (sama seperti sebelumnya, tidak diubah banyak) ==========
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -696,7 +755,7 @@ async function renderTransaksi() {
 function openTransaksiModal(predefinedType=null){
     const today = new Date().toISOString().slice(0,10);
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">✨ Tambah Transaksi</div><input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input"><input type="text" id="modalJum" placeholder="Jumlah" class="modal-input"><select id="modalTipe" class="modal-select"><option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option><option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option></select><input type="date" id="modalTanggal" class="modal-input" value="${today}"><select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select><div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed"> <span>📌 Pengeluaran Tetap</span></label><p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan (tagihan, cicilan, langganan)</p></div><div style="background:linear-gradient(135deg, #f3e8ff, #f0f9ff); padding:12px; border-radius:16px; margin:12px 0"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><p class="info-text">Centang untuk membuat transaksi otomatis di tanggal yang sama setiap bulan (12 bulan)</p></div><div class="button-group"><button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button><button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button></div></div>`;
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">✨ Tambah Transaksi</div><input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input"><input type="text" id="modalJum" placeholder="Jumlah" class="modal-input"><select id="modalTipe" class="modal-select"><option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option><option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option></select><input type="date" id="modalTanggal" class="modal-input" value="${today}"><select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select><div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed"> <span>📌 Pengeluaran Tetap</span></label><p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan (tagihan, cicilan, langganan)</p></div><div style="background:linear-gradient(135deg, #f3e8ff, #f0f9ff); padding:12px; border-radius:16px; margin:12px 0"><label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><p class="info-text">Centang untuk membuat transaksi otomatis di tanggal yang sama setiap bulan (12 bulan)</p></div><div class="modal-button-grid"><button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button><button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button></div></div>`;
     document.body.appendChild(modal);
     setupRupiahInput('modalJum');
     document.getElementById("saveTransaksi").onclick=async()=>{
@@ -729,7 +788,7 @@ function openTransaksiModal(predefinedType=null){
 async function openCategoryManageModal() {
     await loadCategories();
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">🏷️ Kelola Kategori</div><button id="addCategoryBtn" class="modal-btn modal-btn-primary" style="margin-bottom:16px">+ Tambah Kategori Baru</button><div id="categoriesList" style="max-height:400px; overflow-y:auto;"></div><button id="closeCategoryManageBtn" class="modal-btn modal-btn-secondary" style="margin-top:16px">Tutup</button></div>`;
+    modal.innerHTML = `<div class="modal-content"><div class="modal-title">🏷️ Kelola Kategori</div><button id="addCategoryBtn" class="modal-btn modal-btn-primary" style="margin-bottom:16px">+ Tambah Kategori Baru</button><div id="categoriesList" style="max-height:400px; overflow-y:auto;"></div><div class="modal-button-grid"><button id="closeCategoryManageBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button></div></div>`;
     document.body.appendChild(modal);
     const categoriesContainer = document.getElementById("categoriesList");
     if(categories.length === 0) categoriesContainer.innerHTML = '<div class="empty-state">Belum ada kategori</div>';
@@ -743,7 +802,7 @@ function openCategoryFormModal(editId=null) {
     const isEdit = !!editId;
     const cat = isEdit ? categories.find(c => c.id === editId) : null;
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">${isEdit ? '✏️ Edit Kategori' : '➕ Tambah Kategori'}</div><input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit ? escapeHtml(cat.name) : ''}"><input type="text" id="catIcon" class="modal-input" placeholder="Icon (contoh: 🍔, 🚗, 💵)" value="${isEdit ? cat.icon : '📁'}"><select id="catType" class="modal-select"><option value="pengeluaran" ${isEdit && cat.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option><option value="pemasukan" ${isEdit && cat.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option></select><input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color : '#3b82f6'}"><div class="button-group"><button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button><button id="cancelCategoryBtn" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteCategoryFormBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
+    modal.innerHTML = `<div class="modal-content"><div class="modal-title">${isEdit ? '✏️ Edit Kategori' : '➕ Tambah Kategori'}</div><input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit ? escapeHtml(cat.name) : ''}"><input type="text" id="catIcon" class="modal-input" placeholder="Icon (contoh: 🍔, 🚗, 💵)" value="${isEdit ? cat.icon : '📁'}"><select id="catType" class="modal-select"><option value="pengeluaran" ${isEdit && cat.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option><option value="pemasukan" ${isEdit && cat.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option></select><input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color : '#3b82f6'}"><div class="modal-button-grid"><button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button><button id="cancelCategoryBtn" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteCategoryFormBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
     document.body.appendChild(modal);
     document.getElementById("saveCategoryBtn").onclick = async () => {
         const name = document.getElementById("catName").value.trim();
@@ -789,7 +848,7 @@ async function renderHutang() {
 
 function openDebtModal(){
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">💰 Tambah Hutang/Piutang</div><input id="debtName" placeholder="Nama orang" class="modal-input"><input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input"><select id="debtType" class="modal-select"><option value="piutang">💰 Piutang (orang berhutang ke saya)</option><option value="hutang">💸 Hutang (saya berhutang ke orang)</option></select><input id="debtDue" type="date" class="modal-input"><input id="debtWa" type="tel" placeholder="Nomor WhatsApp (contoh: 08123456789)" class="modal-input"><textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea><div class="button-group"><button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button><button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button></div></div>`;
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">💰 Tambah Hutang/Piutang</div><input id="debtName" placeholder="Nama orang" class="modal-input"><input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input"><select id="debtType" class="modal-select"><option value="piutang">💰 Piutang (orang berhutang ke saya)</option><option value="hutang">💸 Hutang (saya berhutang ke orang)</option></select><input id="debtDue" type="date" class="modal-input"><input id="debtWa" type="tel" placeholder="Nomor WhatsApp (contoh: 08123456789)" class="modal-input"><textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea><div class="modal-button-grid"><button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button><button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button></div></div>`;
     document.body.appendChild(modal);
     setupRupiahInput('debtAmount');
     setupWhatsAppInput('debtWa');
@@ -831,7 +890,7 @@ function openSavingsModal(editId=null){
     const isEdit=!!editId;
     const s=isEdit?savings.find(s=>s.id===editId):null;
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'✏️ Edit Tabungan':'➕ Tambah Tabungan'}</div><input id="savingsName" class="modal-input" placeholder="Nama Tabungan" value="${isEdit?escapeHtml(s.name):''}"><input type="text" id="savingsTarget" class="modal-input" placeholder="Target Tabungan" value="${isEdit?formatRupiah(s.target_amount):''}"><input type="text" id="savingsCurrent" class="modal-input" placeholder="Jumlah Saat Ini" value="${isEdit?formatRupiah(s.current_amount):'0'}"><div class="button-group"><button id="saveSavings" class="modal-btn modal-btn-primary">Simpan</button><button id="closeSavings" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteSavingsBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'✏️ Edit Tabungan':'➕ Tambah Tabungan'}</div><input id="savingsName" class="modal-input" placeholder="Nama Tabungan" value="${isEdit?escapeHtml(s.name):''}"><input type="text" id="savingsTarget" class="modal-input" placeholder="Target Tabungan" value="${isEdit?formatRupiah(s.target_amount):''}"><input type="text" id="savingsCurrent" class="modal-input" placeholder="Jumlah Saat Ini" value="${isEdit?formatRupiah(s.current_amount):'0'}"><div class="modal-button-grid"><button id="saveSavings" class="modal-btn modal-btn-primary">Simpan</button><button id="closeSavings" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteSavingsBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
     document.body.appendChild(modal);
     setupRupiahInput('savingsTarget');
     setupRupiahInput('savingsCurrent');
@@ -870,7 +929,7 @@ function openReminderModal(editId=null){
     const isEdit=!!editId;
     const r=isEdit?reminders.find(r=>r.id===editId):null;
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'✏️ Edit Pengingat':'⏰ Tambah Pengingat'}</div><input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}"><textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea><input type="date" id="reminderDue" class="modal-input" value="${isEdit?formatDateInput(r.due_date):''}"><input type="text" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?formatRupiah(r.amount||0):''}"><div class="button-group"><button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button><button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteReminderBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'✏️ Edit Pengingat':'⏰ Tambah Pengingat'}</div><input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}"><textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea><input type="date" id="reminderDue" class="modal-input" value="${isEdit?formatDateInput(r.due_date):''}"><input type="text" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?formatRupiah(r.amount||0):''}"><div class="modal-button-grid"><button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button><button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteReminderBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
     document.body.appendChild(modal);
     setupRupiahInput('reminderAmount');
     document.getElementById("saveReminder").onclick=async()=>{
@@ -914,7 +973,7 @@ function openTaskModal(editId=null){
     const isEdit=!!editId;
     const t=isEdit?tasks.find(t=>t.id===editId):null;
     const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'✏️ Edit Tugas':'✅ Tambah Tugas'}</div><input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}"><textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit?escapeHtml(t.description||''):''}</textarea><input type="date" id="taskDue" class="modal-input" value="${isEdit?formatDateInput(t.due_date):''}"><div class="button-group"><button id="saveTask" class="modal-btn modal-btn-primary">Simpan</button><button id="closeTask" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteTaskBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
+    modal.innerHTML=`<div class="modal-content"><div class="modal-title">${isEdit?'✏️ Edit Tugas':'✅ Tambah Tugas'}</div><input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}"><textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit?escapeHtml(t.description||''):''}</textarea><input type="date" id="taskDue" class="modal-input" value="${isEdit?formatDateInput(t.due_date):''}"><div class="modal-button-grid"><button id="saveTask" class="modal-btn modal-btn-primary">Simpan</button><button id="closeTask" class="modal-btn modal-btn-secondary">Batal</button>${isEdit ? `<button id="deleteTaskBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}</div></div>`;
     document.body.appendChild(modal);
     document.getElementById("saveTask").onclick=async()=>{
         const title=document.getElementById("taskTitle").value.trim();
@@ -1084,7 +1143,6 @@ async function onAuthSuccess(user) {
     await loadTasks(); 
     await loadSharedAccess();
     
-    // Load tema dari database setelah login
     const dbTheme = await loadThemeFromDatabase();
     if (dbTheme !== null) {
         applyTheme(dbTheme);
@@ -1123,15 +1181,13 @@ async function checkSession() {
     }
 }
 
-// Inisialisasi tema awal (sebelum login)
-// Cek localStorage untuk tema yang tersimpan
+// Inisialisasi tema awal
 const savedTheme = localStorage.getItem('theme_mode');
 if (savedTheme === 'dark') {
     applyTheme(true);
 } else if (savedTheme === 'light') {
     applyTheme(false);
 } else {
-    // Default light mode
     applyTheme(false);
 }
 
