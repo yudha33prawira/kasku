@@ -130,34 +130,10 @@
         .modal-content { background: var(--card-bg); border-radius: 32px; padding: 24px; width: 100%; max-width: 350px; max-height: 85vh; overflow-y: auto; animation: scaleIn 0.3s ease-out; color: var(--text-primary); }
         .modal-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         
-        .modal-button-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 20px;
-        }
-        
-        .modal-btn {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 60px;
-            border: none;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
+        .modal-button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+        .modal-btn { width: 100%; padding: 12px 16px; border-radius: 60px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .modal-btn:active { transform: scale(0.96); }
-        
-        .modal-btn-full {
-            grid-column: span 2;
-        }
-        
+        .modal-btn-full { grid-column: span 2; }
         .modal-btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 2px 8px rgba(59,130,246,0.3); }
         .modal-btn-secondary { background: #f1f5f9; color: #475569; }
         .modal-btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
@@ -223,12 +199,17 @@
 </div>
 
 <script>
-// Supabase Config
+// ============================================
+// SUPABASE CONFIGURATION
+// ============================================
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
 let sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ============================================
+// GLOBAL VARIABLES
+// ============================================
 let currentUser = null;
 let categories = [];
 let transactions = [];
@@ -247,8 +228,12 @@ let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
 let navigationHistory = [];
+let sharedAccessLoaded = false;
+let isProcessingSharedAccess = false;
 
-// ========== UTILITY FUNCTIONS ==========
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 function pushHistory(nav) { navigationHistory.push(nav); }
 
 function goBack() {
@@ -355,7 +340,9 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-// ========== MODE DARK/LIGHT ==========
+// ============================================
+// THEME FUNCTIONS
+// ============================================
 function applyTheme(isDark) {
     if (isDark) {
         document.body.classList.add("dark");
@@ -385,8 +372,7 @@ async function saveThemeToDatabase(isDark) {
     try {
         const { error } = await sb.from("user_settings").upsert({ 
             user_id: currentUser.id, 
-            dark_mode: isDark,
-            updated_at: new Date().toISOString()
+            dark_mode: isDark
         });
         if (error) throw error;
     } catch(e) { console.log("Theme save error:", e); }
@@ -403,8 +389,6 @@ async function initTheme() {
     const localTheme = localStorage.getItem('theme_mode');
     if (localTheme === 'dark') {
         applyTheme(true);
-    } else if (localTheme === 'light') {
-        applyTheme(false);
     } else {
         applyTheme(false);
     }
@@ -421,45 +405,112 @@ async function toggleTheme() {
     showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
 }
 
-// ========== SHARED ACCESS ==========
-async function loadSharedAccess() { 
-    if(currentUser) { 
-        try {
-            const {data: asOwner}=await sb.from("shared_access").select("*").eq("owner_id",currentUser.id);
-            const {data: asReceiver}=await sb.from("shared_access").select("*").eq("shared_email",currentUser.email);
-            sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
-            console.log("Shared access loaded:", sharedAccess.length);
-            
-            await autoAcceptPendingAccess();
-        } catch(e) { console.error("Load shared access error:", e); }
+// ============================================
+// SHARED ACCESS FUNCTIONS (FIXED)
+// ============================================
+async function loadSharedAccess(refresh = false) { 
+    if(!currentUser) return;
+    
+    if (!refresh && sharedAccessLoaded) {
+        console.log("Shared access already loaded, skipping");
+        return;
+    }
+    
+    try {
+        console.log("Loading shared access for user:", currentUser.email);
+        
+        // Load access where user is owner
+        const {data: asOwner, error: ownerError} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("owner_id", currentUser.id);
+        
+        if (ownerError) throw ownerError;
+        
+        // Load access where user is receiver
+        const {data: asReceiver, error: receiverError} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email);
+        
+        if (receiverError) throw receiverError;
+        
+        sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
+        sharedAccessLoaded = true;
+        console.log("Shared access loaded:", sharedAccess.length);
+        
+        // Auto accept pending access for current user
+        await autoAcceptPendingAccess();
+        
+    } catch(e) { 
+        console.error("Load shared access error:", e);
     } 
 }
 
 async function autoAcceptPendingAccess() {
     if (!currentUser) return;
+    if (isProcessingSharedAccess) return;
     
-    const pendingAccess = sharedAccess.filter(s => 
-        s.shared_email === currentUser.email && 
-        s.status === 'pending'
-    );
+    isProcessingSharedAccess = true;
     
-    console.log("Pending access found:", pendingAccess.length);
-    
-    for (const access of pendingAccess) {
-        const { error } = await sb.from("shared_access")
-            .update({ status: 'accepted' })
-            .eq("id", access.id);
+    try {
+        // Find pending access where current user is the receiver
+        const pendingAccess = sharedAccess.filter(s => 
+            s.shared_email === currentUser.email && 
+            s.status === 'pending'
+        );
         
-        if (error) {
-            console.error("Error auto accepting:", error);
-        } else {
-            console.log("Auto accepted access from:", access.owner_id);
+        if (pendingAccess.length === 0) {
+            isProcessingSharedAccess = false;
+            return;
         }
-    }
-    
-    if (pendingAccess.length > 0) {
-        await loadSharedAccess();
-        showToast(`${pendingAccess.length} akses bersama diterima`);
+        
+        console.log("Pending access found:", pendingAccess.length);
+        
+        let acceptedCount = 0;
+        
+        for (const access of pendingAccess) {
+            console.log("Auto accepting access from owner:", access.owner_id);
+            
+            // Update status to accepted (TANPA updated_at)
+            const { error } = await sb
+                .from("shared_access")
+                .update({ 
+                    status: 'accepted',
+                    accepted_at: new Date().toISOString()
+                })
+                .eq("id", access.id);
+            
+            if (error) {
+                console.error("Error auto accepting:", error);
+            } else {
+                console.log("Auto accepted access from:", access.owner_id);
+                acceptedCount++;
+            }
+        }
+        
+        if (acceptedCount > 0) {
+            // Reload shared access to get updated status
+            sharedAccessLoaded = false;
+            await loadSharedAccess(true);
+            
+            showToast(`${acceptedCount} akses bersama diterima`);
+            
+            // Reload all data to show shared data
+            await loadTransactions();
+            await loadDebts();
+            await loadSavings();
+            await loadReminders();
+            await loadTasks();
+            
+            // Re-render current view
+            renderCurrentView();
+        }
+        
+    } catch(e) {
+        console.error("Auto accept error:", e);
+    } finally {
+        isProcessingSharedAccess = false;
     }
 }
 
@@ -475,6 +526,18 @@ function hasEditAccess(dataOwnerId) {
     return access && access.access_level === 'edit';
 }
 
+function hasViewAccess(dataOwnerId) {
+    if (!currentUser) return false;
+    if (dataOwnerId === currentUser.id) return true;
+    
+    const access = sharedAccess.find(s => 
+        s.owner_id === dataOwnerId && 
+        s.shared_email === currentUser.email && 
+        s.status === 'accepted'
+    );
+    return access !== undefined;
+}
+
 function getAccessLevelLabel(dataOwnerId) {
     if (dataOwnerId === currentUser.id) return null;
     const access = sharedAccess.find(s => 
@@ -486,7 +549,9 @@ function getAccessLevelLabel(dataOwnerId) {
     return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
 }
 
-// ========== LOAD DATA DENGAN SHARED ACCESS ==========
+// ============================================
+// LOAD DATA FUNCTIONS
+// ============================================
 async function loadCategories() { 
     if(currentUser) { 
         try {
@@ -527,6 +592,7 @@ async function loadTransactions() {
             }
             uniqueTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             transactions = uniqueTransactions;
+            console.log("Total transactions loaded:", transactions.length);
         } catch(e) { console.error("Load transactions error:", e); }
     } 
 }
@@ -659,6 +725,9 @@ async function loadTasks() {
     } 
 }
 
+// ============================================
+// RECURRING TRANSACTION FUNCTIONS
+// ============================================
 async function createRecurringTransaction(originalTransaction, monthsAhead = 12) {
     if (!currentUser) return 0;
     let createdCount = 0;
@@ -693,6 +762,9 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
     return createdCount;
 }
 
+// ============================================
+// WHATSAPP & REMINDER FUNCTIONS
+// ============================================
 function openWhatsApp(phoneNumber, name, amount) {
     if (!phoneNumber) { showToast("Nomor WhatsApp tidak tersedia"); return; }
     let cleanNumber = formatWhatsAppNumber(phoneNumber);
@@ -771,7 +843,9 @@ function showRemindersPopup() {
     document.getElementById("closeReminderPopup").onclick = () => modal.remove();
 }
 
-// ========== MODAL DETAIL FUNCTIONS ==========
+// ============================================
+// MODAL DETAIL FUNCTIONS
+// ============================================
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
@@ -983,7 +1057,77 @@ async function openEditDebtModal(debtId) {
     document.getElementById("cancelEditDebt").onclick = () => modal.remove();
 }
 
-// ========== RENDER FUNGSI ==========
+// ============================================
+// TRANSACTION MODAL
+// ============================================
+function openTransaksiModal(predefinedType=null){
+    const today = new Date().toISOString().slice(0,10);
+    const modal=document.createElement('div');modal.className='modal-overlay';
+    modal.innerHTML=`
+        <div class="modal-content">
+            <div class="modal-title">✨ Tambah Transaksi</div>
+            <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input">
+            <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input">
+            <select id="modalTipe" class="modal-select">
+                <option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option>
+                <option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option>
+            </select>
+            <input type="date" id="modalTanggal" class="modal-input" value="${today}">
+            <select id="modalKat" class="modal-select">
+                <option value="">Pilih Kategori</option>
+                ${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}
+            </select>
+            <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed"> <span>📌 Pengeluaran Tetap</span></label>
+                <p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p>
+            </div>
+            <div style="background:linear-gradient(135deg, #f3e8ff, #f0f9ff); padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label>
+                <p class="info-text">Centang untuk membuat transaksi otomatis di tanggal yang sama setiap bulan</p>
+            </div>
+            <div class="modal-button-grid">
+                <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    setupRupiahInput('modalJum');
+    
+    document.getElementById("saveTransaksi").onclick=async()=>{
+        const desc=document.getElementById("modalDesk").value.trim();
+        const amount=parseRupiah(document.getElementById("modalJum").value);
+        const type=document.getElementById("modalTipe").value;
+        const tanggal=document.getElementById("modalTanggal").value;
+        const catId=document.getElementById("modalKat").value;
+        const isFixed=document.getElementById("modalFixed").checked;
+        const isRecurring=document.getElementById("modalRecurring").checked;
+        
+        if(!desc||!amount) return alert("Isi dengan benar");
+        
+        const data={user_id:currentUser.id,description:desc,amount:amount,type:type,is_fixed_expense:isFixed};
+        if(catId) data.category_id=catId;
+        if(tanggal) data.created_at=new Date(tanggal).toISOString();
+        
+        const {data: newTransaction, error}=await sb.from("transactions").insert(data).select();
+        if(error) alert(error.message);
+        else { 
+            showToast("✅ Transaksi ditambahkan");
+            if (isRecurring && newTransaction && newTransaction.length > 0) {
+                showToast("🔄 Membuat transaksi berulang...");
+                const created = await createRecurringTransaction(newTransaction[0], 12);
+                await loadTransactions();
+                showToast(`✅ Selesai! ${created} transaksi berulang ditambahkan`);
+            }
+            modal.remove(); await loadTransactions(); renderCurrentView(); 
+        }
+    };
+    document.getElementById("closeModal").onclick=()=>modal.remove();
+}
+
+// ============================================
+// RENDER HOME FUNCTION
+// ============================================
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -1090,6 +1234,9 @@ async function renderHome() {
     });
 }
 
+// ============================================
+// RENDER TRANSAKSI FUNCTION
+// ============================================
 async function renderTransaksi() {
     await loadTransactions();
     
@@ -1151,66 +1298,9 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
-function openTransaksiModal(predefinedType=null){
-    const today = new Date().toISOString().slice(0,10);
-    const modal=document.createElement('div');modal.className='modal-overlay';
-    modal.innerHTML=`
-        <div class="modal-content">
-            <div class="modal-title">✨ Tambah Transaksi</div>
-            <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input">
-            <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input">
-            <select id="modalTipe" class="modal-select"><option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option><option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option></select>
-            <input type="date" id="modalTanggal" class="modal-input" value="${today}">
-            <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select>
-            <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
-                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed"> <span>📌 Pengeluaran Tetap</span></label>
-                <p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p>
-            </div>
-            <div style="background:linear-gradient(135deg, #f3e8ff, #f0f9ff); padding:12px; border-radius:16px; margin:12px 0">
-                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label>
-                <p class="info-text">Centang untuk membuat transaksi otomatis di tanggal yang sama setiap bulan</p>
-            </div>
-            <div class="modal-button-grid">
-                <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
-                <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    setupRupiahInput('modalJum');
-    
-    document.getElementById("saveTransaksi").onclick=async()=>{
-        const desc=document.getElementById("modalDesk").value.trim();
-        const amount=parseRupiah(document.getElementById("modalJum").value);
-        const type=document.getElementById("modalTipe").value;
-        const tanggal=document.getElementById("modalTanggal").value;
-        const catId=document.getElementById("modalKat").value;
-        const isFixed=document.getElementById("modalFixed").checked;
-        const isRecurring=document.getElementById("modalRecurring").checked;
-        
-        if(!desc||!amount) return alert("Isi dengan benar");
-        
-        const data={user_id:currentUser.id,description:desc,amount:amount,type:type,is_fixed_expense:isFixed};
-        if(catId) data.category_id=catId;
-        if(tanggal) data.created_at=new Date(tanggal).toISOString();
-        
-        const {data: newTransaction, error}=await sb.from("transactions").insert(data).select();
-        if(error) alert(error.message);
-        else { 
-            showToast("✅ Transaksi ditambahkan");
-            if (isRecurring && newTransaction && newTransaction.length > 0) {
-                showToast("🔄 Membuat transaksi berulang...");
-                const created = await createRecurringTransaction(newTransaction[0], 12);
-                await loadTransactions();
-                showToast(`✅ Selesai! ${created} transaksi berulang ditambahkan`);
-            }
-            modal.remove(); await loadTransactions(); renderCurrentView(); 
-        }
-    };
-    document.getElementById("closeModal").onclick=()=>modal.remove();
-}
-
-// ========== KELOLA KATEGORI ==========
+// ============================================
+// CATEGORY MANAGEMENT FUNCTIONS
+// ============================================
 async function openCategoryManageModal() {
     await loadCategories();
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
@@ -1301,7 +1391,9 @@ function openCategoryFormModal(editId=null) {
     document.getElementById("cancelCategoryBtn").onclick = () => { modal.remove(); openCategoryManageModal(); };
 }
 
-// ========== HUTANG ==========
+// ============================================
+// HUTANG/PIUTANG FUNCTIONS
+// ============================================
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1425,7 +1517,9 @@ function openDebtModal(){
     document.getElementById("closeDebt").onclick=()=>modal.remove();
 }
 
-// ========== TABUNGAN ==========
+// ============================================
+// TABUNGAN FUNCTIONS
+// ============================================
 async function renderSavings() {
     await loadSavings();
     let html=`
@@ -1515,7 +1609,9 @@ function openSavingsModal(editId=null){
     document.getElementById("closeSavings").onclick=()=>modal.remove();
 }
 
-// ========== PENGINGAT ==========
+// ============================================
+// REMINDERS FUNCTIONS
+// ============================================
 async function renderReminders() {
     await loadReminders();
     let html=`
@@ -1603,7 +1699,9 @@ function openReminderModal(editId=null){
     document.getElementById("closeReminder").onclick=()=>modal.remove();
 }
 
-// ========== TUGAS ==========
+// ============================================
+// TASKS FUNCTIONS
+// ============================================
 async function renderTasks() {
     await loadTasks();
     let html=`
@@ -1713,6 +1811,9 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
+// ============================================
+// LAPORAN FUNCTIONS
+// ============================================
 async function renderLaporan() {
     await loadTransactions();
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1767,6 +1868,9 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
+// ============================================
+// SETTINGS FUNCTION
+// ============================================
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -1857,13 +1961,15 @@ async function renderSettings() {
             owner_id: currentUser.id, 
             shared_email: email, 
             access_level: level, 
-            status: 'pending' 
+            status: 'pending',
+            invited_at: new Date().toISOString()
         });
         if(error) alert(error.message);
         else { 
             showToast(`Undangan akses dikirim ke ${email} (${level === 'edit' ? '✏️ Edit' : '👁️ Lihat'})`); 
             document.getElementById("sharedEmail").value = ""; 
-            await loadSharedAccess(); 
+            sharedAccessLoaded = false;
+            await loadSharedAccess(true); 
             renderSettings(); 
         }
     });
@@ -1907,6 +2013,8 @@ async function renderSettings() {
             if(id && confirm("Hapus akses ini?")){ 
                 await sb.from("shared_access").delete().eq("id", id); 
                 showToast("Akses dihapus"); 
+                sharedAccessLoaded = false;
+                await loadSharedAccess(true);
                 renderSettings(); 
             } 
         }; 
@@ -1919,6 +2027,9 @@ async function renderSettings() {
     });
 }
 
+// ============================================
+// RENDER CURRENT VIEW & NAVIGATION
+// ============================================
 function renderCurrentView() {
     if(currentNav==='home') renderHome();
     else if(currentNav==='transaksi') renderTransaksi();
@@ -1965,7 +2076,9 @@ window.addEventListener('popstate', function(event) {
     }
 });
 
-// ========== AUTH FUNCTIONS ==========
+// ============================================
+// AUTH FUNCTIONS
+// ============================================
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
@@ -2046,7 +2159,8 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    await loadSharedAccess();
+    sharedAccessLoaded = false;
+    await loadSharedAccess(true);
     await loadCategories(); 
     await loadTransactions(); 
     await loadDebts(); 
@@ -2099,7 +2213,9 @@ async function checkSession() {
     }
 }
 
-// Event Listeners
+// ============================================
+// EVENT LISTENERS
+// ============================================
 document.getElementById("submitLoginBtn").addEventListener("click", handleLogin);
 document.getElementById("guestBtn").addEventListener("click", handleGuest);
 document.getElementById("switchText").addEventListener("click", toggleMode);
@@ -2109,6 +2225,7 @@ document.getElementById("toggleLoginPassword").addEventListener("click", () => {
     else{ inp.type = 'password'; inp.nextElementSibling.textContent = '👁️'; }
 });
 
+// Start the app
 checkSession();
 </script>
 </body>
