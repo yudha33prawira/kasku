@@ -242,22 +242,35 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
+// MODE DARK/LIGHT - Load dari database
 async function loadThemePreference() {
     if (!currentUser) return;
     try {
-        const { data } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).single();
+        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
         if (data && data.dark_mode !== undefined) {
             isDarkMode = data.dark_mode;
-            if (isDarkMode) document.body.classList.add("dark");
-            else document.body.classList.remove("dark");
+        } else {
+            // Jika belum ada data, buat default
+            await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: false });
+            isDarkMode = false;
         }
-    } catch(e) { console.log("Theme load error:", e); }
+        if (isDarkMode) document.body.classList.add("dark");
+        else document.body.classList.remove("dark");
+    } catch(e) { 
+        console.log("Theme load error:", e);
+        isDarkMode = false;
+    }
 }
 
 async function saveThemePreference(isDark) {
     if (!currentUser) return;
     try {
-        await sb.from("user_settings").upsert({ user_id: currentUser.id, dark_mode: isDark, updated_at: new Date().toISOString() });
+        const { error } = await sb.from("user_settings").upsert({ 
+            user_id: currentUser.id, 
+            dark_mode: isDark,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+        if (error) console.error("Save theme error:", error);
     } catch(e) { console.log("Theme save error:", e); }
 }
 
@@ -338,7 +351,6 @@ function setupRupiahInput(inputId) {
     });
 }
 
-// Format WA otomatis saat input
 function setupWhatsAppInput(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
@@ -499,10 +511,7 @@ async function openEditDebtModal(debtId) {
     setupRupiahInput('editDebtAmount');
     setupWhatsAppInput('editDebtWa');
     
-    // Format nama otomatis saat blur
-    document.getElementById("editDebtName").addEventListener('blur', function(e) {
-        this.value = capitalizeName(this.value);
-    });
+    document.getElementById("editDebtName").addEventListener('blur', function(e) { this.value = capitalizeName(this.value); });
     
     document.getElementById("saveEditDebt").onclick = async () => {
         const name = capitalizeName(document.getElementById("editDebtName").value.trim());
@@ -733,12 +742,7 @@ function openDebtModal(){
     document.body.appendChild(modal);
     setupRupiahInput('debtAmount');
     setupWhatsAppInput('debtWa');
-    
-    // Format nama otomatis saat blur
-    document.getElementById("debtName").addEventListener('blur', function(e) {
-        this.value = capitalizeName(this.value);
-    });
-    
+    document.getElementById("debtName").addEventListener('blur', function(e) { this.value = capitalizeName(this.value); });
     document.getElementById("saveDebt").onclick=async()=>{
         const name = capitalizeName(document.getElementById("debtName").value.trim());
         const amount=parseRupiah(document.getElementById("debtAmount").value);
@@ -1008,8 +1012,8 @@ function toggleMode() {
 async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
-    try { await sb.from("user_settings").select("*").eq("user_id", user.id).single(); } catch(e) { await sb.from("user_settings").insert({ user_id: user.id, dark_mode: false }); }
-    await loadCategories(); await loadTransactions(); await loadDebts(); await loadSavings(); await loadReminders(); await loadTasks(); await loadSharedAccess(); await loadThemePreference();
+    await loadCategories(); await loadTransactions(); await loadDebts(); await loadSavings(); await loadReminders(); await loadTasks(); await loadSharedAccess();
+    await loadThemePreference();
     addBottomNav();
     renderCurrentView();
 }
