@@ -199,17 +199,13 @@
 </div>
 
 <script>
-// ============================================
-// SUPABASE CONFIGURATION
-// ============================================
+// Supabase Config
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
 let sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ============================================
-// GLOBAL VARIABLES
-// ============================================
+// Global Variables
 let currentUser = null;
 let categories = [];
 let transactions = [];
@@ -231,9 +227,7 @@ let navigationHistory = [];
 let sharedAccessLoaded = false;
 let isProcessingSharedAccess = false;
 
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
+// Utility Functions
 function pushHistory(nav) { navigationHistory.push(nav); }
 
 function goBack() {
@@ -340,9 +334,7 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-// ============================================
-// THEME FUNCTIONS
-// ============================================
+// Theme Functions
 function applyTheme(isDark) {
     if (isDark) {
         document.body.classList.add("dark");
@@ -405,14 +397,9 @@ async function toggleTheme() {
     showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
 }
 
-// ============================================
-// SHARED ACCESS FUNCTIONS (FIXED)
-// ============================================
+// ========== SHARED ACCESS FUNCTIONS (FIXED) ==========
 async function loadSharedAccess(refresh = false) { 
-    if(!currentUser) {
-        console.log("No current user");
-        return;
-    }
+    if(!currentUser) return;
     
     if (!refresh && sharedAccessLoaded) {
         console.log("Shared access already loaded, skipping");
@@ -421,51 +408,29 @@ async function loadSharedAccess(refresh = false) {
     
     try {
         console.log("Loading shared access for user:", currentUser.email);
-        console.log("User ID:", currentUser.id);
         
-        // Load access where user is owner
         const {data: asOwner, error: ownerError} = await sb
             .from("shared_access")
             .select("*")
             .eq("owner_id", currentUser.id);
         
-        if (ownerError) {
-            console.error("Owner query error:", ownerError);
-            throw ownerError;
-        }
+        if (ownerError) throw ownerError;
         
-        console.log("As owner data:", asOwner);
-        
-        // Load access where user is receiver
         const {data: asReceiver, error: receiverError} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email);
         
-        if (receiverError) {
-            console.error("Receiver query error:", receiverError);
-            throw receiverError;
-        }
-        
-        console.log("As receiver data:", asReceiver);
+        if (receiverError) throw receiverError;
         
         sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
         sharedAccessLoaded = true;
-        console.log("Total shared access loaded:", sharedAccess.length);
+        console.log("Shared access loaded:", sharedAccess.length);
         
-        if (sharedAccess.length === 0) {
-            console.log("No shared access found. Check if:");
-            console.log("1. Table 'shared_access' exists");
-            console.log("2. User has sent or received any invites");
-            console.log("3. RLS policies are correctly set up");
-        }
-        
-        // Auto accept pending access for current user
         await autoAcceptPendingAccess();
         
     } catch(e) { 
         console.error("Load shared access error:", e);
-        showToast("Error loading shared access: " + e.message);
     } 
 }
 
@@ -476,57 +441,39 @@ async function autoAcceptPendingAccess() {
     isProcessingSharedAccess = true;
     
     try {
-        console.log("Checking for pending access...");
-        console.log("Current user email:", currentUser.email);
-        
-        // Query langsung ke database untuk pending access
         const { data: pendingAccess, error } = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "pending");
         
-        if (error) {
-            console.error("Query error:", error);
-            isProcessingSharedAccess = false;
-            return;
-        }
-        
-        console.log("Pending access found:", pendingAccess?.length || 0);
+        if (error) throw error;
         
         if (!pendingAccess || pendingAccess.length === 0) {
             isProcessingSharedAccess = false;
             return;
         }
         
+        console.log("Pending access found:", pendingAccess.length);
+        
         let acceptedCount = 0;
         
         for (const access of pendingAccess) {
-            console.log("Auto accepting access from owner:", access.owner_id);
-            
             const { error: updateError } = await sb
                 .from("shared_access")
                 .update({ status: 'accepted' })
                 .eq("id", access.id);
             
-            if (updateError) {
-                console.error("Error updating:", updateError);
-            } else {
-                console.log("Successfully accepted access from:", access.owner_id);
+            if (!updateError) {
                 acceptedCount++;
             }
         }
         
         if (acceptedCount > 0) {
-            console.log(`Accepted ${acceptedCount} access requests`);
             sharedAccessLoaded = false;
             await loadSharedAccess(true);
-            await loadTransactions();
-            await loadDebts();
-            await loadSavings();
-            await loadReminders();
-            await loadTasks();
             showToast(`${acceptedCount} akses bersama diterima`);
+            await loadAllData();
             renderCurrentView();
         }
         
@@ -549,18 +496,6 @@ function hasEditAccess(dataOwnerId) {
     return access && access.access_level === 'edit';
 }
 
-function hasViewAccess(dataOwnerId) {
-    if (!currentUser) return false;
-    if (dataOwnerId === currentUser.id) return true;
-    
-    const access = sharedAccess.find(s => 
-        s.owner_id === dataOwnerId && 
-        s.shared_email === currentUser.email && 
-        s.status === 'accepted'
-    );
-    return access !== undefined;
-}
-
 function getAccessLevelLabel(dataOwnerId) {
     if (dataOwnerId === currentUser.id) return null;
     const access = sharedAccess.find(s => 
@@ -572,9 +507,7 @@ function getAccessLevelLabel(dataOwnerId) {
     return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
 }
 
-// ============================================
-// LOAD DATA FUNCTIONS
-// ============================================
+// ========== LOAD DATA FUNCTIONS (FIXED) ==========
 async function loadCategories() { 
     if(currentUser) { 
         try {
@@ -585,172 +518,202 @@ async function loadCategories() {
 }
 
 async function loadTransactions() { 
-    if(currentUser) { 
-        try {
-            const {data: ownData}=await sb.from("transactions").select("*").eq("user_id",currentUser.id).order("created_at", { ascending: false }); 
-            let allTransactions = ownData || [];
-            
-            const acceptedAccess = sharedAccess.filter(s => 
-                s.shared_email === currentUser.email && 
-                s.status === 'accepted'
-            );
-            
+    if(!currentUser) return;
+    
+    try {
+        // Load own transactions
+        const {data: ownData, error: ownError} = await sb
+            .from("transactions")
+            .select("*")
+            .eq("user_id", currentUser.id)
+            .order("created_at", { ascending: false });
+        
+        if (ownError) throw ownError;
+        
+        let allTransactions = ownData || [];
+        
+        // Get accepted shared access
+        const { data: acceptedAccess, error: accessError } = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "accepted");
+        
+        if (accessError) throw accessError;
+        
+        // Load transactions from each owner
+        if (acceptedAccess && acceptedAccess.length > 0) {
             for (const access of acceptedAccess) {
                 const ownerId = access.owner_id;
-                if (ownerId) {
-                    const {data: sharedData}=await sb.from("transactions").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
-                    if (sharedData && sharedData.length > 0) {
-                        allTransactions = [...allTransactions, ...sharedData];
-                    }
+                const {data: sharedData, error: sharedError} = await sb
+                    .from("transactions")
+                    .select("*")
+                    .eq("user_id", ownerId)
+                    .order("created_at", { ascending: false });
+                
+                if (!sharedError && sharedData) {
+                    allTransactions = [...allTransactions, ...sharedData];
                 }
             }
-            
-            const uniqueTransactions = [];
-            const seenIds = new Set();
-            for (const t of allTransactions) {
-                if (!seenIds.has(t.id)) {
-                    seenIds.add(t.id);
-                    uniqueTransactions.push(t);
-                }
+        }
+        
+        // Remove duplicates
+        const unique = [];
+        const seen = new Set();
+        for (const t of allTransactions) {
+            if (!seen.has(t.id)) {
+                seen.add(t.id);
+                unique.push(t);
             }
-            uniqueTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            transactions = uniqueTransactions;
-            console.log("Total transactions loaded:", transactions.length);
-        } catch(e) { console.error("Load transactions error:", e); }
+        }
+        unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        transactions = unique;
+        
+        console.log("Total transactions loaded:", transactions.length);
+        
+    } catch(e) { 
+        console.error("Load transactions error:", e);
     } 
 }
 
 async function loadDebts() { 
-    if(currentUser) { 
-        try {
-            const {data: ownData}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
-            let allDebts = ownData || [];
-            
-            const acceptedAccess = sharedAccess.filter(s => 
-                s.shared_email === currentUser.email && 
-                s.status === 'accepted'
-            );
-            
+    if(!currentUser) return;
+    
+    try {
+        const {data: ownData}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
+        let allDebts = ownData || [];
+        
+        const { data: acceptedAccess } = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "accepted");
+        
+        if (acceptedAccess && acceptedAccess.length > 0) {
             for (const access of acceptedAccess) {
-                const ownerId = access.owner_id;
-                if (ownerId) {
-                    const {data: sharedData}=await sb.from("debts").select("*").eq("user_id", ownerId);
-                    if (sharedData) allDebts = [...allDebts, ...sharedData];
-                }
+                const {data: sharedData}=await sb.from("debts").select("*").eq("user_id", access.owner_id);
+                if (sharedData) allDebts = [...allDebts, ...sharedData];
             }
-            
-            const uniqueDebts = [];
-            const seenIds = new Set();
-            for (const d of allDebts) {
-                if (!seenIds.has(d.id)) {
-                    seenIds.add(d.id);
-                    uniqueDebts.push(d);
-                }
+        }
+        
+        const unique = [];
+        const seen = new Set();
+        for (const d of allDebts) {
+            if (!seen.has(d.id)) {
+                seen.add(d.id);
+                unique.push(d);
             }
-            debts = uniqueDebts;
-        } catch(e) { console.error("Load debts error:", e); }
-    } 
+        }
+        debts = unique;
+    } catch(e) { console.error("Load debts error:", e); }
 }
 
 async function loadSavings() { 
-    if(currentUser) { 
-        try {
-            const {data: ownData}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
-            let allSavings = ownData || [];
-            
-            const acceptedAccess = sharedAccess.filter(s => 
-                s.shared_email === currentUser.email && 
-                s.status === 'accepted'
-            );
-            
+    if(!currentUser) return;
+    
+    try {
+        const {data: ownData}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
+        let allSavings = ownData || [];
+        
+        const { data: acceptedAccess } = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "accepted");
+        
+        if (acceptedAccess && acceptedAccess.length > 0) {
             for (const access of acceptedAccess) {
-                const ownerId = access.owner_id;
-                if (ownerId) {
-                    const {data: sharedData}=await sb.from("savings").select("*").eq("user_id", ownerId);
-                    if (sharedData) allSavings = [...allSavings, ...sharedData];
-                }
+                const {data: sharedData}=await sb.from("savings").select("*").eq("user_id", access.owner_id);
+                if (sharedData) allSavings = [...allSavings, ...sharedData];
             }
-            
-            const uniqueSavings = [];
-            const seenIds = new Set();
-            for (const s of allSavings) {
-                if (!seenIds.has(s.id)) {
-                    seenIds.add(s.id);
-                    uniqueSavings.push(s);
-                }
+        }
+        
+        const unique = [];
+        const seen = new Set();
+        for (const s of allSavings) {
+            if (!seen.has(s.id)) {
+                seen.add(s.id);
+                unique.push(s);
             }
-            savings = uniqueSavings;
-        } catch(e) { console.error("Load savings error:", e); }
-    } 
+        }
+        savings = unique;
+    } catch(e) { console.error("Load savings error:", e); }
 }
 
 async function loadReminders() { 
-    if(currentUser) { 
-        try {
-            const {data: ownData}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
-            let allReminders = ownData || [];
-            
-            const acceptedAccess = sharedAccess.filter(s => 
-                s.shared_email === currentUser.email && 
-                s.status === 'accepted'
-            );
-            
+    if(!currentUser) return;
+    
+    try {
+        const {data: ownData}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
+        let allReminders = ownData || [];
+        
+        const { data: acceptedAccess } = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "accepted");
+        
+        if (acceptedAccess && acceptedAccess.length > 0) {
             for (const access of acceptedAccess) {
-                const ownerId = access.owner_id;
-                if (ownerId) {
-                    const {data: sharedData}=await sb.from("reminders").select("*").eq("user_id", ownerId);
-                    if (sharedData) allReminders = [...allReminders, ...sharedData];
-                }
+                const {data: sharedData}=await sb.from("reminders").select("*").eq("user_id", access.owner_id);
+                if (sharedData) allReminders = [...allReminders, ...sharedData];
             }
-            
-            const uniqueReminders = [];
-            const seenIds = new Set();
-            for (const r of allReminders) {
-                if (!seenIds.has(r.id)) {
-                    seenIds.add(r.id);
-                    uniqueReminders.push(r);
-                }
+        }
+        
+        const unique = [];
+        const seen = new Set();
+        for (const r of allReminders) {
+            if (!seen.has(r.id)) {
+                seen.add(r.id);
+                unique.push(r);
             }
-            reminders = uniqueReminders;
-        } catch(e) { console.error("Load reminders error:", e); }
-    } 
+        }
+        reminders = unique;
+    } catch(e) { console.error("Load reminders error:", e); }
 }
 
 async function loadTasks() { 
-    if(currentUser) { 
-        try {
-            const {data: ownData}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
-            let allTasks = ownData || [];
-            
-            const acceptedAccess = sharedAccess.filter(s => 
-                s.shared_email === currentUser.email && 
-                s.status === 'accepted'
-            );
-            
+    if(!currentUser) return;
+    
+    try {
+        const {data: ownData}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
+        let allTasks = ownData || [];
+        
+        const { data: acceptedAccess } = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "accepted");
+        
+        if (acceptedAccess && acceptedAccess.length > 0) {
             for (const access of acceptedAccess) {
-                const ownerId = access.owner_id;
-                if (ownerId) {
-                    const {data: sharedData}=await sb.from("tasks").select("*").eq("user_id", ownerId);
-                    if (sharedData) allTasks = [...allTasks, ...sharedData];
-                }
+                const {data: sharedData}=await sb.from("tasks").select("*").eq("user_id", access.owner_id);
+                if (sharedData) allTasks = [...allTasks, ...sharedData];
             }
-            
-            const uniqueTasks = [];
-            const seenIds = new Set();
-            for (const t of allTasks) {
-                if (!seenIds.has(t.id)) {
-                    seenIds.add(t.id);
-                    uniqueTasks.push(t);
-                }
+        }
+        
+        const unique = [];
+        const seen = new Set();
+        for (const t of allTasks) {
+            if (!seen.has(t.id)) {
+                seen.add(t.id);
+                unique.push(t);
             }
-            tasks = uniqueTasks;
-        } catch(e) { console.error("Load tasks error:", e); }
-    } 
+        }
+        tasks = unique;
+    } catch(e) { console.error("Load tasks error:", e); }
 }
 
-// ============================================
-// RECURRING TRANSACTION FUNCTIONS
-// ============================================
+async function loadAllData() {
+    await loadCategories();
+    await loadTransactions();
+    await loadDebts();
+    await loadSavings();
+    await loadReminders();
+    await loadTasks();
+}
+
+// Recurring Transaction
 async function createRecurringTransaction(originalTransaction, monthsAhead = 12) {
     if (!currentUser) return 0;
     let createdCount = 0;
@@ -785,9 +748,7 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
     return createdCount;
 }
 
-// ============================================
-// WHATSAPP & REMINDER FUNCTIONS
-// ============================================
+// WhatsApp & Reminder Functions
 function openWhatsApp(phoneNumber, name, amount) {
     if (!phoneNumber) { showToast("Nomor WhatsApp tidak tersedia"); return; }
     let cleanNumber = formatWhatsAppNumber(phoneNumber);
@@ -866,9 +827,7 @@ function showRemindersPopup() {
     document.getElementById("closeReminderPopup").onclick = () => modal.remove();
 }
 
-// ============================================
-// MODAL DETAIL FUNCTIONS
-// ============================================
+// ========== MODAL DETAIL FUNCTIONS ==========
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
@@ -1080,9 +1039,7 @@ async function openEditDebtModal(debtId) {
     document.getElementById("cancelEditDebt").onclick = () => modal.remove();
 }
 
-// ============================================
-// TRANSACTION MODAL
-// ============================================
+// ========== TRANSACTION MODAL ==========
 function openTransaksiModal(predefinedType=null){
     const today = new Date().toISOString().slice(0,10);
     const modal=document.createElement('div');modal.className='modal-overlay';
@@ -1148,9 +1105,98 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// ============================================
-// RENDER HOME FUNCTION
-// ============================================
+// ========== CATEGORY MANAGEMENT ==========
+async function openCategoryManageModal() {
+    await loadCategories();
+    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">🏷️ Kelola Kategori</div>
+            <button id="addCategoryBtn" class="modal-btn modal-btn-primary" style="margin-bottom:16px">+ Tambah Kategori Baru</button>
+            <div id="categoriesList" style="max-height:400px; overflow-y:auto;"></div>
+            <div class="modal-button-grid"><button id="closeCategoryManageBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const categoriesContainer = document.getElementById("categoriesList");
+    if(categories.length === 0) categoriesContainer.innerHTML = '<div class="empty-state">Belum ada kategori</div>';
+    else categoriesContainer.innerHTML = categories.map(c => `
+        <div class="category-item" data-id="${c.id}">
+            <div><span style="font-size:22px;">${c.icon}</span><span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span><span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span></div>
+            <div><span style="display:inline-block; width:24px; height:24px; background:${c.color}; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1);"></span></div>
+        </div>
+    `).join('');
+    
+    document.getElementById("addCategoryBtn").onclick = () => { modal.remove(); openCategoryFormModal(); };
+    document.getElementById("closeCategoryManageBtn").onclick = () => modal.remove();
+    document.querySelectorAll(".category-item").forEach(el => { 
+        el.onclick = () => { 
+            const id = el.getAttribute("data-id"); 
+            modal.remove(); 
+            openCategoryFormModal(id); 
+        }; 
+    });
+}
+
+function openCategoryFormModal(editId=null) {
+    const isEdit = !!editId;
+    const cat = isEdit ? categories.find(c => c.id === editId) : null;
+    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">${isEdit ? '✏️ Edit Kategori' : '➕ Tambah Kategori'}</div>
+            <input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit ? escapeHtml(cat.name) : ''}">
+            <input type="text" id="catIcon" class="modal-input" placeholder="Icon (contoh: 🍔, 🚗, 💵)" value="${isEdit ? cat.icon : '📁'}">
+            <select id="catType" class="modal-select">
+                <option value="pengeluaran" ${isEdit && cat.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
+                <option value="pemasukan" ${isEdit && cat.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
+            </select>
+            <input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color : '#3b82f6'}">
+            <div class="modal-button-grid">
+                <button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="cancelCategoryBtn" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteCategoryFormBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    document.getElementById("saveCategoryBtn").onclick = async () => {
+        const name = document.getElementById("catName").value.trim();
+        const icon = document.getElementById("catIcon").value.trim() || "📁";
+        const type = document.getElementById("catType").value;
+        const color = document.getElementById("catColor").value;
+        
+        if (!name) return alert("Nama kategori harus diisi");
+        
+        if (isEdit) {
+            await sb.from("categories").update({ name, icon, type, color }).eq("id", editId);
+            showToast("Kategori diupdate");
+        } else {
+            await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
+            showToast("Kategori ditambahkan");
+        }
+        modal.remove();
+        await loadCategories();
+        openCategoryManageModal();
+    };
+    
+    if (isEdit) {
+        document.getElementById("deleteCategoryFormBtn").onclick = async () => { 
+            if (confirm(`Hapus kategori "${cat.name}"?`)) { 
+                await sb.from("categories").delete().eq("id", editId); 
+                showToast("Kategori dihapus"); 
+                modal.remove(); 
+                await loadCategories(); 
+                openCategoryManageModal(); 
+            } 
+        };
+    }
+    document.getElementById("cancelCategoryBtn").onclick = () => { modal.remove(); openCategoryManageModal(); };
+}
+
+// ========== RENDER FUNCTIONS ==========
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -1257,9 +1303,6 @@ async function renderHome() {
     });
 }
 
-// ============================================
-// RENDER TRANSAKSI FUNCTION
-// ============================================
 async function renderTransaksi() {
     await loadTransactions();
     
@@ -1321,102 +1364,7 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
-// ============================================
-// CATEGORY MANAGEMENT FUNCTIONS
-// ============================================
-async function openCategoryManageModal() {
-    await loadCategories();
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-title">🏷️ Kelola Kategori</div>
-            <button id="addCategoryBtn" class="modal-btn modal-btn-primary" style="margin-bottom:16px">+ Tambah Kategori Baru</button>
-            <div id="categoriesList" style="max-height:400px; overflow-y:auto;"></div>
-            <div class="modal-button-grid"><button id="closeCategoryManageBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button></div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    const categoriesContainer = document.getElementById("categoriesList");
-    if(categories.length === 0) categoriesContainer.innerHTML = '<div class="empty-state">Belum ada kategori</div>';
-    else categoriesContainer.innerHTML = categories.map(c => `
-        <div class="category-item" data-id="${c.id}">
-            <div><span style="font-size:22px;">${c.icon}</span><span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span><span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span></div>
-            <div><span style="display:inline-block; width:24px; height:24px; background:${c.color}; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1);"></span></div>
-        </div>
-    `).join('');
-    
-    document.getElementById("addCategoryBtn").onclick = () => { modal.remove(); openCategoryFormModal(); };
-    document.getElementById("closeCategoryManageBtn").onclick = () => modal.remove();
-    document.querySelectorAll(".category-item").forEach(el => { 
-        el.onclick = () => { 
-            const id = el.getAttribute("data-id"); 
-            modal.remove(); 
-            openCategoryFormModal(id); 
-        }; 
-    });
-}
-
-function openCategoryFormModal(editId=null) {
-    const isEdit = !!editId;
-    const cat = isEdit ? categories.find(c => c.id === editId) : null;
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-title">${isEdit ? '✏️ Edit Kategori' : '➕ Tambah Kategori'}</div>
-            <input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit ? escapeHtml(cat.name) : ''}">
-            <input type="text" id="catIcon" class="modal-input" placeholder="Icon (contoh: 🍔, 🚗, 💵)" value="${isEdit ? cat.icon : '📁'}">
-            <select id="catType" class="modal-select">
-                <option value="pengeluaran" ${isEdit && cat.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
-                <option value="pemasukan" ${isEdit && cat.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
-            </select>
-            <input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color : '#3b82f6'}">
-            <div class="modal-button-grid">
-                <button id="saveCategoryBtn" class="modal-btn modal-btn-primary">Simpan</button>
-                <button id="cancelCategoryBtn" class="modal-btn modal-btn-secondary">Batal</button>
-                ${isEdit ? `<button id="deleteCategoryFormBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    document.getElementById("saveCategoryBtn").onclick = async () => {
-        const name = document.getElementById("catName").value.trim();
-        const icon = document.getElementById("catIcon").value.trim() || "📁";
-        const type = document.getElementById("catType").value;
-        const color = document.getElementById("catColor").value;
-        
-        if (!name) return alert("Nama kategori harus diisi");
-        
-        if (isEdit) {
-            await sb.from("categories").update({ name, icon, type, color }).eq("id", editId);
-            showToast("Kategori diupdate");
-        } else {
-            await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
-            showToast("Kategori ditambahkan");
-        }
-        modal.remove();
-        await loadCategories();
-        openCategoryManageModal();
-    };
-    
-    if (isEdit) {
-        document.getElementById("deleteCategoryFormBtn").onclick = async () => { 
-            if (confirm(`Hapus kategori "${cat.name}"?`)) { 
-                await sb.from("categories").delete().eq("id", editId); 
-                showToast("Kategori dihapus"); 
-                modal.remove(); 
-                await loadCategories(); 
-                openCategoryManageModal(); 
-            } 
-        };
-    }
-    document.getElementById("cancelCategoryBtn").onclick = () => { modal.remove(); openCategoryManageModal(); };
-}
-
-// ============================================
-// HUTANG/PIUTANG FUNCTIONS
-// ============================================
+// ========== HUTANG FUNCTIONS ==========
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1540,9 +1488,7 @@ function openDebtModal(){
     document.getElementById("closeDebt").onclick=()=>modal.remove();
 }
 
-// ============================================
-// TABUNGAN FUNCTIONS
-// ============================================
+// ========== TABUNGAN FUNCTIONS ==========
 async function renderSavings() {
     await loadSavings();
     let html=`
@@ -1632,9 +1578,7 @@ function openSavingsModal(editId=null){
     document.getElementById("closeSavings").onclick=()=>modal.remove();
 }
 
-// ============================================
-// REMINDERS FUNCTIONS
-// ============================================
+// ========== REMINDERS FUNCTIONS ==========
 async function renderReminders() {
     await loadReminders();
     let html=`
@@ -1722,9 +1666,7 @@ function openReminderModal(editId=null){
     document.getElementById("closeReminder").onclick=()=>modal.remove();
 }
 
-// ============================================
-// TASKS FUNCTIONS
-// ============================================
+// ========== TASKS FUNCTIONS ==========
 async function renderTasks() {
     await loadTasks();
     let html=`
@@ -1834,9 +1776,7 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// ============================================
-// LAPORAN FUNCTIONS
-// ============================================
+// ========== LAPORAN FUNCTIONS ==========
 async function renderLaporan() {
     await loadTransactions();
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1891,9 +1831,7 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// ============================================
-// SETTINGS FUNCTION
-// ============================================
+// ========== SETTINGS FUNCTION ==========
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -1984,8 +1922,7 @@ async function renderSettings() {
             owner_id: currentUser.id, 
             shared_email: email, 
             access_level: level, 
-            status: 'pending',
-            invited_at: new Date().toISOString()
+            status: 'pending'
         });
         if(error) alert(error.message);
         else { 
@@ -2050,9 +1987,7 @@ async function renderSettings() {
     });
 }
 
-// ============================================
-// RENDER CURRENT VIEW & NAVIGATION
-// ============================================
+// ========== RENDER CURRENT VIEW & NAVIGATION ==========
 function renderCurrentView() {
     if(currentNav==='home') renderHome();
     else if(currentNav==='transaksi') renderTransaksi();
@@ -2099,9 +2034,7 @@ window.addEventListener('popstate', function(event) {
     }
 });
 
-// ============================================
-// AUTH FUNCTIONS
-// ============================================
+// ========== AUTH FUNCTIONS ==========
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
@@ -2236,9 +2169,7 @@ async function checkSession() {
     }
 }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
+// Event Listeners
 document.getElementById("submitLoginBtn").addEventListener("click", handleLogin);
 document.getElementById("guestBtn").addEventListener("click", handleGuest);
 document.getElementById("switchText").addEventListener("click", toggleMode);
@@ -2248,7 +2179,6 @@ document.getElementById("toggleLoginPassword").addEventListener("click", () => {
     else{ inp.type = 'password'; inp.nextElementSibling.textContent = '👁️'; }
 });
 
-// Start the app
 checkSession();
 </script>
 </body>
