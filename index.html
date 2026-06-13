@@ -198,90 +198,6 @@
         .edit-badge { background: #3b82f6; color: white; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
         .view-badge { background: #10b981; color: white; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
         
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,255,255,0.2);
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .loading-text {
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .success-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10001;
-            padding: 20px;
-        }
-        .success-content {
-            background: var(--card-bg);
-            border-radius: 32px;
-            padding: 32px 24px;
-            max-width: 320px;
-            text-align: center;
-            animation: scaleIn 0.3s ease-out;
-        }
-        .success-icon {
-            font-size: 64px;
-            margin-bottom: 16px;
-        }
-        .success-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-        }
-        .success-message {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-        .success-btn {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-            border: none;
-            border-radius: 60px;
-            padding: 14px 24px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-        }
-        .success-btn:active { transform: scale(0.97); }
-        
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -306,10 +222,6 @@
 </div>
 
 <script>
-// ============================================================
-// BAGIAN 1: KONFIGURASI DAN VARIABEL GLOBAL
-// ============================================================
-
 // Supabase Config
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
@@ -335,17 +247,25 @@ let transaksiFilter = "all";
 let taskFilter = "all";
 let navigationHistory = [];
 
-// ============================================================
-// BAGIAN 2: FUNGSI UTILITY
-// ============================================================
-
+// ========== UTILITY FUNCTIONS ==========
 function pushHistory(nav) { navigationHistory.push(nav); }
 
 function goBack() {
     if (navigationHistory.length > 1) {
         navigationHistory.pop();
         const previous = navigationHistory[navigationHistory.length - 1];
-        if (previous) { currentNav = previous; updateNav(); renderCurrentView(); return true; }
+        if (previous) { 
+            currentNav = previous; 
+            updateNav(); 
+            renderCurrentView(); 
+            return true; 
+        }
+    } else if (navigationHistory.length === 1 && currentNav !== "home") {
+        // Kembali ke home
+        currentNav = "home";
+        updateNav();
+        renderCurrentView();
+        return true;
     }
     return false;
 }
@@ -435,44 +355,59 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-// ============================================================
-// BAGIAN 3: MODE DARK/LIGHT (DIPERBAIKI AGAR TERSIMPAN)
-// ============================================================
-
-async function loadThemeFromDatabase() {
-    if (!currentUser) return false;
-    try {
-        const { data } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
-        if (data && data.dark_mode !== undefined) {
-            return data.dark_mode;
-        }
-        // Jika belum ada data, buat default false
-        await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: false });
-        return false;
-    } catch(e) { 
-        console.log("Theme load error:", e);
-        return false;
-    }
-}
-
-async function saveThemeToDatabase(isDark) {
-    if (!currentUser) return;
-    try {
-        await sb.from("user_settings").upsert({ user_id: currentUser.id, dark_mode: isDark });
-    } catch(e) { console.log("Theme save error:", e); }
-}
-
+// ========== MODE DARK/LIGHT - DIPERBAIKI ==========
+// Fungsi untuk menerapkan tema ke body
 function applyTheme(isDark) {
     if (isDark) {
         document.body.classList.add("dark");
     } else {
         document.body.classList.remove("dark");
     }
+    // Simpan ke localStorage sebagai backup
     localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
 }
 
+// Load tema dari database
+async function loadThemeFromDatabase() {
+    if (!currentUser) return null;
+    try {
+        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
+        if (error) throw error;
+        if (data && data.dark_mode !== undefined) {
+            return data.dark_mode;
+        }
+        return null;
+    } catch(e) { 
+        console.log("Theme load error:", e);
+        return null;
+    }
+}
+
+// Simpan tema ke database
+async function saveThemeToDatabase(isDark) {
+    if (!currentUser) return;
+    try {
+        const { error } = await sb.from("user_settings").upsert({ 
+            user_id: currentUser.id, 
+            dark_mode: isDark,
+            updated_at: new Date().toISOString()
+        });
+        if (error) throw error;
+    } catch(e) { console.log("Theme save error:", e); }
+}
+
+// Inisialisasi tema saat login
 async function initTheme() {
-    // Cek dari localStorage dulu
+    // Cek dari database dulu (prioritas)
+    if (currentUser) {
+        const dbTheme = await loadThemeFromDatabase();
+        if (dbTheme !== null) {
+            applyTheme(dbTheme);
+            return;
+        }
+    }
+    
+    // Jika tidak ada di database, cek localStorage
     const localTheme = localStorage.getItem('theme_mode');
     if (localTheme === 'dark') {
         applyTheme(true);
@@ -481,16 +416,9 @@ async function initTheme() {
     } else {
         applyTheme(false);
     }
-    
-    // Jika sudah login, ambil dari database dan timpa
-    if (currentUser) {
-        const dbTheme = await loadThemeFromDatabase();
-        if (dbTheme !== null) {
-            applyTheme(dbTheme);
-        }
-    }
 }
 
+// Toggle tema (dipanggil dari switch)
 async function toggleTheme() {
     const isDark = !document.body.classList.contains("dark");
     applyTheme(isDark);
@@ -502,10 +430,7 @@ async function toggleTheme() {
     showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
 }
 
-// ============================================================
-// BAGIAN 4: SHARED ACCESS (DENGAN LEVEL AKSES)
-// ============================================================
-
+// ========== SHARED ACCESS ==========
 async function loadSharedAccess() { 
     if(currentUser) { 
         try {
@@ -517,6 +442,7 @@ async function loadSharedAccess() {
     } 
 }
 
+// Auto accept pending access
 async function autoAcceptPendingAccess() {
     if (!currentUser) return;
     
@@ -533,27 +459,23 @@ async function autoAcceptPendingAccess() {
     
     if (pendingAccess.length > 0) {
         await loadSharedAccess();
-        showToast(`${pendingAccess.length} akses bersama diterima`);
+        showToast(`${pendingAccess.length} akses bersama otomatis diterima`);
     }
 }
 
-// Cek apakah user memiliki akses edit untuk data tertentu
+// Cek apakah user memiliki akses edit
 function hasEditAccess(dataOwnerId) {
     if (!currentUser) return false;
-    // Pemilik data bisa edit
     if (dataOwnerId === currentUser.id) return true;
     
-    // Cek shared access
     const access = sharedAccess.find(s => 
         s.owner_id === dataOwnerId && 
         s.shared_email === currentUser.email && 
         s.status === 'accepted'
     );
-    
     return access && access.access_level === 'edit';
 }
 
-// Get access level label
 function getAccessLevelLabel(dataOwnerId) {
     if (dataOwnerId === currentUser.id) return null;
     const access = sharedAccess.find(s => 
@@ -565,10 +487,7 @@ function getAccessLevelLabel(dataOwnerId) {
     return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
 }
 
-// ============================================================
-// BAGIAN 5: LOAD DATA DENGAN SHARED ACCESS
-// ============================================================
-
+// ========== LOAD DATA DENGAN SHARED ACCESS ==========
 async function loadCategories() { 
     if(currentUser) { 
         try {
@@ -833,11 +752,7 @@ function showRemindersPopup() {
     document.getElementById("closeReminderPopup").onclick = () => modal.remove();
 }
 
-// ============================================================
-// BAGIAN 6: MODAL DETAIL FUNGSI
-// ============================================================
-
-// Detail Transaksi
+// ========== MODAL DETAIL FUNCTIONS ==========
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
@@ -879,7 +794,6 @@ async function showTransactionDetail(transaction) {
     document.getElementById("closeDetailBtn").onclick = () => modal.remove();
 }
 
-// Edit Transaksi Modal
 async function openEditTransactionModal(transactionId) {
     const transaction = transactions.find(t => t.id === transactionId);
     if (!transaction) return;
@@ -936,7 +850,6 @@ async function openEditTransactionModal(transactionId) {
     document.getElementById("cancelEditModal").onclick = () => modal.remove();
 }
 
-// Detail Hutang
 async function showDebtDetail(debt) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const isShared = debt.user_id !== currentUser.id;
@@ -996,7 +909,6 @@ async function showDebtDetail(debt) {
     document.getElementById("closeDebtDetailBtn").onclick = () => modal.remove();
 }
 
-// Edit Hutang Modal
 async function openEditDebtModal(debtId) {
     const debt = debts.find(d => d.id === debtId);
     if (!debt) return;
@@ -1052,11 +964,7 @@ async function openEditDebtModal(debtId) {
     document.getElementById("cancelEditDebt").onclick = () => modal.remove();
 }
 
-// ============================================================
-// BAGIAN 7: RENDER FUNGSI
-// ============================================================
-
-// RENDER HOME
+// ========== RENDER FUNGSI ==========
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -1163,7 +1071,6 @@ async function renderHome() {
     });
 }
 
-// RENDER TRANSAKSI
 async function renderTransaksi() {
     await loadTransactions();
     
@@ -1225,7 +1132,6 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
-// MODAL TAMBAH TRANSAKSI
 function openTransaksiModal(predefinedType=null){
     const today = new Date().toISOString().slice(0,10);
     const modal=document.createElement('div');modal.className='modal-overlay';
@@ -1285,7 +1191,6 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// KELOLA KATEGORI
 async function openCategoryManageModal() {
     await loadCategories();
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
@@ -1376,7 +1281,6 @@ function openCategoryFormModal(editId=null) {
     document.getElementById("cancelCategoryBtn").onclick = () => { modal.remove(); openCategoryManageModal(); };
 }
 
-// RENDER HUTANG
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1448,7 +1352,6 @@ async function renderHutang() {
     });
 }
 
-// MODAL TAMBAH HUTANG
 function openDebtModal(){
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
@@ -1501,7 +1404,6 @@ function openDebtModal(){
     document.getElementById("closeDebt").onclick=()=>modal.remove();
 }
 
-// RENDER TABUNGAN
 async function renderSavings() {
     await loadSavings();
     let html=`
@@ -1591,7 +1493,6 @@ function openSavingsModal(editId=null){
     document.getElementById("closeSavings").onclick=()=>modal.remove();
 }
 
-// RENDER PENGINGAT
 async function renderReminders() {
     await loadReminders();
     let html=`
@@ -1679,7 +1580,6 @@ function openReminderModal(editId=null){
     document.getElementById("closeReminder").onclick=()=>modal.remove();
 }
 
-// RENDER TUGAS
 async function renderTasks() {
     await loadTasks();
     let html=`
@@ -1789,7 +1689,6 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// RENDER LAPORAN
 async function renderLaporan() {
     await loadTransactions();
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1844,7 +1743,6 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// RENDER SETTINGS
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -1917,7 +1815,9 @@ async function renderSettings() {
     
     const darkModeSwitch = document.getElementById("darkModeSwitch");
     if (darkModeSwitch) {
-        darkModeSwitch.addEventListener("change", async (e) => { await toggleTheme(); });
+        darkModeSwitch.addEventListener("change", async (e) => { 
+            await toggleTheme(); 
+        });
     }
     
     document.getElementById("addSharedBtn")?.addEventListener("click",async()=>{
@@ -1968,8 +1868,9 @@ async function renderSettings() {
             html += `<div style="margin-top:12px; margin-bottom:12px"><strong>📥 Akses yang diterima:</strong></div>`; 
             receiverAccess.forEach(s => { 
                 const levelText = s.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
+                const ownerInfo = s.owner_id ? s.owner_id.slice(0,8) : 'User';
                 html += `<div class="shared-item">
-                    <div>👤 ${escapeHtml(s.owner_id?.slice(0,8)||'User')}<br><small>${levelText} • ${s.status === 'accepted' ? '✅ Aktif' : '⏳ Menunggu'}</small></div>
+                    <div>👤 ${escapeHtml(ownerInfo)}<br><small>${levelText} • ${s.status === 'accepted' ? '✅ Aktif' : '⏳ Menunggu'}</small></div>
                 </div>`; 
             }); 
         }
@@ -1993,10 +1894,6 @@ async function renderSettings() {
         else{inp.type='password';btn.textContent='👁️';}
     });
 }
-
-// ============================================================
-// BAGIAN 10: NAVIGASI & AUTH
-// ============================================================
 
 function renderCurrentView() {
     if(currentNav==='home') renderHome();
@@ -2038,15 +1935,14 @@ function addBottomNav() {
     });
 }
 
+// Tombol back HP: kembali ke halaman sebelumnya, bukan keluar
 window.addEventListener('popstate', function(event) { 
-    if (goBack()) event.preventDefault(); 
-    else if (confirm("Keluar dari aplikasi?")) window.close(); 
+    if (goBack()) {
+        event.preventDefault();
+    }
 });
 
-// ============================================================
-// BAGIAN 11: AUTH FUNCTIONS
-// ============================================================
-
+// ========== AUTH FUNCTIONS ==========
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
@@ -2159,6 +2055,7 @@ async function logout() {
         submitBtn.innerHTML = "Masuk";
         switchText.innerHTML = "Belum punya akun? Daftar";
     }
+    // Reset tema ke default saat logout
     applyTheme(false);
 }
 
@@ -2181,10 +2078,7 @@ async function checkSession() {
     }
 }
 
-// ============================================================
-// BAGIAN 12: INISIALISASI
-// ============================================================
-
+// ========== INISIALISASI ==========
 document.getElementById("submitLoginBtn").onclick = handleLogin;
 document.getElementById("switchText").onclick = toggleMode;
 document.getElementById("guestBtn").onclick = handleGuest;
@@ -2200,7 +2094,7 @@ document.getElementById("toggleLoginPassword")?.addEventListener("click", () => 
     }
 });
 
-// Inisialisasi tema awal dari localStorage
+// Inisialisasi tema awal (sebelum login)
 const savedTheme = localStorage.getItem('theme_mode');
 if (savedTheme === 'dark') {
     applyTheme(true);
