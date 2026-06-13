@@ -476,56 +476,57 @@ async function autoAcceptPendingAccess() {
     isProcessingSharedAccess = true;
     
     try {
-        // Find pending access where current user is the receiver
-        const pendingAccess = sharedAccess.filter(s => 
-            s.shared_email === currentUser.email && 
-            s.status === 'pending'
-        );
+        console.log("Checking for pending access...");
+        console.log("Current user email:", currentUser.email);
         
-        if (pendingAccess.length === 0) {
+        // Query langsung ke database untuk pending access
+        const { data: pendingAccess, error } = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "pending");
+        
+        if (error) {
+            console.error("Query error:", error);
             isProcessingSharedAccess = false;
             return;
         }
         
-        console.log("Pending access found:", pendingAccess.length);
+        console.log("Pending access found:", pendingAccess?.length || 0);
+        
+        if (!pendingAccess || pendingAccess.length === 0) {
+            isProcessingSharedAccess = false;
+            return;
+        }
         
         let acceptedCount = 0;
         
         for (const access of pendingAccess) {
             console.log("Auto accepting access from owner:", access.owner_id);
             
-            // Update status to accepted (TANPA updated_at)
-            const { error } = await sb
+            const { error: updateError } = await sb
                 .from("shared_access")
-                .update({ 
-                    status: 'accepted',
-                    accepted_at: new Date().toISOString()
-                })
+                .update({ status: 'accepted' })
                 .eq("id", access.id);
             
-            if (error) {
-                console.error("Error auto accepting:", error);
+            if (updateError) {
+                console.error("Error updating:", updateError);
             } else {
-                console.log("Auto accepted access from:", access.owner_id);
+                console.log("Successfully accepted access from:", access.owner_id);
                 acceptedCount++;
             }
         }
         
         if (acceptedCount > 0) {
-            // Reload shared access to get updated status
+            console.log(`Accepted ${acceptedCount} access requests`);
             sharedAccessLoaded = false;
             await loadSharedAccess(true);
-            
-            showToast(`${acceptedCount} akses bersama diterima`);
-            
-            // Reload all data to show shared data
             await loadTransactions();
             await loadDebts();
             await loadSavings();
             await loadReminders();
             await loadTasks();
-            
-            // Re-render current view
+            showToast(`${acceptedCount} akses bersama diterima`);
             renderCurrentView();
         }
         
