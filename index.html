@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
+        /* CSS SAMA SEPERTI SEBELUMNYA - tidak berubah */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root {
@@ -172,7 +173,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="">
+<body>
 <div class="app-container" id="appContainer"></div>
 
 <div id="loginModal" class="modal-overlay">
@@ -213,7 +214,6 @@ let isLoginMode = true;
 let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
-let isDarkMode = false;
 let navigationHistory = [];
 
 function pushHistory(nav) { navigationHistory.push(nav); }
@@ -227,13 +227,12 @@ function goBack() {
     return false;
 }
 
-// Format nama: huruf besar di setiap awal kata
+// ========== FORMAT FUNCTIONS ==========
 function capitalizeName(name) {
     if (!name) return '';
     return name.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
-// Format nomor WhatsApp: otomatis +62, ganti 0, batasi 13 digit
 function formatWhatsAppNumber(input) {
     let number = input.replace(/[^0-9]/g, '');
     if (number.startsWith('0')) number = '62' + number.substring(1);
@@ -242,99 +241,92 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-// ========== MODE DARK/LIGHT - DIPERBAIKI ==========
-async function loadThemePreference() {
-    if (!currentUser) {
-        // Jika belum login, gunakan default dari localStorage
-        const savedTheme = localStorage.getItem('theme_mode');
-        if (savedTheme === 'dark') {
-            isDarkMode = true;
-            document.body.classList.add("dark");
-        } else {
-            isDarkMode = false;
-            document.body.classList.remove("dark");
-        }
-        return;
+// ========== MODE DARK/LIGHT - VERSI SEDERHANA YANG PASTI BEKERJA ==========
+// Fungsi untuk menerapkan tema
+function applyTheme(isDark) {
+    if (isDark) {
+        document.body.classList.add("dark");
+    } else {
+        document.body.classList.remove("dark");
     }
+}
+
+// Fungsi untuk menyimpan tema ke database
+async function saveThemeToDatabase(isDark) {
+    if (!currentUser) return;
+    
+    try {
+        // Cek apakah sudah ada data
+        const { data: existing } = await sb.from("user_settings").select("id").eq("user_id", currentUser.id).maybeSingle();
+        
+        if (existing) {
+            // Update
+            await sb.from("user_settings").update({ dark_mode: isDark, updated_at: new Date().toISOString() }).eq("user_id", currentUser.id);
+        } else {
+            // Insert
+            await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: isDark });
+        }
+        console.log("Theme saved to database:", isDark);
+    } catch(e) {
+        console.error("Save theme error:", e);
+    }
+}
+
+// Fungsi untuk memuat tema dari database
+async function loadThemeFromDatabase() {
+    if (!currentUser) return false;
     
     try {
         const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
         
         if (error) {
             console.error("Load theme error:", error);
-            // Fallback ke localStorage
-            const savedTheme = localStorage.getItem('theme_mode');
-            if (savedTheme === 'dark') {
-                isDarkMode = true;
-                document.body.classList.add("dark");
-            } else {
-                isDarkMode = false;
-                document.body.classList.remove("dark");
-            }
-            return;
+            return null;
         }
         
         if (data && data.dark_mode !== undefined) {
-            isDarkMode = data.dark_mode;
-        } else {
-            // Jika belum ada data, buat default (false)
-            isDarkMode = false;
-            await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: false });
+            console.log("Theme loaded from database:", data.dark_mode);
+            return data.dark_mode;
         }
-        
-        // Terapkan ke body
-        if (isDarkMode) {
-            document.body.classList.add("dark");
-        } else {
-            document.body.classList.remove("dark");
-        }
-        
-        // Simpan juga ke localStorage untuk fallback
-        localStorage.setItem('theme_mode', isDarkMode ? 'dark' : 'light');
-        
-    } catch(e) { 
-        console.log("Theme load error:", e);
-        // Fallback ke localStorage
-        const savedTheme = localStorage.getItem('theme_mode');
-        if (savedTheme === 'dark') {
-            isDarkMode = true;
-            document.body.classList.add("dark");
-        } else {
-            isDarkMode = false;
-            document.body.classList.remove("dark");
-        }
+        return null;
+    } catch(e) {
+        console.error("Load theme error:", e);
+        return null;
     }
 }
 
-async function saveThemePreference(isDark) {
-    localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+// Fungsi toggle tema (dipanggil dari switch)
+async function toggleTheme() {
+    const isDark = !document.body.classList.contains("dark");
+    applyTheme(isDark);
+    await saveThemeToDatabase(isDark);
     
-    if (!currentUser) return;
-    
-    try {
-        const { error } = await sb.from("user_settings").upsert({ 
-            user_id: currentUser.id, 
-            dark_mode: isDark,
-            updated_at: new Date().toISOString()
-        });
-        if (error) console.error("Save theme error:", error);
-    } catch(e) { console.log("Theme save error:", e); }
-}
-
-function toggleTheme() {
-    isDarkMode = !isDarkMode;
-    if (isDarkMode) {
-        document.body.classList.add("dark");
-    } else {
-        document.body.classList.remove("dark");
-    }
-    saveThemePreference(isDarkMode);
-    showToast(isDarkMode ? "Mode Gelap aktif" : "Mode Terang aktif");
-    
-    // Update switch di settings jika sedang terbuka
+    // Update switch jika sedang di halaman settings
     const darkModeSwitch = document.getElementById("darkModeSwitch");
     if (darkModeSwitch) {
-        darkModeSwitch.checked = isDarkMode;
+        darkModeSwitch.checked = isDark;
+    }
+    
+    showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
+}
+
+// Inisialisasi tema saat halaman dimuat
+async function initTheme() {
+    // Cek dari localStorage dulu (cepat)
+    const localTheme = localStorage.getItem('theme_mode');
+    if (localTheme === 'dark') {
+        applyTheme(true);
+    } else if (localTheme === 'light') {
+        applyTheme(false);
+    }
+    
+    // Jika sudah login, ambil dari database
+    if (currentUser) {
+        const dbTheme = await loadThemeFromDatabase();
+        if (dbTheme !== null) {
+            applyTheme(dbTheme);
+            localStorage.setItem('theme_mode', dbTheme ? 'dark' : 'light');
+        }
     }
 }
 
@@ -419,6 +411,7 @@ function setupWhatsAppInput(inputId) {
     });
 }
 
+// LOAD DATA FUNCTIONS
 async function loadCategories() { 
     if(currentUser) { try { const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); if(data) categories=data; } catch(e) { console.error("Load categories error:", e); } } 
 }
@@ -489,6 +482,7 @@ function openWhatsApp(phoneNumber, name, amount) {
     window.open(url, '_blank');
 }
 
+// ========== MODAL DETAIL FUNCTIONS ==========
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
@@ -632,6 +626,7 @@ function showRemindersPopup() {
     document.getElementById("closeReminderPopup").onclick = () => modal.remove();
 }
 
+// ========== RENDER FUNCTIONS ==========
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -980,22 +975,20 @@ async function renderLaporan() {
 }
 
 async function renderSettings() {
-    // Pastikan theme switch mencerminkan state saat ini
-    const darkModeSwitch = document.getElementById("darkModeSwitch");
-    if (darkModeSwitch) {
-        darkModeSwitch.checked = isDarkMode;
-    }
-    
-    let html = `<div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="backFromSettingsBtn" class="icon-btn" style="font-size:20px;">←</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>${renderRunningText()}<div class="card"><div class="card-title">🎨 Tampilan</div><div class="theme-toggle" id="themeToggle"><span class="theme-toggle-label">🌙 Mode Gelap</span><label class="theme-switch"><input type="checkbox" id="darkModeSwitch" ${isDarkMode ? 'checked' : ''}><span class="slider"></span></label></div></div><div class="card"><div class="card-title">🔐 Ubah Password</div><div class="password-wrapper"><input type="password" id="oldPass" placeholder="Password Lama" class="modal-input"><button class="toggle-password" data-target="oldPass">👁️</button></div><div class="password-wrapper"><input type="password" id="newPass" placeholder="Password Baru (min 6)" class="modal-input"><button class="toggle-password" data-target="newPass">👁️</button></div><div class="password-wrapper"><input type="password" id="confirmPass" placeholder="Konfirmasi Password" class="modal-input"><button class="toggle-password" data-target="confirmPass">👁️</button></div><button id="changePassBtn" class="modal-btn modal-btn-primary">Update Password</button></div><div class="card"><div class="card-title">👥 Akses Bersama</div><div style="margin-bottom:12px"><p style="font-size:12px; margin-bottom:12px;">Bagikan akses ke pengguna lain. Pengguna yang diundang akan memiliki akses ke data Anda.</p><div style="display:flex; gap:8px; margin-bottom:16px"><input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1"><select id="accessLevel" class="modal-select" style="width:100px"><option value="view">👁️ Lihat</option><option value="edit">✏️ Edit</option></select><button id="addSharedBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Kirim</button></div></div><div id="sharedList"></div></div>`;
+    let html = `<div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="backFromSettingsBtn" class="icon-btn" style="font-size:20px;">←</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>${renderRunningText()}<div class="card"><div class="card-title">🎨 Tampilan</div><div class="theme-toggle" id="themeToggle"><span class="theme-toggle-label">🌙 Mode Gelap</span><label class="theme-switch"><input type="checkbox" id="darkModeSwitch" ${document.body.classList.contains("dark") ? 'checked' : ''}><span class="slider"></span></label></div></div><div class="card"><div class="card-title">🔐 Ubah Password</div><div class="password-wrapper"><input type="password" id="oldPass" placeholder="Password Lama" class="modal-input"><button class="toggle-password" data-target="oldPass">👁️</button></div><div class="password-wrapper"><input type="password" id="newPass" placeholder="Password Baru (min 6)" class="modal-input"><button class="toggle-password" data-target="newPass">👁️</button></div><div class="password-wrapper"><input type="password" id="confirmPass" placeholder="Konfirmasi Password" class="modal-input"><button class="toggle-password" data-target="confirmPass">👁️</button></div><button id="changePassBtn" class="modal-btn modal-btn-primary">Update Password</button></div><div class="card"><div class="card-title">👥 Akses Bersama</div><div style="margin-bottom:12px"><p style="font-size:12px; margin-bottom:12px;">Bagikan akses ke pengguna lain. Pengguna yang diundang akan memiliki akses ke data Anda.</p><div style="display:flex; gap:8px; margin-bottom:16px"><input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1"><select id="accessLevel" class="modal-select" style="width:100px"><option value="view">👁️ Lihat</option><option value="edit">✏️ Edit</option></select><button id="addSharedBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Kirim</button></div></div><div id="sharedList"></div></div>`;
     document.getElementById("appContainer").innerHTML = html;
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("backFromSettingsBtn")?.addEventListener("click",() => { if (previousNav && previousNav !== "settings") { currentNav = previousNav; updateNav(); renderCurrentView(); } else { currentNav = "home"; updateNav(); renderHome(); } });
     document.getElementById("changePassBtn")?.addEventListener("click",async()=>{ const old=document.getElementById("oldPass").value, newp=document.getElementById("newPass").value, conf=document.getElementById("confirmPass").value; if(!old||!newp) return alert("Isi semua field"); if(newp.length<6) return alert("Password baru minimal 6 karakter"); if(newp!==conf) return alert("Konfirmasi password tidak cocok"); const {error}=await sb.auth.updateUser({password:newp}); if(error) alert(error.message); else showToast("Password berhasil diubah"); });
     
-    const darkModeSwitchEl = document.getElementById("darkModeSwitch");
-    if (darkModeSwitchEl) {
-        darkModeSwitchEl.addEventListener("change", (e) => {
-            toggleTheme();
+    const darkModeSwitch = document.getElementById("darkModeSwitch");
+    if (darkModeSwitch) {
+        darkModeSwitch.addEventListener("change", async (e) => {
+            const isDark = e.target.checked;
+            applyTheme(isDark);
+            await saveThemeToDatabase(isDark);
+            localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+            showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
         });
     }
     
@@ -1025,6 +1018,7 @@ async function renderSettings() {
     document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{ const inp=document.getElementById(btn.getAttribute("data-target")); if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁️';} });
 }
 
+// ========== NAVIGATION ==========
 function renderCurrentView() {
     if(currentNav==='home') renderHome();
     else if(currentNav==='transaksi') renderTransaksi();
@@ -1047,6 +1041,7 @@ function addBottomNav() {
 
 window.addEventListener('popstate', function(event) { if (goBack()) event.preventDefault(); else if (confirm("Keluar dari aplikasi?")) window.close(); });
 
+// ========== AUTH ==========
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
@@ -1081,7 +1076,6 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    // Load semua data
     await loadCategories(); 
     await loadTransactions(); 
     await loadDebts(); 
@@ -1090,8 +1084,12 @@ async function onAuthSuccess(user) {
     await loadTasks(); 
     await loadSharedAccess();
     
-    // Load tema setelah login
-    await loadThemePreference();
+    // Load tema dari database setelah login
+    const dbTheme = await loadThemeFromDatabase();
+    if (dbTheme !== null) {
+        applyTheme(dbTheme);
+        localStorage.setItem('theme_mode', dbTheme ? 'dark' : 'light');
+    }
     
     addBottomNav();
     renderCurrentView();
@@ -1123,6 +1121,18 @@ async function checkSession() {
     } catch(e) { 
         document.getElementById("loginModal").style.display = "flex"; 
     }
+}
+
+// Inisialisasi tema awal (sebelum login)
+// Cek localStorage untuk tema yang tersimpan
+const savedTheme = localStorage.getItem('theme_mode');
+if (savedTheme === 'dark') {
+    applyTheme(true);
+} else if (savedTheme === 'light') {
+    applyTheme(false);
+} else {
+    // Default light mode
+    applyTheme(false);
 }
 
 document.getElementById("submitLoginBtn").onclick = handleLogin;
