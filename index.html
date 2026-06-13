@@ -16,11 +16,38 @@
             -webkit-tap-highlight-color: transparent;
         }
         
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --card-bg: white;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #f1f5f9;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            --nav-bg: rgba(255,255,255,0.96);
+            --input-bg: #f8fafc;
+            --input-border: #e2e8f0;
+        }
+        
+        body.dark {
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e1b4b;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --card-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --nav-bg: rgba(30,41,59,0.96);
+            --input-bg: #334155;
+            --input-border: #475569;
+        }
+        
         body { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             min-height: 100vh;
             padding-bottom: 80px;
+            transition: background 0.3s ease;
         }
         
         .app-container { 
@@ -31,35 +58,18 @@
         }
         
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
-        }
-        
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
         }
         
         .header { 
@@ -87,11 +97,11 @@
             align-items: center; 
         }
         
-        .settings-btn { 
+        .settings-btn, .reminder-btn { 
             background: rgba(255,255,255,0.2); 
             backdrop-filter: blur(10px);
             border: none; 
-            font-size: 22px; 
+            font-size: 20px; 
             cursor: pointer; 
             padding: 8px 12px; 
             border-radius: 40px;
@@ -99,7 +109,22 @@
             transition: all 0.2s ease;
         }
         
-        .settings-btn:active { transform: scale(0.95); }
+        .reminder-btn { position: relative; }
+        .reminder-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 20px;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .settings-btn:active, .reminder-btn:active { transform: scale(0.95); }
         
         .logout-btn { 
             background: rgba(239, 68, 68, 0.9); 
@@ -127,6 +152,13 @@
             border: 1px solid #fde68a;
             animation: slideIn 0.4s ease-out 0.1s both;
         }
+        
+        body.dark .running-text-container {
+            background: linear-gradient(135deg, #451a03, #422006);
+            border-color: #713f12;
+        }
+        
+        body.dark .running-text-container .running-text { color: #fde68a; }
         
         .running-text { 
             display: inline-block; 
@@ -208,17 +240,10 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
-        .btn-income:active, .btn-expense:active, .btn-secondary:active, .btn-recurring:active { 
-            transform: scale(0.97); 
-        }
+        .btn-income:active, .btn-expense:active, .btn-secondary:active { transform: scale(0.97); }
         
-        .btn-income { 
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-        
-        .btn-expense { 
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
+        .btn-income { background: linear-gradient(135deg, #10b981, #059669); }
+        .btn-expense { background: linear-gradient(135deg, #ef4444, #dc2626); }
         
         .btn-secondary { 
             background: linear-gradient(135deg, #64748b, #475569); 
@@ -243,13 +268,14 @@
         }
         
         .card { 
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 24px; 
             padding: 20px; 
             margin-bottom: 16px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: var(--card-shadow);
             transition: all 0.3s ease;
             animation: fadeInUp 0.5s ease-out both;
+            color: var(--text-primary);
         }
         
         .card:active { transform: scale(0.98); }
@@ -257,7 +283,7 @@
         .card-title { 
             font-size: 17px; 
             font-weight: 700; 
-            color: #1e293b; 
+            color: var(--text-primary); 
             margin-bottom: 14px; 
             display: flex; 
             justify-content: space-between; 
@@ -270,7 +296,7 @@
             bottom: 0; 
             left: 0; 
             right: 0; 
-            background: rgba(255,255,255,0.96); 
+            background: var(--nav-bg); 
             backdrop-filter: blur(20px);
             display: flex; 
             justify-content: space-around; 
@@ -301,23 +327,50 @@
         .nav-item .nav-icon { font-size: 22px; transition: transform 0.2s ease; }
         .nav-item:active .nav-icon { transform: scale(0.9); }
         .nav-item.active { color: #3b82f6; background: #eff6ff; }
+        body.dark .nav-item.active { background: #1e3a5f; }
+        
+        .fab-add {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(59,130,246,0.4);
+            transition: all 0.2s ease;
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fab-add:active { transform: scale(0.92); }
         
         .transaction-item, .debt-item, .task-item, .savings-item, .reminder-item, .shared-item, .category-item { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             padding: 14px 0; 
-            border-bottom: 1px solid #f1f5f9; 
+            border-bottom: 1px solid var(--border-color); 
             cursor: pointer;
             transition: all 0.2s ease;
+            color: var(--text-primary);
         }
         
         .transaction-item:hover, .debt-item:hover, .task-item:hover, .savings-item:hover, .reminder-item:hover { 
-            background: #f8fafc;
+            background: rgba(0,0,0,0.03);
             padding-left: 8px;
             margin-left: -8px;
             border-radius: 12px;
         }
+        
+        body.dark .transaction-item:hover { background: rgba(255,255,255,0.05); }
         
         .task-check { 
             margin-right: 12px; 
@@ -345,13 +398,18 @@
             cursor: pointer; 
             white-space: nowrap;
             transition: all 0.2s ease;
+            color: #1e293b;
         }
+        
+        body.dark .filter-btn { background: #334155; color: #e2e8f0; }
         
         .filter-btn.active { 
             background: linear-gradient(135deg, #1e293b, #0f172a); 
             color: white; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
+        
+        body.dark .filter-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         
         .modal-overlay { 
             position: fixed; 
@@ -370,7 +428,7 @@
         }
         
         .modal-content { 
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 32px; 
             padding: 28px 24px; 
             width: 100%; 
@@ -378,6 +436,7 @@
             max-height: 85vh; 
             overflow-y: auto;
             animation: slideIn 0.3s ease-out;
+            color: var(--text-primary);
         }
         
         .modal-title { 
@@ -385,7 +444,7 @@
             font-weight: 700; 
             text-align: center; 
             margin-bottom: 24px; 
-            background: linear-gradient(135deg, #1e293b, #3b82f6);
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -395,11 +454,12 @@
             width: 100%; 
             padding: 14px 18px; 
             margin-bottom: 14px; 
-            border: 1.5px solid #e2e8f0; 
+            border: 1.5px solid var(--input-border); 
             border-radius: 60px; 
             font-size: 15px; 
-            background: #f8fafc;
+            background: var(--input-bg);
             transition: all 0.2s ease;
+            color: var(--text-primary);
         }
         
         .modal-input:focus, .modal-select:focus, .modal-textarea:focus {
@@ -422,16 +482,13 @@
         
         .modal-btn:active { transform: scale(0.97); }
         
-        .modal-btn-primary { 
-            background: linear-gradient(135deg, #3b82f6, #2563eb); 
-            color: white; 
-            box-shadow: 0 4px 15px rgba(59,130,246,0.3);
-        }
-        
+        .modal-btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
         .modal-btn-secondary { background: #f1f5f9; color: #475569; }
         .modal-btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
         .modal-btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
         .modal-btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        
+        body.dark .modal-btn-secondary { background: #334155; color: #94a3b8; }
         
         .toast { 
             position: fixed; 
@@ -453,7 +510,7 @@
         .empty-state { 
             text-align: center; 
             padding: 50px 20px; 
-            color: #94a3b8; 
+            color: var(--text-secondary); 
             font-size: 14px;
         }
         
@@ -476,11 +533,12 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center;
-            background: white; 
+            background: var(--card-bg); 
             border-radius: 60px; 
             padding: 10px 20px; 
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            color: var(--text-primary);
         }
         
         .month-selector button {
@@ -491,6 +549,7 @@
             padding: 8px 16px;
             border-radius: 40px;
             transition: all 0.2s ease;
+            color: var(--text-primary);
         }
         
         .month-selector button:active { background: #f1f5f9; }
@@ -499,7 +558,8 @@
             display: flex; 
             justify-content: space-between; 
             padding: 10px 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
         
         .badge-recurring { 
@@ -510,6 +570,15 @@
             border-radius: 20px; 
             margin-left: 8px;
             font-weight: 500;
+        }
+        
+        .badge-warning {
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            margin-left: 8px;
         }
         
         .button-group { 
@@ -525,11 +594,11 @@
             display: flex; 
             justify-content: space-between; 
             padding: 12px 0; 
-            border-bottom: 1px solid #f1f5f9; 
+            border-bottom: 1px solid var(--border-color); 
         }
         
-        .detail-label { font-weight: 600; color: #64748b; }
-        .detail-value { color: #1e293b; font-weight: 500; }
+        .detail-label { font-weight: 600; color: var(--text-secondary); }
+        .detail-value { color: var(--text-primary); font-weight: 500; }
         
         .password-wrapper { position: relative; }
         .password-wrapper input { padding-right: 55px; }
@@ -546,77 +615,68 @@
             opacity: 0.6;
         }
         
-        /* Skeleton loading */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 12px;
-        }
-        
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        
-        /* Loading spinner */
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f1f5f9;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 20px auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Floating action button style */
-        .fab-income, .fab-expense {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            border-radius: 28px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            border: none;
-            font-size: 24px;
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            margin-bottom: 16px;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(16,185,129,0.4);
-            transition: all 0.2s ease;
-            z-index: 90;
         }
         
-        .fab-expense {
-            right: 90px;
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            box-shadow: 0 8px 20px rgba(239,68,68,0.4);
+        .theme-toggle-label {
+            font-weight: 500;
+            color: var(--text-primary);
         }
         
-        .fab-income:active, .fab-expense:active {
-            transform: scale(0.92);
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 52px;
+            height: 28px;
         }
         
-        @media (max-width: 500px) {
-            .fab-expense { right: 85px; }
-            .fab-income { right: 20px; }
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
         }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -624,7 +684,7 @@
 
 <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
-        <div class="modal-title" id="modalTitle">💰 Masuk / Daftar</div>
+        <div class="modal-title">💰 Masuk / Daftar</div>
         <input type="email" id="emailInput" class="modal-input" placeholder="Email">
         <div class="password-wrapper">
             <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
@@ -660,6 +720,86 @@ let isLoginMode = true;
 let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
+let isDarkMode = false;
+let navigationHistory = [];
+
+// History management untuk tombol back
+function pushHistory(nav) {
+    navigationHistory.push(nav);
+}
+
+function goBack() {
+    if (navigationHistory.length > 1) {
+        navigationHistory.pop();
+        const previous = navigationHistory[navigationHistory.length - 1];
+        if (previous) {
+            currentNav = previous;
+            updateNav();
+            renderCurrentView();
+            return true;
+        }
+    }
+    return false;
+}
+
+// Mode Dark/Light
+async function loadThemePreference() {
+    if (!currentUser) return;
+    try {
+        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).single();
+        if (data && data.dark_mode !== undefined) {
+            isDarkMode = data.dark_mode;
+            if (isDarkMode) document.body.classList.add("dark");
+            else document.body.classList.remove("dark");
+        }
+    } catch(e) { console.log("Theme load error:", e); }
+}
+
+async function saveThemePreference(isDark) {
+    if (!currentUser) return;
+    try {
+        const { error } = await sb.from("user_settings").upsert({ 
+            user_id: currentUser.id, 
+            dark_mode: isDark,
+            updated_at: new Date().toISOString()
+        });
+        if (error) console.error("Save theme error:", error);
+    } catch(e) { console.log("Theme save error:", e); }
+}
+
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    if (isDarkMode) document.body.classList.add("dark");
+    else document.body.classList.remove("dark");
+    saveThemePreference(isDarkMode);
+    showToast(isDarkMode ? "Mode Gelap aktif" : "Mode Terang aktif");
+}
+
+// Count overdue reminders
+function getOverdueCount() {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let overdue = 0;
+    for (const t of tasks) {
+        if (!t.is_completed && t.due_date) {
+            const dueDate = new Date(t.due_date);
+            if (dueDate < today) overdue++;
+        }
+    }
+    for (const r of reminders) {
+        if (!r.is_done && r.due_date) {
+            const dueDate = new Date(r.due_date);
+            if (dueDate < today) overdue++;
+        }
+    }
+    for (const d of debts) {
+        if (d.status !== 'lunas' && d.due_date) {
+            const dueDate = new Date(d.due_date);
+            if (dueDate < today) overdue++;
+        }
+    }
+    return overdue;
+}
 
 function showToast(msg) { 
     let t = document.querySelector('.toast'); 
@@ -741,7 +881,6 @@ function setupRupiahInput(inputId) {
     });
 }
 
-// Load Data
 async function loadCategories() { 
     if(currentUser) { 
         try {
@@ -756,7 +895,6 @@ async function loadTransactions() {
             const {data}=await sb.from("transactions").select("*").eq("user_id",currentUser.id).order("created_at", { ascending: false }); 
             if(data) {
                 transactions = data;
-                console.log("Loaded transactions:", transactions.length);
             }
         } catch(e) { console.error("Load transactions error:", e); }
     } 
@@ -803,15 +941,12 @@ async function loadSharedAccess() {
     } 
 }
 
-// Fungsi untuk membuat transaksi berulang
 async function createRecurringTransaction(originalTransaction, monthsAhead = 12) {
     if (!currentUser) return 0;
     
     let createdCount = 0;
     const originalDate = new Date(originalTransaction.created_at);
     const startDate = new Date(originalDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
     await loadTransactions();
     const existingKeys = new Set();
@@ -826,9 +961,7 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
         const nextDate = new Date(startDate);
         nextDate.setMonth(startDate.getMonth() + i);
         
-        if (nextDate.getDate() !== originalDate.getDate()) {
-            continue;
-        }
+        if (nextDate.getDate() !== originalDate.getDate()) continue;
         
         const key = `${originalTransaction.description}_${nextDate.getFullYear()}_${nextDate.getMonth()}`;
         
@@ -839,9 +972,7 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
                 amount: originalTransaction.amount,
                 type: originalTransaction.type,
                 is_fixed_expense: originalTransaction.is_fixed_expense,
-                created_at: nextDate.toISOString(),
-                is_recurring: true,
-                parent_transaction_id: originalTransaction.id
+                created_at: nextDate.toISOString()
             };
             if (originalTransaction.category_id) insertData.category_id = originalTransaction.category_id;
             
@@ -852,11 +983,8 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
             }
         }
     }
-    
     return createdCount;
 }
-
-// ==================== MODAL DETAIL ====================
 
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div');
@@ -870,6 +998,7 @@ async function showTransactionDetail(transaction) {
             <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
             <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
             <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${cat ? `${cat.icon} ${cat.name}` : '-'}</span></div>
+            <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
             <div class="button-group">
                 <button id="editTransaksiBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
                 <button id="deleteTransaksiBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
@@ -915,9 +1044,13 @@ async function openEditTransactionModal(transactionId) {
                 <option value="">Pilih Kategori</option>
                 ${categories.map(c => `<option value="${c.id}" ${transaction.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
             </select>
-            <label style="display:flex; align-items:center; gap:8px; margin:8px 0">
-                <input type="checkbox" id="editFixed" ${transaction.is_fixed_expense ? 'checked' : ''}> Pengeluaran Tetap
-            </label>
+            <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="editFixed" ${transaction.is_fixed_expense ? 'checked' : ''}> 
+                    <span>📌 Pengeluaran Tetap</span>
+                </label>
+                <p style="font-size:11px; color:#64748b; margin-top:8px;">Centang jika ini adalah pengeluaran rutin bulanan (seperti tagihan, cicilan, dll)</p>
+            </div>
             <div class="button-group">
                 <button id="saveEditTransaksi" class="modal-btn modal-btn-primary">💾 Simpan</button>
                 <button id="cancelEditModal" class="modal-btn modal-btn-secondary">Batal</button>
@@ -1058,38 +1191,48 @@ async function showCategoryDetail(category) {
     document.getElementById("closeCategoryDetailBtn").onclick = () => modal.remove();
 }
 
+// Running text dengan overdue reminders
 function getRunningText() {
     const today = new Date();
     const messages = [];
     
+    // Hutang/piutang overdue
     for (const d of debts) {
         if (d.status === 'lunas') continue;
         if (d.due_date) {
             const due = new Date(d.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-            if (diff >= 0 && diff <= 7) {
+            if (diff < 0) {
+                messages.push(`⚠️ TERLEWAT! ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} sudah jatuh tempo ${Math.abs(diff)} hari yang lalu!`);
+            } else if (diff <= 7) {
                 messages.push(`⚠️ ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
     }
     
+    // Tugas overdue
     for (const t of tasks) {
         if (t.is_completed) continue;
         if (t.due_date) {
             const due = new Date(t.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-            if (diff >= 0 && diff <= 7) {
+            if (diff < 0) {
+                messages.push(`⚠️ TERLEWAT! Tugas "${escapeHtml(t.title)}" sudah terlewat ${Math.abs(diff)} hari!`);
+            } else if (diff <= 7) {
                 messages.push(`📋 Tugas "${escapeHtml(t.title)}" ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
     }
     
+    // Pengingat overdue
     for (const r of reminders) {
         if (r.is_done) continue;
         if (r.due_date) {
             const due = new Date(r.due_date);
             const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-            if (diff >= 0 && diff <= 7) {
+            if (diff < 0) {
+                messages.push(`⚠️ TERLEWAT! Pengingat "${escapeHtml(r.title)}" sudah terlewat ${Math.abs(diff)} hari!`);
+            } else if (diff <= 7) {
                 messages.push(`⏰ ${escapeHtml(r.title)} ${diff === 0 ? 'HARI INI!' : `${diff} hari lagi`}`);
             }
         }
@@ -1104,13 +1247,35 @@ function renderRunningText() {
     return `<div class="running-text-container"><div class="running-text">${messages.map(m => `<span>🔔 ${m}</span>`).join('')}</div></div>`;
 }
 
-// ==================== RENDER FUNGSI ====================
+// Show reminders popup
+function showRemindersPopup() {
+    const overdue = getRunningText();
+    if (overdue.length === 0) {
+        showToast("Tidak ada peringatan terlewat");
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">⚠️ Peringatan Terlewat</div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                ${overdue.map(m => `<div style="padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary);">${m}</div>`).join('')}
+            </div>
+            <button id="closeReminderPopup" class="modal-btn modal-btn-primary" style="margin-top: 16px;">Tutup</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById("closeReminderPopup").onclick = () => modal.remove();
+}
 
 async function renderHome() {
     await loadTransactions();
     
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
+    const overdueCount = getOverdueCount();
     
     const now = new Date();
     const bulanIni = [];
@@ -1136,6 +1301,7 @@ async function renderHome() {
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
+                <button id="reminderBtn" class="reminder-btn">🔔${overdueCount > 0 ? `<span class="reminder-badge">${overdueCount}</span>` : ''}</button>
                 <button id="openSettingsBtn" class="settings-btn">⚙️</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
@@ -1170,22 +1336,24 @@ async function renderHome() {
     const previewDiv = document.getElementById("savingsPreview");
     if(previewDiv) {
         if(savings.length===0) previewDiv.innerHTML='<div class="empty-state" style="padding:12px">Belum ada tabungan</div>';
-        else previewDiv.innerHTML = savings.slice(0,2).map(s=>`<div class="savings-item" data-id="${s.id}" style="display:block; padding:8px 0; border-bottom:1px solid #f0f0f0;"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (Number(s.current_amount)/Number(s.target_amount)*100).toFixed(0):0}%"></div></div></div></div>`).join('');
+        else previewDiv.innerHTML = savings.slice(0,2).map(s=>`<div class="savings-item" data-id="${s.id}" style="display:block; padding:8px 0; border-bottom:1px solid var(--border-color);"><div><div>${escapeHtml(s.name)}</div><div>Rp ${formatRupiah(s.current_amount)} / Rp ${formatRupiah(s.target_amount)}</div><div class="progress-bar"><div class="progress-fill" style="width:${s.target_amount? (Number(s.current_amount)/Number(s.target_amount)*100).toFixed(0):0}%"></div></div></div></div>`).join('');
     }
     
     document.getElementById("quickIncome")?.addEventListener("click",()=>openTransaksiModal("pemasukan"));
     document.getElementById("quickExpense")?.addEventListener("click",()=>openTransaksiModal("pengeluaran"));
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     document.getElementById("toggleBalanceBtn")?.addEventListener("click",(e)=>{ e.stopPropagation(); isBalanceHidden=!isBalanceHidden; renderHome(); });
-    document.getElementById("piutangCard")?.addEventListener("click",()=>{ currentNav="hutang"; updateNav(); renderHutang(); });
-    document.getElementById("hutangCard")?.addEventListener("click",()=>{ currentNav="hutang"; updateNav(); renderHutang(); });
-    document.getElementById("savingsCard")?.addEventListener("click",()=>{ currentNav="savings"; updateNav(); renderSavings(); });
+    document.getElementById("piutangCard")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="hutang"; updateNav(); renderHutang(); });
+    document.getElementById("hutangCard")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="hutang"; updateNav(); renderHutang(); });
+    document.getElementById("savingsCard")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="savings"; updateNav(); renderSavings(); });
     
     document.querySelectorAll(".transaction-item").forEach(el => {
         el.onclick = () => {
@@ -1211,12 +1379,12 @@ async function renderTransaksi() {
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
+                <button id="reminderBtn" class="reminder-btn">🔔</button>
                 <button id="openSettingsBtn" class="settings-btn">⚙️</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
         </div>
-        ${renderRunningText()}
-        <button id="addTransaksiBtn" class="btn-primary" style="margin-bottom:16px; width:100%">+ Tambah Transaksi</button>
+        <button id="openReportBtn" class="btn-primary" style="margin-bottom:16px; width:100%">📊 Lihat Laporan Keuangan</button>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:linear-gradient(135deg, #8b5cf6, #6d28d9)">🏷️ Kelola Kategori</button>
         
         <div class="filter">
@@ -1228,6 +1396,13 @@ async function renderTransaksi() {
     `;
     document.getElementById("appContainer").innerHTML = html;
     
+    // Update badge reminder
+    const overdueCount = getOverdueCount();
+    const reminderBtn = document.getElementById("reminderBtn");
+    if (reminderBtn && overdueCount > 0) {
+        reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
+    }
+    
     let data = [...transactions];
     if(transaksiFilter==='income') data=data.filter(t=>t.type==='pemasukan');
     if(transaksiFilter==='expense') data=data.filter(t=>t.type==='pengeluaran');
@@ -1238,22 +1413,24 @@ async function renderTransaksi() {
         <div class="transaction-item" data-id="${t.id}">
             <div style="flex:1">
                 <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}</div>
-                <div style="font-size:11px; color:#64748b; margin-top:4px">📅 ${formatDate(t.created_at)}</div>
-                <div style="font-size:11px; color:#64748b">${t.category_id ? `• ${getCategoryById(t.category_id)?.icon || ''} ${getCategoryById(t.category_id)?.name || ''}` : ''}</div>
+                <div style="font-size:11px; margin-top:4px">📅 ${formatDate(t.created_at)}</div>
+                <div style="font-size:11px">${t.category_id ? `• ${getCategoryById(t.category_id)?.icon || ''} ${getCategoryById(t.category_id)?.name || ''}` : ''}</div>
             </div>
             <div style="font-weight:700; font-size:16px; color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
         </div>
     `).join('');
     
-    document.getElementById("addTransaksiBtn")?.addEventListener("click",()=>openTransaksiModal());
+    document.getElementById("openReportBtn")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="laporan"; updateNav(); renderLaporan(); });
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     
     document.querySelectorAll(".transaction-item").forEach(el => {
         el.onclick = () => {
@@ -1277,12 +1454,20 @@ function openTransaksiModal(predefinedType=null){
             <select id="modalTipe" class="modal-select"><option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option><option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option></select>
             <input type="date" id="modalTanggal" class="modal-input" value="${today}">
             <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}</select>
-            <label style="display:flex; align-items:center; gap:8px; margin:12px 0; padding:12px; background:#f0f9ff; border-radius:16px;">
-                <input type="checkbox" id="modalFixed"> Pengeluaran Tetap
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; margin:12px 0; padding:12px; background:linear-gradient(135deg, #f3e8ff, #f0f9ff); border-radius:16px;">
-                <input type="checkbox" id="modalRecurring"> 🔄 Ulangi setiap bulan (otomatis muncul di tanggal yang sama bulan depan)
-            </label>
+            <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="modalFixed"> 
+                    <span>📌 Pengeluaran Tetap</span>
+                </label>
+                <p style="font-size:11px; color:#64748b; margin-top:8px;">Centang jika ini adalah pengeluaran rutin bulanan (tagihan, cicilan, langganan, dll). Berguna untuk analisis keuangan.</p>
+            </div>
+            <div style="background:linear-gradient(135deg, #f3e8ff, #f0f9ff); padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="modalRecurring"> 
+                    <span>🔄 Ulangi setiap bulan</span>
+                </label>
+                <p style="font-size:11px; color:#64748b; margin-top:8px;">Centang untuk membuat transaksi otomatis di tanggal yang sama setiap bulan (12 bulan ke depan).</p>
+            </div>
             <div class="button-group">
                 <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
                 <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
@@ -1351,7 +1536,7 @@ async function openCategoryManageModal() {
                 <div>
                     <span style="font-size:22px;">${c.icon}</span>
                     <span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span>
-                    <span style="font-size:12px; color:#64748b; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span>
+                    <span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span>
                 </div>
                 <div>
                     <span style="display:inline-block; width:24px; height:24px; background:${c.color}; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1);"></span>
@@ -1452,6 +1637,7 @@ async function renderHutang() {
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
+                <button id="reminderBtn" class="reminder-btn">🔔</button>
                 <button id="openSettingsBtn" class="settings-btn">⚙️</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
@@ -1465,14 +1651,23 @@ async function renderHutang() {
         <div class="card"><div id="debtList"></div></div>
     `;
     document.getElementById("appContainer").innerHTML=html;
+    
+    const overdueCount = getOverdueCount();
+    const reminderBtn = document.getElementById("reminderBtn");
+    if (reminderBtn && overdueCount > 0) {
+        reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
+    }
+    
     document.getElementById("addDebtBtn")?.addEventListener("click",()=>openDebtModal());
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     
     const container=document.getElementById("debtList");
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data hutang/piutang</div>';
@@ -1480,7 +1675,7 @@ async function renderHutang() {
         <div class="debt-item" data-id="${d.id}" style="${d.status!=='lunas' && d.due_date && new Date(d.due_date) < new Date() ? 'background:#fee2e2; border-radius:16px; padding:12px; margin-bottom:8px' : ''}">
             <div>
                 <div style="font-weight:600;">${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div>
-                <div style="font-size:12px; color:#64748b; margin-top:4px">Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${formatDate(d.due_date)}`:''}</div>
+                <div style="font-size:12px; margin-top:4px">Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${formatDate(d.due_date)}`:''}</div>
                 <div style="font-size:12px; margin-top:4px; color:${d.status==='lunas'?'#10b981':'#ef4444'}">${d.status==='lunas'?'✅ Lunas':'⏳ Belum Lunas'}</div>
             </div>
         </div>
@@ -1536,6 +1731,7 @@ async function renderSavings() {
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
+                <button id="reminderBtn" class="reminder-btn">🔔</button>
                 <button id="openSettingsBtn" class="settings-btn">⚙️</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
@@ -1545,14 +1741,23 @@ async function renderSavings() {
         <div class="card"><div id="savingsList"></div></div>
     `;
     document.getElementById("appContainer").innerHTML=html;
+    
+    const overdueCount = getOverdueCount();
+    const reminderBtn = document.getElementById("reminderBtn");
+    if (reminderBtn && overdueCount > 0) {
+        reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
+    }
+    
     document.getElementById("addSavingsBtn")?.addEventListener("click",()=>openSavingsModal());
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     
     const container=document.getElementById("savingsList");
     if(!savings.length) container.innerHTML='<div class="empty-state">Belum ada tabungan</div>';
@@ -1622,6 +1827,7 @@ async function renderReminders() {
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
+                <button id="reminderBtn" class="reminder-btn">🔔</button>
                 <button id="openSettingsBtn" class="settings-btn">⚙️</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
@@ -1631,14 +1837,23 @@ async function renderReminders() {
         <div class="card"><div id="remindersList"></div></div>
     `;
     document.getElementById("appContainer").innerHTML=html;
+    
+    const overdueCount = getOverdueCount();
+    const reminderBtn = document.getElementById("reminderBtn");
+    if (reminderBtn && overdueCount > 0) {
+        reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
+    }
+    
     document.getElementById("addReminderBtn")?.addEventListener("click",()=>openReminderModal());
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     
     const container=document.getElementById("remindersList");
     if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
@@ -1646,8 +1861,8 @@ async function renderReminders() {
         <div class="reminder-item" data-id="${r.id}">
             <div>
                 <div style="font-weight:600;">${escapeHtml(r.title)}</div>
-                <div style="font-size:12px; color:#64748b; margin-top:4px">📅 ${formatDate(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>
-                ${r.description?`<div style="font-size:12px; color:#64748b">${escapeHtml(r.description)}</div>`:''}
+                <div style="font-size:12px; margin-top:4px">📅 ${formatDate(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>
+                ${r.description?`<div style="font-size:12px;">${escapeHtml(r.description)}</div>`:''}
             </div>
         </div>
     `).join('');
@@ -1706,6 +1921,7 @@ async function renderTasks() {
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
+                <button id="reminderBtn" class="reminder-btn">🔔</button>
                 <button id="openSettingsBtn" class="settings-btn">⚙️</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
             </div>
@@ -1720,14 +1936,23 @@ async function renderTasks() {
         <div class="card"><div id="tasksList"></div></div>
     `;
     document.getElementById("appContainer").innerHTML=html;
+    
+    const overdueCount = getOverdueCount();
+    const reminderBtn = document.getElementById("reminderBtn");
+    if (reminderBtn && overdueCount > 0) {
+        reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
+    }
+    
     document.getElementById("addTaskBtn")?.addEventListener("click",()=>openTaskModal());
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     
     let filtered=tasks;
     if(taskFilter==='active') filtered=tasks.filter(t=>!t.is_completed);
@@ -1742,8 +1967,8 @@ async function renderTasks() {
                     <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}>
                     <div>
                         <div class="${t.is_completed?'task-completed':''}" style="font-weight:600;">${escapeHtml(t.title)}</div>
-                        ${t.description?`<div style="font-size:12px; color:#64748b; margin-top:4px">📝 ${escapeHtml(t.description)}</div>`:''}
-                        <div style="font-size:12px; color:#64748b; margin-top:4px">📅 ${t.due_date?formatDate(t.due_date):'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div>
+                        ${t.description?`<div style="font-size:12px; margin-top:4px">📝 ${escapeHtml(t.description)}</div>`:''}
+                        <div style="font-size:12px; margin-top:4px">📅 ${t.due_date?formatDate(t.due_date):'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div>
                     </div>
                 </div>
             </div>
@@ -1836,7 +2061,7 @@ async function renderLaporan() {
         data.push(val);
     }
     let html=`
-        <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="openSettingsBtn" class="settings-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
+        <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="reminderBtn" class="reminder-btn">🔔</button><button id="openSettingsBtn" class="settings-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
         ${renderRunningText()}
         <div class="month-selector"><button id="prevMonth">◀</button><span style="font-weight:600;">${monthNames[currentMonth]} ${currentYear}</span><button id="nextMonth">▶</button></div>
         <div class="balance-card" style="padding:20px; cursor:default"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 ${pemasukan-pengeluaran >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(pemasukan-pengeluaran))}</div></div></div>
@@ -1844,6 +2069,12 @@ async function renderLaporan() {
         <div class="card"><div class="card-title">📋 Detail Transaksi</div><div id="detailTransaksi"></div></div>
     `;
     document.getElementById("appContainer").innerHTML=html;
+    
+    const overdueCount = getOverdueCount();
+    const reminderBtn = document.getElementById("reminderBtn");
+    if (reminderBtn && overdueCount > 0) {
+        reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
+    }
     
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
     if(ctx && data.length > 0) {
@@ -1875,17 +2106,21 @@ async function renderLaporan() {
     document.getElementById("detailTransaksi").innerHTML=detail||'<div class="empty-state">Tidak ada transaksi</div>';
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
+        pushHistory(currentNav);
         previousNav = currentNav;
         currentNav = "settings"; 
         updateNav(); 
         renderSettings(); 
     });
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     document.getElementById("prevMonth")?.addEventListener("click",()=>{if(currentMonth===0){currentMonth=11;currentYear--;}else currentMonth--; renderLaporan();});
     document.getElementById("nextMonth")?.addEventListener("click",()=>{if(currentMonth===11){currentMonth=0;currentYear++;}else currentMonth++; renderLaporan();});
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
 async function renderSettings() {
+    await loadThemePreference();
+    
     let html = `
         <div class="header">
             <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
@@ -1896,6 +2131,16 @@ async function renderSettings() {
         </div>
         ${renderRunningText()}
         <div class="card">
+            <div class="card-title">🎨 Tampilan</div>
+            <div class="theme-toggle" id="themeToggle">
+                <span class="theme-toggle-label">🌙 Mode Gelap</span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="darkModeSwitch" ${isDarkMode ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="card">
             <div class="card-title">🔐 Ubah Password</div>
             <div class="password-wrapper"><input type="password" id="oldPass" placeholder="Password Lama" class="modal-input"><button class="toggle-password" data-target="oldPass">👁️</button></div>
             <div class="password-wrapper"><input type="password" id="newPass" placeholder="Password Baru (min 6)" class="modal-input"><button class="toggle-password" data-target="newPass">👁️</button></div>
@@ -1905,7 +2150,7 @@ async function renderSettings() {
         <div class="card">
             <div class="card-title">👥 Akses Bersama</div>
             <div style="margin-bottom:12px">
-                <p style="font-size:12px; color:#64748b; margin-bottom:12px">Bagikan akses ke pengguna lain. Pengguna yang diundang harus login dengan email yang sama.</p>
+                <p style="font-size:12px; margin-bottom:12px;">Bagikan akses ke pengguna lain. Pengguna yang diundang harus login dengan email yang sama.</p>
                 <div style="display:flex; gap:8px; margin-bottom:16px">
                     <input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1">
                     <select id="accessLevel" class="modal-select" style="width:100px">
@@ -1920,7 +2165,6 @@ async function renderSettings() {
     `;
     document.getElementById("appContainer").innerHTML = html;
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
-    
     document.getElementById("backFromSettingsBtn")?.addEventListener("click",() => {
         if (previousNav && previousNav !== "settings") {
             currentNav = previousNav;
@@ -1943,6 +2187,10 @@ async function renderSettings() {
         else showToast("Password berhasil diubah");
     });
     
+    document.getElementById("darkModeSwitch")?.addEventListener("change", (e) => {
+        toggleTheme();
+    });
+    
     document.getElementById("addSharedBtn")?.addEventListener("click",async()=>{
         const email = document.getElementById("sharedEmail").value.trim();
         const level = document.getElementById("accessLevel").value;
@@ -1962,7 +2210,7 @@ async function renderSettings() {
         });
         if(error) alert(error.message);
         else {
-            showToast(`Undangan akses dikirim ke ${email}. Pengguna harus login dengan email tersebut.`);
+            showToast(`Undangan akses dikirim ke ${email}`);
             document.getElementById("sharedEmail").value = "";
             await loadSharedAccess();
             renderSettings();
@@ -2034,18 +2282,33 @@ function addBottomNav() {
     const navHtml=`<div class="bottom-nav">
         <button class="nav-item ${currentNav==='home'?'active':''}" data-nav="home"><span class="nav-icon">🏠</span><span>Beranda</span></button>
         <button class="nav-item ${currentNav==='transaksi'?'active':''}" data-nav="transaksi"><span class="nav-icon">📋</span><span>Transaksi</span></button>
-        <button class="nav-item ${currentNav==='laporan'?'active':''}" data-nav="laporan"><span class="nav-icon">📅</span><span>Laporan</span></button>
         <button class="nav-item ${currentNav==='hutang'?'active':''}" data-nav="hutang"><span class="nav-icon">💰</span><span>Hutang</span></button>
         <button class="nav-item ${currentNav==='tasks'?'active':''}" data-nav="tasks"><span class="nav-icon">✅</span><span>Tugas</span></button>
-    </div>`;
+    </div>
+    <button id="fabAddTransaksi" class="fab-add">+</button>`;
     document.body.insertAdjacentHTML('beforeend',navHtml);
+    
+    document.getElementById("fabAddTransaksi")?.addEventListener("click", () => openTransaksiModal());
+    
     document.querySelectorAll('.nav-item').forEach(btn=>btn.onclick=()=>{
-        previousNav = currentNav;
+        pushHistory(currentNav);
         currentNav = btn.getAttribute("data-nav");
         updateNav();
         renderCurrentView();
     });
 }
+
+// Handle tombol back HP
+window.addEventListener('popstate', function(event) {
+    if (goBack()) {
+        event.preventDefault();
+    } else {
+        // Jika sudah di halaman awal, biarkan keluar aplikasi
+        if (confirm("Keluar dari aplikasi?")) {
+            window.close();
+        }
+    }
+});
 
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
@@ -2080,6 +2343,14 @@ function toggleMode() {
 async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
+    
+    // Buat tabel user_settings jika belum ada
+    try {
+        await sb.from("user_settings").select("*").eq("user_id", user.id).single();
+    } catch(e) {
+        await sb.from("user_settings").insert({ user_id: user.id, dark_mode: false });
+    }
+    
     await loadCategories(); 
     await loadTransactions(); 
     await loadDebts(); 
@@ -2087,6 +2358,7 @@ async function onAuthSuccess(user) {
     await loadReminders(); 
     await loadTasks(); 
     await loadSharedAccess();
+    await loadThemePreference();
     
     addBottomNav();
     renderCurrentView();
@@ -2100,6 +2372,7 @@ async function logout() {
     }
     currentUser = null;
     document.querySelector(".bottom-nav")?.remove();
+    document.getElementById("fabAddTransaksi")?.remove();
     document.getElementById("appContainer").innerHTML = "";
     document.getElementById("loginModal").style.display = "flex";
     document.getElementById("emailInput").value = "";
@@ -2110,7 +2383,6 @@ async function checkSession() {
     try {
         const { data, error } = await sb.auth.getSession();
         if (error && error.message?.includes("Invalid Refresh Token")) {
-            console.log("Session invalid, clearing...");
             localStorage.clear();
             document.getElementById("loginModal").style.display = "flex";
             return;
@@ -2121,7 +2393,6 @@ async function checkSession() {
             document.getElementById("loginModal").style.display = "flex"; 
         }
     } catch(e) {
-        console.log("Session check error:", e);
         document.getElementById("loginModal").style.display = "flex";
     }
 }
