@@ -284,7 +284,7 @@ async function loadSharedAccess() {
     } 
 }
 
-// Fungsi untuk membuat transaksi dari recurring (versi sederhana tanpa recurring_id)
+// PERBAIKAN: Fungsi untuk membuat transaksi dari recurring - HANYA 1 per bulan
 async function generateTransactionsForRecurring(recurring) {
     if (!currentUser || !recurring.is_active) return 0;
     
@@ -294,35 +294,37 @@ async function generateTransactionsForRecurring(recurring) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Mulai dari start_date atau dari awal tahun ini
-    let startDate = recurring.start_date ? new Date(recurring.start_date) : new Date(today.getFullYear(), 0, 1);
+    // Mulai dari start_date
+    let startDate = recurring.start_date ? new Date(recurring.start_date) : new Date();
     startDate.setHours(0, 0, 0, 0);
     
-    // Generate sampai 12 bulan ke depan
+    // Generate sampai 24 bulan ke depan
     const maxDate = new Date(today);
-    maxDate.setMonth(today.getMonth() + 12);
+    maxDate.setMonth(today.getMonth() + 24);
     
-    // Buat set kunci transaksi yang sudah ada (berdasarkan deskripsi + tanggal)
+    // Buat set kunci transaksi yang sudah ada (bulan + tahun + deskripsi)
     const existingKeys = new Set();
     for (const t of transactions) {
         const tDate = new Date(t.created_at);
         tDate.setHours(0, 0, 0, 0);
-        const key = `${t.description}_${tDate.getFullYear()}_${tDate.getMonth()}_${tDate.getDate()}`;
+        // Gunakan kombinasi deskripsi + tahun + bulan untuk cek duplikat
+        const key = `${t.description}_${tDate.getFullYear()}_${tDate.getMonth()}`;
         existingKeys.add(key);
     }
     
-    // Looping dari start_date sampai maxDate
+    // Looping per bulan dari start_date sampai maxDate
     let currentDate = new Date(startDate);
     while (currentDate <= maxDate) {
         const targetDay = recurring.day_of_month;
-        // Buat tanggal target dengan hari yang sama setiap bulan
+        
+        // Buat tanggal target (gunakan tanggal yang sama setiap bulan)
         let targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), targetDay);
         
         // Cek apakah tanggal valid (misal 31 di bulan Februari)
         if (targetDate.getMonth() === currentDate.getMonth()) {
-            const key = `${recurring.description}_${targetDate.getFullYear()}_${targetDate.getMonth()}_${targetDate.getDate()}`;
+            const key = `${recurring.description}_${targetDate.getFullYear()}_${targetDate.getMonth()}`;
             
-            // Buat transaksi jika belum ada
+            // Buat transaksi hanya jika belum ada untuk bulan ini
             if (!existingKeys.has(key)) {
                 const insertData = {
                     user_id: currentUser.id,
@@ -350,6 +352,23 @@ async function generateTransactionsForRecurring(recurring) {
     }
     
     return createdCount;
+}
+
+// Hapus semua transaksi otomatis untuk recurring tertentu
+async function deleteAutoTransactionsForRecurring(recurringId, description) {
+    if (!currentUser) return;
+    
+    // Hapus transaksi otomatis dengan deskripsi yang sama
+    const { error } = await sb.from("transactions")
+        .delete()
+        .eq("user_id", currentUser.id)
+        .like("description", `${description}%`);
+    
+    if (error) {
+        console.error("Error deleting auto transactions:", error);
+    } else {
+        console.log(`Deleted auto transactions for: ${description}`);
+    }
 }
 
 // Generate untuk semua recurring aktif
@@ -715,6 +734,7 @@ async function renderTransaksi() {
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
         <button id="generateRecurringBtn" class="btn-warning" style="margin-bottom:16px; width:100%;">⚡ Generate Semua Transaksi Berulang</button>
+        <button id="resetRecurringBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#ef4444;">🗑️ Hapus Semua Transaksi Otomatis & Regenerate</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
@@ -776,6 +796,24 @@ async function renderTransaksi() {
         await loadTransactions();
         renderTransaksi();
         if (currentNav === 'home') renderHome();
+    });
+    document.getElementById("resetRecurringBtn")?.addEventListener("click", async () => {
+        if(confirm("Hapus semua transaksi otomatis? Ini akan menghapus semua transaksi berulang yang sudah dibuat, lalu membuat ulang.")){
+            showToast("Menghapus semua transaksi otomatis...");
+            // Hapus semua transaksi otomatis
+            const { error } = await sb.from("transactions").delete().like("description", "%Otomatis%").eq("user_id", currentUser.id);
+            if(error) {
+                alert("Gagal menghapus: " + error.message);
+            } else {
+                showToast("Menghapus selesai, sekarang membuat ulang...");
+                await loadTransactions();
+                const created = await generateAllRecurringTransactions();
+                showToast(`Selesai! ${created} transaksi baru dibuat`);
+                await loadTransactions();
+                renderTransaksi();
+                if (currentNav === 'home') renderHome();
+            }
+        }
     });
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
@@ -1040,7 +1078,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG
+// HUTANG (sederhana)
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
