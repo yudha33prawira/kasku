@@ -40,6 +40,7 @@
         .btn-secondary { background: #64748b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         .btn-recurring { background: #8b5cf6; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         .btn-warning { background: #f59e0b; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
+        .btn-danger { background: #ef4444; color: white; border: none; border-radius: 40px; padding: 10px 16px; font-weight: 500; cursor: pointer; }
         
         .card { background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); cursor: pointer; transition: transform 0.1s; }
         .card:active { transform: scale(0.98); }
@@ -88,6 +89,8 @@
         .button-group .modal-btn { flex: 1; margin-top: 0; }
         .recurring-active { color: #10b981; font-size: 12px; }
         .recurring-inactive { color: #ef4444; font-size: 12px; }
+        .selection-bar { display: flex; gap: 8px; margin-bottom: 12px; padding: 8px; background: #f1f5f9; border-radius: 12px; }
+        .checkbox-select { width: 20px; height: 20px; margin-right: 12px; cursor: pointer; pointer-events: auto; }
     </style>
 </head>
 <body>
@@ -132,6 +135,7 @@ let isLoginMode = true;
 let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
+let selectedTransactions = new Set(); // Untuk menyimpan ID transaksi yang dipilih
 
 function showToast(msg) { 
     let t = document.querySelector('.toast'); 
@@ -284,7 +288,7 @@ async function loadSharedAccess() {
     } 
 }
 
-// PERBAIKAN: Fungsi untuk membuat transaksi dari recurring - HANYA 1 per bulan
+// Fungsi untuk membuat transaksi dari recurring - HANYA 1 per bulan
 async function generateTransactionsForRecurring(recurring) {
     if (!currentUser || !recurring.is_active) return 0;
     
@@ -302,12 +306,12 @@ async function generateTransactionsForRecurring(recurring) {
     const maxDate = new Date(today);
     maxDate.setMonth(today.getMonth() + 24);
     
-    // Buat set kunci transaksi yang sudah ada (bulan + tahun + deskripsi)
+    // Buat set kunci transaksi yang sudah ada (bulan + tahun)
     const existingKeys = new Set();
     for (const t of transactions) {
         const tDate = new Date(t.created_at);
         tDate.setHours(0, 0, 0, 0);
-        // Gunakan kombinasi deskripsi + tahun + bulan untuk cek duplikat
+        // Kunci: deskripsi + tahun + bulan (tanpa tanggal)
         const key = `${t.description}_${tDate.getFullYear()}_${tDate.getMonth()}`;
         existingKeys.add(key);
     }
@@ -317,10 +321,10 @@ async function generateTransactionsForRecurring(recurring) {
     while (currentDate <= maxDate) {
         const targetDay = recurring.day_of_month;
         
-        // Buat tanggal target (gunakan tanggal yang sama setiap bulan)
+        // Buat tanggal target
         let targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), targetDay);
         
-        // Cek apakah tanggal valid (misal 31 di bulan Februari)
+        // Cek apakah tanggal valid
         if (targetDate.getMonth() === currentDate.getMonth()) {
             const key = `${recurring.description}_${targetDate.getFullYear()}_${targetDate.getMonth()}`;
             
@@ -328,7 +332,7 @@ async function generateTransactionsForRecurring(recurring) {
             if (!existingKeys.has(key)) {
                 const insertData = {
                     user_id: currentUser.id,
-                    description: recurring.description + " (Otomatis)",
+                    description: recurring.description,
                     amount: recurring.amount,
                     type: recurring.type,
                     is_fixed_expense: recurring.type === 'pengeluaran',
@@ -352,23 +356,6 @@ async function generateTransactionsForRecurring(recurring) {
     }
     
     return createdCount;
-}
-
-// Hapus semua transaksi otomatis untuk recurring tertentu
-async function deleteAutoTransactionsForRecurring(recurringId, description) {
-    if (!currentUser) return;
-    
-    // Hapus transaksi otomatis dengan deskripsi yang sama
-    const { error } = await sb.from("transactions")
-        .delete()
-        .eq("user_id", currentUser.id)
-        .like("description", `${description}%`);
-    
-    if (error) {
-        console.error("Error deleting auto transactions:", error);
-    } else {
-        console.log(`Deleted auto transactions for: ${description}`);
-    }
 }
 
 // Generate untuk semua recurring aktif
@@ -395,6 +382,25 @@ async function generateAllRecurringTransactions() {
     return totalCreated;
 }
 
+// Hapus transaksi yang dipilih
+async function deleteSelectedTransactions() {
+    if (selectedTransactions.size === 0) {
+        showToast("Pilih transaksi yang akan dihapus");
+        return;
+    }
+    
+    if (confirm(`Hapus ${selectedTransactions.size} transaksi yang dipilih?`)) {
+        const ids = Array.from(selectedTransactions);
+        for (const id of ids) {
+            await sb.from("transactions").delete().eq("id", id);
+        }
+        showToast(`${ids.length} transaksi dihapus`);
+        selectedTransactions.clear();
+        await loadTransactions();
+        renderCurrentView();
+    }
+}
+
 // ==================== MODAL DETAIL ====================
 
 // Detail Transaksi
@@ -410,7 +416,6 @@ async function showTransactionDetail(transaction) {
             <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
             <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
             <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${cat ? `${cat.icon} ${cat.name}` : '-'}</span></div>
-            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${transaction.description?.includes('Otomatis') ? '🤖 Transaksi Otomatis' : '✏️ Manual'}</span></div>
             <div class="button-group">
                 <button id="editTransaksiBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
                 <button id="deleteTransaksiBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
@@ -673,7 +678,7 @@ async function renderHome() {
             <div class="card" style="flex:1; text-align:center; padding:12px; cursor:pointer" id="hutangCard"><div>💸 Hutang</div><div style="font-weight:700; color:#ef4444">Rp ${formatRupiah(hutang)}</div></div>
         </div>
         <div class="card"><div class="card-title">📊 Pengeluaran Teratas Bulan Ini</div>${topExpenses.map((t,i)=>`<div class="top-expense-item"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran bulan ini</div>'}</div>
-        <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div class="transaction-item" data-id="${t.id}"><div>${escapeHtml(t.description)}${t.description?.includes('Otomatis') ? '<span class="badge-auto">Auto</span>' : ''}<br><small>${formatDate(t.created_at)}</small></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
+        <div class="card"><div class="card-title">📋 Transaksi Terbaru</div>${recent.map(t=>`<div class="transaction-item" data-id="${t.id}"><div>${escapeHtml(t.description)}<br><small>${formatDate(t.created_at)}</small></div><div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div></div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}</div>
     `;
     document.getElementById("appContainer").innerHTML = html;
     
@@ -714,10 +719,13 @@ async function renderHome() {
     });
 }
 
-// TRANSAKSI
+// TRANSAKSI - dengan fitur ceklis
 async function renderTransaksi() {
     await loadRecurring();
     await loadTransactions();
+    
+    // Filter transaksi otomatis untuk ditampilkan dengan ceklis
+    const autoTransactions = transactions.filter(t => t.description?.includes('Otomatis') === false);
     
     let html = `
         <div class="header">
@@ -733,12 +741,16 @@ async function renderTransaksi() {
             <button id="addRecurringBtn" class="btn-recurring" style="flex:1">🔄 Berulang</button>
         </div>
         <button id="manageCategoryBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#8b5cf6">🏷️ Kelola Kategori</button>
-        <button id="generateRecurringBtn" class="btn-warning" style="margin-bottom:16px; width:100%;">⚡ Generate Semua Transaksi Berulang</button>
-        <button id="resetRecurringBtn" class="btn-secondary" style="margin-bottom:16px; width:100%; background:#ef4444;">🗑️ Hapus Semua Transaksi Otomatis & Regenerate</button>
         
         <div class="card">
             <div class="card-title">🔄 Daftar Transaksi Berulang</div>
             <div id="recurringList"></div>
+        </div>
+        
+        <div class="selection-bar">
+            <button id="selectAllBtn" class="btn-secondary" style="flex:1">✓ Pilih Semua</button>
+            <button id="deselectAllBtn" class="btn-secondary" style="flex:1">✗ Batal Pilih</button>
+            <button id="deleteSelectedBtn" class="btn-danger" style="flex:1">🗑️ Hapus Dipilih</button>
         </div>
         
         <div class="filter">
@@ -763,11 +775,12 @@ async function renderTransaksi() {
                     <div style="font-size:11px; color:#64748b">📅 Mulai: ${formatDate(r.start_date)}</div>
                     <div class="${r.is_active ? 'recurring-active' : 'recurring-inactive'}">${r.is_active ? '✅ Aktif' : '❌ Nonaktif'}</div>
                 </div>
+                <button class="generate-now" data-id="${r.id}" style="background:#10b981; border:none; border-radius:30px; padding:6px 12px; color:white;">⚡ Generate</button>
             </div>
         `).join('');
     }
     
-    // Tampilkan daftar transaksi
+    // Tampilkan daftar transaksi dengan ceklis
     let data = [...transactions];
     if(transaksiFilter==='income') data=data.filter(t=>t.type==='pemasukan');
     if(transaksiFilter==='expense') data=data.filter(t=>t.type==='pengeluaran');
@@ -775,9 +788,10 @@ async function renderTransaksi() {
     const container = document.getElementById("transaksiList");
     if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
     else container.innerHTML = data.map(t=>`
-        <div class="transaction-item" data-id="${t.id}">
+        <div class="transaction-item" data-id="${t.id}" style="display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" class="checkbox-select" data-id="${t.id}" ${selectedTransactions.has(t.id) ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer;">
             <div style="flex:1">
-                <div>${escapeHtml(t.description)}${t.description?.includes('Otomatis') ? '<span class="badge-auto">Auto</span>' : ''}</div>
+                <div>${escapeHtml(t.description)}</div>
                 <div style="font-size:11px; color:#64748b">📅 ${formatDate(t.created_at)}</div>
                 <div style="font-size:11px; color:#64748b">${t.category_id ? `• ${getCategoryById(t.category_id)?.icon || ''} ${getCategoryById(t.category_id)?.name || ''}` : ''}</div>
             </div>
@@ -789,32 +803,6 @@ async function renderTransaksi() {
     document.getElementById("addTransaksiBtn")?.addEventListener("click",()=>openTransaksiModal());
     document.getElementById("addRecurringBtn")?.addEventListener("click",()=>openRecurringModal());
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
-    document.getElementById("generateRecurringBtn")?.addEventListener("click", async () => {
-        showToast("Memproses transaksi berulang...");
-        const created = await generateAllRecurringTransactions();
-        showToast(`Selesai! ${created} transaksi baru ditambahkan ke daftar transaksi`);
-        await loadTransactions();
-        renderTransaksi();
-        if (currentNav === 'home') renderHome();
-    });
-    document.getElementById("resetRecurringBtn")?.addEventListener("click", async () => {
-        if(confirm("Hapus semua transaksi otomatis? Ini akan menghapus semua transaksi berulang yang sudah dibuat, lalu membuat ulang.")){
-            showToast("Menghapus semua transaksi otomatis...");
-            // Hapus semua transaksi otomatis
-            const { error } = await sb.from("transactions").delete().like("description", "%Otomatis%").eq("user_id", currentUser.id);
-            if(error) {
-                alert("Gagal menghapus: " + error.message);
-            } else {
-                showToast("Menghapus selesai, sekarang membuat ulang...");
-                await loadTransactions();
-                const created = await generateAllRecurringTransactions();
-                showToast(`Selesai! ${created} transaksi baru dibuat`);
-                await loadTransactions();
-                renderTransaksi();
-                if (currentNav === 'home') renderHome();
-            }
-        }
-    });
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ 
         previousNav = currentNav;
@@ -823,25 +811,75 @@ async function renderTransaksi() {
         renderSettings(); 
     });
     
+    // Selection buttons
+    document.getElementById("selectAllBtn")?.addEventListener("click", () => {
+        for (const t of data) {
+            selectedTransactions.add(t.id);
+        }
+        renderTransaksi();
+    });
+    document.getElementById("deselectAllBtn")?.addEventListener("click", () => {
+        selectedTransactions.clear();
+        renderTransaksi();
+    });
+    document.getElementById("deleteSelectedBtn")?.addEventListener("click", deleteSelectedTransactions);
+    
+    // Generate button untuk masing-masing recurring
+    document.querySelectorAll(".generate-now").forEach(btn => {
+        btn.onclick = async (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute("data-id");
+            const recurring = recurringList.find(r => r.id === id);
+            if (recurring && recurring.is_active) {
+                showToast(`Membuat transaksi untuk ${recurring.description}...`);
+                const created = await generateTransactionsForRecurring(recurring);
+                await loadTransactions();
+                showToast(`Selesai! ${created} transaksi baru ditambahkan`);
+                renderTransaksi();
+                if (currentNav === 'home') renderHome();
+            }
+        };
+    });
+    
     // Klik recurring untuk edit
     document.querySelectorAll(".recurring-item").forEach(el => {
-        el.onclick = () => {
+        el.onclick = (e) => {
+            if(e.target.classList.contains('generate-now')) return;
             const id = el.getAttribute("data-id");
             openRecurringModal(id);
         };
     });
     
-    // Klik transaksi untuk detail
+    // Klik checkbox
+    document.querySelectorAll(".checkbox-select").forEach(cb => {
+        cb.onclick = (e) => {
+            e.stopPropagation();
+            const id = cb.getAttribute("data-id");
+            if (cb.checked) {
+                selectedTransactions.add(id);
+            } else {
+                selectedTransactions.delete(id);
+            }
+        };
+    });
+    
+    // Klik transaksi untuk detail (tapi jika klik checkbox, jangan buka detail)
     document.querySelectorAll(".transaction-item").forEach(el => {
-        el.onclick = () => {
-            const id = el.getAttribute("data-id");
-            const transaction = transactions.find(t => t.id === id);
-            if (transaction) showTransactionDetail(transaction);
+        el.onclick = (e) => {
+            if(e.target.type !== 'checkbox') {
+                const id = el.getAttribute("data-id");
+                const transaction = transactions.find(t => t.id === id);
+                if (transaction) showTransactionDetail(transaction);
+            }
         };
     });
     
     // Filter
-    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
+    document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{
+        transaksiFilter=btn.getAttribute("data-filter");
+        selectedTransactions.clear();
+        renderTransaksi();
+    });
 }
 
 // Modal Transaksi Manual
@@ -988,15 +1026,6 @@ async function openRecurringModal(editId=null){
             modal.remove();
             await loadRecurring();
             
-            // Generate transaksi
-            const newRecurring = recurringList.find(rr => rr.description === desc && rr.day_of_month === day);
-            if (newRecurring && newRecurring.is_active) {
-                showToast("Membuat transaksi otomatis...");
-                const created = await generateTransactionsForRecurring(newRecurring);
-                await loadTransactions();
-                showToast(`Selesai! ${created} transaksi otomatis ditambahkan`);
-            }
-            
             renderTransaksi();
             if (currentNav === 'home') renderHome();
         } catch(err) {
@@ -1078,7 +1107,7 @@ function openCategoryManageModal(editId=null) {
     document.getElementById("closeCategoryModal").onclick = () => modal.remove();
 }
 
-// HUTANG (sederhana)
+// HUTANG
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1510,7 +1539,7 @@ async function renderLaporan() {
         detail+=`<div style="margin-top:12px"><strong>📌 ${date}</strong> <span style="color:${total>=0?'#10b981':'#ef4444'}">${total>=0?'+':'-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`; 
         for (const i of items) {
             const cat=getCategoryById(i.category_id); 
-            detail+=`<div style="padding-left:16px; margin:4px 0">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('Otomatis') ? '<span class="badge-auto">Auto</span>' : ''} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`;
+            detail+=`<div style="padding-left:16px; margin:4px 0">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`;
         }
     }
     document.getElementById("detailTransaksi").innerHTML=detail||'<div class="empty-state">Tidak ada transaksi</div>';
