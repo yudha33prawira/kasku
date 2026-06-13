@@ -172,7 +172,7 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="">
 <div class="app-container" id="appContainer"></div>
 
 <div id="loginModal" class="modal-overlay">
@@ -242,44 +242,100 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-// MODE DARK/LIGHT - Load dari database
+// ========== MODE DARK/LIGHT - DIPERBAIKI ==========
 async function loadThemePreference() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        // Jika belum login, gunakan default dari localStorage
+        const savedTheme = localStorage.getItem('theme_mode');
+        if (savedTheme === 'dark') {
+            isDarkMode = true;
+            document.body.classList.add("dark");
+        } else {
+            isDarkMode = false;
+            document.body.classList.remove("dark");
+        }
+        return;
+    }
+    
     try {
         const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
+        
+        if (error) {
+            console.error("Load theme error:", error);
+            // Fallback ke localStorage
+            const savedTheme = localStorage.getItem('theme_mode');
+            if (savedTheme === 'dark') {
+                isDarkMode = true;
+                document.body.classList.add("dark");
+            } else {
+                isDarkMode = false;
+                document.body.classList.remove("dark");
+            }
+            return;
+        }
+        
         if (data && data.dark_mode !== undefined) {
             isDarkMode = data.dark_mode;
         } else {
-            // Jika belum ada data, buat default
-            await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: false });
+            // Jika belum ada data, buat default (false)
             isDarkMode = false;
+            await sb.from("user_settings").insert({ user_id: currentUser.id, dark_mode: false });
         }
-        if (isDarkMode) document.body.classList.add("dark");
-        else document.body.classList.remove("dark");
+        
+        // Terapkan ke body
+        if (isDarkMode) {
+            document.body.classList.add("dark");
+        } else {
+            document.body.classList.remove("dark");
+        }
+        
+        // Simpan juga ke localStorage untuk fallback
+        localStorage.setItem('theme_mode', isDarkMode ? 'dark' : 'light');
+        
     } catch(e) { 
         console.log("Theme load error:", e);
-        isDarkMode = false;
+        // Fallback ke localStorage
+        const savedTheme = localStorage.getItem('theme_mode');
+        if (savedTheme === 'dark') {
+            isDarkMode = true;
+            document.body.classList.add("dark");
+        } else {
+            isDarkMode = false;
+            document.body.classList.remove("dark");
+        }
     }
 }
 
 async function saveThemePreference(isDark) {
+    localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    
     if (!currentUser) return;
+    
     try {
         const { error } = await sb.from("user_settings").upsert({ 
             user_id: currentUser.id, 
             dark_mode: isDark,
             updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        });
         if (error) console.error("Save theme error:", error);
     } catch(e) { console.log("Theme save error:", e); }
 }
 
 function toggleTheme() {
     isDarkMode = !isDarkMode;
-    if (isDarkMode) document.body.classList.add("dark");
-    else document.body.classList.remove("dark");
+    if (isDarkMode) {
+        document.body.classList.add("dark");
+    } else {
+        document.body.classList.remove("dark");
+    }
     saveThemePreference(isDarkMode);
     showToast(isDarkMode ? "Mode Gelap aktif" : "Mode Terang aktif");
+    
+    // Update switch di settings jika sedang terbuka
+    const darkModeSwitch = document.getElementById("darkModeSwitch");
+    if (darkModeSwitch) {
+        darkModeSwitch.checked = isDarkMode;
+    }
 }
 
 function getOverdueCount() {
@@ -924,13 +980,25 @@ async function renderLaporan() {
 }
 
 async function renderSettings() {
-    await loadThemePreference();
+    // Pastikan theme switch mencerminkan state saat ini
+    const darkModeSwitch = document.getElementById("darkModeSwitch");
+    if (darkModeSwitch) {
+        darkModeSwitch.checked = isDarkMode;
+    }
+    
     let html = `<div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="backFromSettingsBtn" class="icon-btn" style="font-size:20px;">←</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>${renderRunningText()}<div class="card"><div class="card-title">🎨 Tampilan</div><div class="theme-toggle" id="themeToggle"><span class="theme-toggle-label">🌙 Mode Gelap</span><label class="theme-switch"><input type="checkbox" id="darkModeSwitch" ${isDarkMode ? 'checked' : ''}><span class="slider"></span></label></div></div><div class="card"><div class="card-title">🔐 Ubah Password</div><div class="password-wrapper"><input type="password" id="oldPass" placeholder="Password Lama" class="modal-input"><button class="toggle-password" data-target="oldPass">👁️</button></div><div class="password-wrapper"><input type="password" id="newPass" placeholder="Password Baru (min 6)" class="modal-input"><button class="toggle-password" data-target="newPass">👁️</button></div><div class="password-wrapper"><input type="password" id="confirmPass" placeholder="Konfirmasi Password" class="modal-input"><button class="toggle-password" data-target="confirmPass">👁️</button></div><button id="changePassBtn" class="modal-btn modal-btn-primary">Update Password</button></div><div class="card"><div class="card-title">👥 Akses Bersama</div><div style="margin-bottom:12px"><p style="font-size:12px; margin-bottom:12px;">Bagikan akses ke pengguna lain. Pengguna yang diundang akan memiliki akses ke data Anda.</p><div style="display:flex; gap:8px; margin-bottom:16px"><input type="email" id="sharedEmail" placeholder="Email pengguna lain" class="modal-input" style="flex:1"><select id="accessLevel" class="modal-select" style="width:100px"><option value="view">👁️ Lihat</option><option value="edit">✏️ Edit</option></select><button id="addSharedBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Kirim</button></div></div><div id="sharedList"></div></div>`;
     document.getElementById("appContainer").innerHTML = html;
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("backFromSettingsBtn")?.addEventListener("click",() => { if (previousNav && previousNav !== "settings") { currentNav = previousNav; updateNav(); renderCurrentView(); } else { currentNav = "home"; updateNav(); renderHome(); } });
     document.getElementById("changePassBtn")?.addEventListener("click",async()=>{ const old=document.getElementById("oldPass").value, newp=document.getElementById("newPass").value, conf=document.getElementById("confirmPass").value; if(!old||!newp) return alert("Isi semua field"); if(newp.length<6) return alert("Password baru minimal 6 karakter"); if(newp!==conf) return alert("Konfirmasi password tidak cocok"); const {error}=await sb.auth.updateUser({password:newp}); if(error) alert(error.message); else showToast("Password berhasil diubah"); });
-    document.getElementById("darkModeSwitch")?.addEventListener("change", (e) => { toggleTheme(); });
+    
+    const darkModeSwitchEl = document.getElementById("darkModeSwitch");
+    if (darkModeSwitchEl) {
+        darkModeSwitchEl.addEventListener("change", (e) => {
+            toggleTheme();
+        });
+    }
+    
     document.getElementById("addSharedBtn")?.addEventListener("click",async()=>{
         const email = document.getElementById("sharedEmail").value.trim();
         const level = document.getElementById("accessLevel").value;
@@ -1012,8 +1080,19 @@ function toggleMode() {
 async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
-    await loadCategories(); await loadTransactions(); await loadDebts(); await loadSavings(); await loadReminders(); await loadTasks(); await loadSharedAccess();
+    
+    // Load semua data
+    await loadCategories(); 
+    await loadTransactions(); 
+    await loadDebts(); 
+    await loadSavings(); 
+    await loadReminders(); 
+    await loadTasks(); 
+    await loadSharedAccess();
+    
+    // Load tema setelah login
     await loadThemePreference();
+    
     addBottomNav();
     renderCurrentView();
 }
@@ -1031,10 +1110,19 @@ async function logout() {
 async function checkSession() {
     try {
         const { data, error } = await sb.auth.getSession();
-        if (error && error.message?.includes("Invalid Refresh Token")) { localStorage.clear(); document.getElementById("loginModal").style.display = "flex"; return; }
-        if (data.session?.user) await onAuthSuccess(data.session.user);
-        else document.getElementById("loginModal").style.display = "flex";
-    } catch(e) { document.getElementById("loginModal").style.display = "flex"; }
+        if (error && error.message?.includes("Invalid Refresh Token")) { 
+            localStorage.clear(); 
+            document.getElementById("loginModal").style.display = "flex"; 
+            return; 
+        }
+        if (data.session?.user) {
+            await onAuthSuccess(data.session.user);
+        } else { 
+            document.getElementById("loginModal").style.display = "flex"; 
+        }
+    } catch(e) { 
+        document.getElementById("loginModal").style.display = "flex"; 
+    }
 }
 
 document.getElementById("submitLoginBtn").onclick = handleLogin;
