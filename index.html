@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Keuangan Keluarga - Money Manager</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -178,6 +179,17 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .refresh-btn {
+            background: #10b981;
+            border: none;
+            border-radius: 30px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -224,8 +236,6 @@ let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
 let navigationHistory = [];
-let sharedAccessLoaded = false;
-let isProcessingSharedAccess = false;
 
 // Utility Functions
 function pushHistory(nav) { navigationHistory.push(nav); }
@@ -398,90 +408,46 @@ async function toggleTheme() {
 }
 
 // ========== SHARED ACCESS FUNCTIONS (FIXED) ==========
-async function loadSharedAccess(refresh = false) { 
+async function loadSharedAccess() { 
     if(!currentUser) return;
     
-    if (!refresh && sharedAccessLoaded) {
-        console.log("Shared access already loaded, skipping");
-        return;
-    }
-    
     try {
-        console.log("Loading shared access for user:", currentUser.email);
+        console.log("Loading shared access for:", currentUser.email);
         
-        const {data: asOwner, error: ownerError} = await sb
+        // Load as owner
+        const {data: asOwner} = await sb
             .from("shared_access")
             .select("*")
             .eq("owner_id", currentUser.id);
         
-        if (ownerError) throw ownerError;
-        
-        const {data: asReceiver, error: receiverError} = await sb
+        // Load as receiver
+        let asReceiver = [];
+        const {data: receiverData, error: receiverError} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email);
         
-        if (receiverError) throw receiverError;
+        if (!receiverError) {
+            asReceiver = receiverData || [];
+        }
         
-        sharedAccess = [...(asOwner||[]), ...(asReceiver||[])];
-        sharedAccessLoaded = true;
+        sharedAccess = [...(asOwner||[]), ...asReceiver];
         console.log("Shared access loaded:", sharedAccess.length);
         
-        await autoAcceptPendingAccess();
+        // Auto accept pending
+        for (const access of asReceiver) {
+            if (access.status === 'pending') {
+                console.log("Auto accepting:", access.id);
+                await sb
+                    .from("shared_access")
+                    .update({ status: 'accepted' })
+                    .eq("id", access.id);
+            }
+        }
         
     } catch(e) { 
         console.error("Load shared access error:", e);
     } 
-}
-
-async function autoAcceptPendingAccess() {
-    if (!currentUser) return;
-    if (isProcessingSharedAccess) return;
-    
-    isProcessingSharedAccess = true;
-    
-    try {
-        const { data: pendingAccess, error } = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "pending");
-        
-        if (error) throw error;
-        
-        if (!pendingAccess || pendingAccess.length === 0) {
-            isProcessingSharedAccess = false;
-            return;
-        }
-        
-        console.log("Pending access found:", pendingAccess.length);
-        
-        let acceptedCount = 0;
-        
-        for (const access of pendingAccess) {
-            const { error: updateError } = await sb
-                .from("shared_access")
-                .update({ status: 'accepted' })
-                .eq("id", access.id);
-            
-            if (!updateError) {
-                acceptedCount++;
-            }
-        }
-        
-        if (acceptedCount > 0) {
-            sharedAccessLoaded = false;
-            await loadSharedAccess(true);
-            showToast(`${acceptedCount} akses bersama diterima`);
-            await loadAllData();
-            renderCurrentView();
-        }
-        
-    } catch(e) {
-        console.error("Auto accept error:", e);
-    } finally {
-        isProcessingSharedAccess = false;
-    }
 }
 
 function hasEditAccess(dataOwnerId) {
@@ -507,7 +473,7 @@ function getAccessLevelLabel(dataOwnerId) {
     return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
 }
 
-// ========== LOAD DATA FUNCTIONS (FIXED) ==========
+// ========== LOAD DATA FUNCTIONS ==========
 async function loadCategories() { 
     if(currentUser) { 
         try {
@@ -521,38 +487,32 @@ async function loadTransactions() {
     if(!currentUser) return;
     
     try {
-        // Load own transactions
-        const {data: ownData, error: ownError} = await sb
+        console.log("Loading transactions...");
+        
+        // Own transactions
+        const {data: ownTx} = await sb
             .from("transactions")
             .select("*")
-            .eq("user_id", currentUser.id)
-            .order("created_at", { ascending: false });
+            .eq("user_id", currentUser.id);
         
-        if (ownError) throw ownError;
-        
-        let allTransactions = ownData || [];
+        let allTx = ownTx || [];
         
         // Get accepted shared access
-        const { data: acceptedAccess, error: accessError } = await sb
+        const {data: accessList} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
         
-        if (accessError) throw accessError;
-        
-        // Load transactions from each owner
-        if (acceptedAccess && acceptedAccess.length > 0) {
-            for (const access of acceptedAccess) {
-                const ownerId = access.owner_id;
-                const {data: sharedData, error: sharedError} = await sb
+        if (accessList && accessList.length > 0) {
+            for (const access of accessList) {
+                const {data: sharedTx} = await sb
                     .from("transactions")
                     .select("*")
-                    .eq("user_id", ownerId)
-                    .order("created_at", { ascending: false });
+                    .eq("user_id", access.owner_id);
                 
-                if (!sharedError && sharedData) {
-                    allTransactions = [...allTransactions, ...sharedData];
+                if (sharedTx && sharedTx.length > 0) {
+                    allTx = [...allTx, ...sharedTx];
                 }
             }
         }
@@ -560,7 +520,7 @@ async function loadTransactions() {
         // Remove duplicates
         const unique = [];
         const seen = new Set();
-        for (const t of allTransactions) {
+        for (const t of allTx) {
             if (!seen.has(t.id)) {
                 seen.add(t.id);
                 unique.push(t);
@@ -569,7 +529,7 @@ async function loadTransactions() {
         unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         transactions = unique;
         
-        console.log("Total transactions loaded:", transactions.length);
+        console.log("Total transactions:", transactions.length);
         
     } catch(e) { 
         console.error("Load transactions error:", e);
@@ -578,19 +538,18 @@ async function loadTransactions() {
 
 async function loadDebts() { 
     if(!currentUser) return;
-    
     try {
         const {data: ownData}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
         let allDebts = ownData || [];
         
-        const { data: acceptedAccess } = await sb
+        const {data: accessList} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
         
-        if (acceptedAccess && acceptedAccess.length > 0) {
-            for (const access of acceptedAccess) {
+        if (accessList) {
+            for (const access of accessList) {
                 const {data: sharedData}=await sb.from("debts").select("*").eq("user_id", access.owner_id);
                 if (sharedData) allDebts = [...allDebts, ...sharedData];
             }
@@ -610,19 +569,18 @@ async function loadDebts() {
 
 async function loadSavings() { 
     if(!currentUser) return;
-    
     try {
         const {data: ownData}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
         let allSavings = ownData || [];
         
-        const { data: acceptedAccess } = await sb
+        const {data: accessList} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
         
-        if (acceptedAccess && acceptedAccess.length > 0) {
-            for (const access of acceptedAccess) {
+        if (accessList) {
+            for (const access of accessList) {
                 const {data: sharedData}=await sb.from("savings").select("*").eq("user_id", access.owner_id);
                 if (sharedData) allSavings = [...allSavings, ...sharedData];
             }
@@ -642,19 +600,18 @@ async function loadSavings() {
 
 async function loadReminders() { 
     if(!currentUser) return;
-    
     try {
         const {data: ownData}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
         let allReminders = ownData || [];
         
-        const { data: acceptedAccess } = await sb
+        const {data: accessList} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
         
-        if (acceptedAccess && acceptedAccess.length > 0) {
-            for (const access of acceptedAccess) {
+        if (accessList) {
+            for (const access of accessList) {
                 const {data: sharedData}=await sb.from("reminders").select("*").eq("user_id", access.owner_id);
                 if (sharedData) allReminders = [...allReminders, ...sharedData];
             }
@@ -674,19 +631,18 @@ async function loadReminders() {
 
 async function loadTasks() { 
     if(!currentUser) return;
-    
     try {
         const {data: ownData}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
         let allTasks = ownData || [];
         
-        const { data: acceptedAccess } = await sb
+        const {data: accessList} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
         
-        if (acceptedAccess && acceptedAccess.length > 0) {
-            for (const access of acceptedAccess) {
+        if (accessList) {
+            for (const access of accessList) {
                 const {data: sharedData}=await sb.from("tasks").select("*").eq("user_id", access.owner_id);
                 if (sharedData) allTasks = [...allTasks, ...sharedData];
             }
@@ -711,6 +667,15 @@ async function loadAllData() {
     await loadSavings();
     await loadReminders();
     await loadTasks();
+}
+
+// Force reload shared data
+async function forceReloadSharedData() {
+    showToast("🔄 Memuat ulang data...");
+    await loadSharedAccess();
+    await loadAllData();
+    renderCurrentView();
+    showToast(`✅ ${transactions.length} transaksi dimuat`);
 }
 
 // Recurring Transaction
@@ -1196,7 +1161,7 @@ function openCategoryFormModal(editId=null) {
     document.getElementById("cancelCategoryBtn").onclick = () => { modal.remove(); openCategoryManageModal(); };
 }
 
-// ========== RENDER FUNCTIONS ==========
+// ========== RENDER HOME ==========
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -1223,7 +1188,7 @@ async function renderHome() {
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔${overdueCount > 0 ? `<span class="reminder-badge">${overdueCount}</span>` : ''}</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1257,11 +1222,11 @@ async function renderHome() {
             ${topExpenses.map((t,i)=>`<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
         </div>
         <div class="card">
-            <div class="card-title">📋 Transaksi Terbaru</div>
+            <div class="card-title">📋 Transaksi Terbaru (${transactions.length})</div>
             ${recent.map(t=>`<div class="transaction-item" data-id="${t.id}">
                 <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? '<span class="shared-access-badge">📤</span>' : ''}<br><small>${formatDate(t.created_at)}</small></div>
                 <div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
-            </div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
+            </div>`).join('')||'<div class="empty-state">Belum ada transaksi. Klik Refresh jika sudah berbagi akses.</div>'}
         </div>
     `;
     document.getElementById("appContainer").innerHTML = html;
@@ -1303,12 +1268,13 @@ async function renderHome() {
     });
 }
 
+// ========== RENDER TRANSAKSI ==========
 async function renderTransaksi() {
     await loadTransactions();
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1336,7 +1302,7 @@ async function renderTransaksi() {
     data.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     
     const container = document.getElementById("transaksiList");
-    if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
+    if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi. Klik Refresh jika sudah berbagi akses.</div>';
     else container.innerHTML = data.map(t=>`
         <div class="transaction-item" data-id="${t.id}">
             <div style="flex:1">
@@ -1377,7 +1343,7 @@ async function renderHutang() {
     
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1493,7 +1459,7 @@ async function renderSavings() {
     await loadSavings();
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1776,7 +1742,7 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// ========== LAPORAN FUNCTIONS ==========
+// ========== LAPORAN ==========
 async function renderLaporan() {
     await loadTransactions();
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -1831,7 +1797,7 @@ async function renderLaporan() {
     document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// ========== SETTINGS FUNCTION ==========
+// ========== SETTINGS ==========
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -1877,6 +1843,7 @@ async function renderSettings() {
                 </div>
             </div>
             <div id="sharedList"></div>
+            <button onclick="forceReloadSharedData()" style="margin-top:12px; width:100%; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:40px; padding:10px; color:white; font-weight:600; cursor:pointer;">🔄 Refresh Data dari Owner</button>
         </div>
     `;
     document.getElementById("appContainer").innerHTML = html;
@@ -1928,8 +1895,7 @@ async function renderSettings() {
         else { 
             showToast(`Undangan akses dikirim ke ${email} (${level === 'edit' ? '✏️ Edit' : '👁️ Lihat'})`); 
             document.getElementById("sharedEmail").value = ""; 
-            sharedAccessLoaded = false;
-            await loadSharedAccess(true); 
+            await loadSharedAccess(); 
             renderSettings(); 
         }
     });
@@ -1959,8 +1925,10 @@ async function renderSettings() {
             receiverAccess.forEach(s => { 
                 const levelText = s.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
                 const ownerInfo = s.owner_id ? s.owner_id.slice(0,8) : 'User';
+                const statusText = s.status === 'accepted' ? '✅ Aktif' : '⏳ Menunggu';
                 htmlStr += `<div class="shared-item" style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border-color);">
-                    <div>👤 ${escapeHtml(ownerInfo)}<br><small>${levelText} • ${s.status === 'accepted' ? '✅ Aktif' : '⏳ Menunggu'}</small></div>
+                    <div>👤 Owner: ${escapeHtml(ownerInfo)}<br><small>${levelText} • ${statusText}</small></div>
+                    ${s.status !== 'accepted' ? `<button class="accept-shared" data-id="${s.id}" style="background:#10b981; border:none; border-radius:30px; padding:4px 12px; color:white; font-size:12px; cursor:pointer;">✅ Terima</button>` : ''}
                 </div>`; 
             }); 
         }
@@ -1973,10 +1941,20 @@ async function renderSettings() {
             if(id && confirm("Hapus akses ini?")){ 
                 await sb.from("shared_access").delete().eq("id", id); 
                 showToast("Akses dihapus"); 
-                sharedAccessLoaded = false;
-                await loadSharedAccess(true);
+                await loadSharedAccess();
                 renderSettings(); 
             } 
+        }; 
+    });
+    
+    document.querySelectorAll(".accept-shared").forEach(btn => { 
+        btn.onclick = async () => { 
+            const id = btn.getAttribute("data-id"); 
+            await sb.from("shared_access").update({ status: 'accepted' }).eq("id", id); 
+            showToast("Akses diterima! Silakan refresh halaman."); 
+            await loadSharedAccess();
+            await forceReloadSharedData();
+            renderSettings(); 
         }; 
     });
     
@@ -2033,6 +2011,9 @@ window.addEventListener('popstate', function(event) {
         event.preventDefault();
     }
 });
+
+// Make forceReloadSharedData global
+window.forceReloadSharedData = forceReloadSharedData;
 
 // ========== AUTH FUNCTIONS ==========
 async function handleLogin() {
@@ -2115,14 +2096,8 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    sharedAccessLoaded = false;
-    await loadSharedAccess(true);
-    await loadCategories(); 
-    await loadTransactions(); 
-    await loadDebts(); 
-    await loadSavings(); 
-    await loadReminders(); 
-    await loadTasks();
+    await loadSharedAccess();
+    await loadAllData();
     await initTheme();
     
     addBottomNav();
@@ -2175,7 +2150,7 @@ document.getElementById("guestBtn").addEventListener("click", handleGuest);
 document.getElementById("switchText").addEventListener("click", toggleMode);
 document.getElementById("toggleLoginPassword").addEventListener("click", () => {
     const inp = document.getElementById("passwordInput");
-    if(inp.type === 'password'){ inp.type = 'text'; inp.nextElementSibling.textContent = '🙈'; }
+    if(inp.type === 'password'){ inp.type = 'text'; inp.nextElementSibling.textContent = '👁️‍🗨️'; }
     else{ inp.type = 'password'; inp.nextElementSibling.textContent = '👁️'; }
 });
 
