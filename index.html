@@ -343,7 +343,21 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); 
 }
 
-function getCategoryById(id) { return categories.find(c => c.id === id); }
+function getCategoryById(id) {
+    if (!id) return null;
+    return categories.find(c => c.id === id);
+}
+
+// Tambahkan fungsi untuk mendapatkan kategori dengan fallback
+function getCategoryName(id) {
+    const cat = getCategoryById(id);
+    return cat ? `${cat.icon} ${cat.name}` : '-';
+}
+
+function getCategoryColor(id) {
+    const cat = getCategoryById(id);
+    return cat ? cat.color : '#94a3b8';
+}
 
 function formatDate(dateString) {
     if (!dateString) return '-';
@@ -615,14 +629,70 @@ function canEditData(dataUserId) {
 
 // ========== LOAD DATA FUNCTIONS ==========
 async function loadCategories() { 
-    if(currentUser) { 
-        try {
-            const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); 
-            if(data) categories=data; 
-        } catch(e) { console.error("Load categories error:", e); }
+    if(!currentUser) return;
+    
+    try {
+        console.log("=== LOADING CATEGORIES ===");
+        
+        // 1. Load kategori milik sendiri
+        const {data: ownCategories, error: ownError} = await sb
+            .from("categories")
+            .select("*")
+            .eq("user_id", currentUser.id);
+        
+        if (ownError) throw ownError;
+        
+        let allCategories = ownCategories || [];
+        console.log("Own categories:", allCategories.length);
+        
+        // 2. Load kategori dari owner yang berbagi akses
+        const {data: accessList, error: accessError} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email)
+            .eq("status", "accepted");
+        
+        if (accessError) {
+            console.error("Error loading shared access:", accessError);
+        }
+        
+        if (accessList && accessList.length > 0) {
+            for (const access of accessList) {
+                const ownerId = access.owner_id;
+                console.log("Loading categories from owner:", ownerId);
+                
+                const {data: sharedCategories, error: sharedError} = await sb
+                    .from("categories")
+                    .select("*")
+                    .eq("user_id", ownerId);
+                
+                if (!sharedError && sharedCategories) {
+                    console.log(`Loaded ${sharedCategories.length} categories from owner ${ownerId}`);
+                    allCategories = [...allCategories, ...sharedCategories];
+                }
+            }
+        }
+        
+        // 3. Hapus duplikat (jika ada kategori dengan nama yang sama)
+        const uniqueCategories = [];
+        const seenNames = new Set();
+        for (const c of allCategories) {
+            const key = `${c.user_id}_${c.name}`;
+            if (!seenNames.has(key)) {
+                seenNames.add(key);
+                uniqueCategories.push(c);
+            }
+        }
+        
+        categories = uniqueCategories;
+        console.log("TOTAL CATEGORIES LOADED:", categories.length);
+        console.log("Categories sample:", categories.slice(0, 3));
+        
+    } catch(e) { 
+        console.error("Load categories error:", e);
     } 
 }
-
+    
 async function loadTransactions() { 
     if(!currentUser) {
         console.log("No current user");
