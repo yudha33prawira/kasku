@@ -476,33 +476,62 @@ async function loadSharedAccess() {
     
     try {
         console.log("Loading shared access for:", currentUser.email);
+        console.log("Current user ID:", currentUser.id);
         
-        const {data: asOwner} = await sb
+        // Load as owner
+        const {data: asOwner, error: ownerError} = await sb
             .from("shared_access")
             .select("*")
             .eq("owner_id", currentUser.id);
         
-        let asReceiver = [];
+        if (ownerError) console.error("Owner error:", ownerError);
+        console.log("As owner:", asOwner);
+        
+        // Load as receiver
         const {data: receiverData, error: receiverError} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email);
         
-        if (!receiverError) {
-            asReceiver = receiverData || [];
-        }
+        if (receiverError) console.error("Receiver error:", receiverError);
+        console.log("As receiver:", receiverData);
         
-        sharedAccess = [...(asOwner||[]), ...asReceiver];
-        console.log("Shared access loaded:", sharedAccess.length);
+        sharedAccess = [...(asOwner||[]), ...(receiverData||[])];
+        console.log("Total shared access loaded:", sharedAccess.length);
         
-        for (const access of asReceiver) {
+        // Auto accept pending
+        let acceptedCount = 0;
+        for (const access of (receiverData||[])) {
             if (access.status === 'pending') {
                 console.log("Auto accepting:", access.id);
-                await sb
+                const { error: updateError } = await sb
                     .from("shared_access")
                     .update({ status: 'accepted' })
                     .eq("id", access.id);
+                
+                if (updateError) {
+                    console.error("Update error:", updateError);
+                } else {
+                    acceptedCount++;
+                    console.log("Accepted:", access.id);
+                }
             }
+        }
+        
+        if (acceptedCount > 0) {
+            // Reload shared access after accepting
+            const {data: updatedReceiver} = await sb
+                .from("shared_access")
+                .select("*")
+                .eq("shared_email", currentUser.email);
+            
+            const {data: updatedOwner} = await sb
+                .from("shared_access")
+                .select("*")
+                .eq("owner_id", currentUser.id);
+            
+            sharedAccess = [...(updatedOwner||[]), ...(updatedReceiver||[])];
+            console.log("Updated shared access:", sharedAccess);
         }
         
     } catch(e) { 
@@ -512,14 +541,24 @@ async function loadSharedAccess() {
 
 function hasEditAccess(dataOwnerId) {
     if (!currentUser) return false;
-    if (dataOwnerId === currentUser.id) return true;
+    console.log("Checking edit access for owner:", dataOwnerId);
+    console.log("Current user:", currentUser.id);
     
+    // Jika data milik sendiri, selalu bisa edit
+    if (dataOwnerId === currentUser.id) {
+        console.log("Own data, can edit: true");
+        return true;
+    }
+    
+    // Cek akses bersama dengan level 'edit'
     const access = sharedAccess.find(s => 
         s.owner_id === dataOwnerId && 
         s.shared_email === currentUser.email && 
         s.status === 'accepted' &&
         s.access_level === 'edit'
     );
+    
+    console.log("Found edit access:", access);
     return access !== undefined;
 }
 
@@ -548,7 +587,9 @@ function getAccessLevelLabel(dataOwnerId) {
 
 function canEditData(dataUserId) {
     if (!currentUser) return false;
-    return hasEditAccess(dataUserId);
+    const result = hasEditAccess(dataUserId);
+    console.log(`canEditData for ${dataUserId}:`, result);
+    return result;
 }
 
 // ========== LOAD DATA FUNCTIONS ==========
@@ -570,6 +611,7 @@ async function loadTransactions() {
     try {
         console.log("=== LOADING TRANSACTIONS ===");
         
+        // Load semua transaksi
         const { data: allTx, error: txError } = await sb
             .from("transactions")
             .select("*");
@@ -581,6 +623,7 @@ async function loadTransactions() {
         
         console.log("All transactions from DB:", allTx?.length || 0);
         
+        // Ambil shared access yang accepted
         const { data: accessList, error: accessError } = await sb
             .from("shared_access")
             .select("*")
@@ -592,24 +635,28 @@ async function loadTransactions() {
         }
         
         console.log("Accepted shared access:", accessList?.length || 0);
+        console.log("Access list details:", accessList);
         
+        // Buat daftar user_id yang diizinkan
         const allowedUserIds = [currentUser.id];
         if (accessList && accessList.length > 0) {
             for (const access of accessList) {
                 if (access.owner_id && !allowedUserIds.includes(access.owner_id)) {
                     allowedUserIds.push(access.owner_id);
+                    console.log(`Added owner ${access.owner_id} with level ${access.access_level}`);
                 }
             }
         }
         
         console.log("Allowed user IDs:", allowedUserIds);
         
+        // Filter transaksi
         let filtered = [];
         if (allTx && allTx.length > 0) {
             filtered = allTx.filter(t => allowedUserIds.includes(t.user_id));
         }
         
-        // URUTKAN berdasarkan tanggal (terbaru di atas)
+        // Urutkan berdasarkan tanggal
         filtered.sort((a, b) => {
             const dateA = new Date(a.created_at);
             const dateB = new Date(b.created_at);
@@ -619,6 +666,13 @@ async function loadTransactions() {
         transactions = filtered;
         
         console.log("FINAL TRANSACTIONS LOADED:", transactions.length);
+        
+        // Log per user
+        const byUser = {};
+        for (const t of transactions) {
+            byUser[t.user_id] = (byUser[t.user_id] || 0) + 1;
+        }
+        console.log("Transactions by user:", byUser);
         
     } catch(e) { 
         console.error("Load transactions error:", e);
