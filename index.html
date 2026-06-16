@@ -202,6 +202,7 @@
         .debt-group-count { font-size: 12px; color: var(--text-secondary); }
         .debt-group-item { padding: 8px 0 8px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .debt-group-item:last-child { border-bottom: none; }
+        .edit-mode-badge { background: #f59e0b; color: white; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -249,6 +250,7 @@ let savings = [];
 let reminders = [];
 let tasks = [];
 let sharedAccess = [];
+let sharedAccessMap = {}; // Untuk cepat cek akses
 let chart = null;
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
@@ -434,15 +436,83 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-function getAccessLevelLabel(dataOwnerId) {
-    if (dataOwnerId === currentUser?.id) return null;
-    const access = sharedAccess.find(s => 
-        s.owner_id === dataOwnerId && 
-        s.shared_email === currentUser?.email && 
-        s.status === 'accepted'
-    );
-    if (!access) return null;
-    return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
+// ============================================
+// SHARED ACCESS FUNCTIONS - PERBAIKAN
+// ============================================
+async function loadSharedAccess() { 
+    if(!currentUser) return;
+    
+    try {
+        console.log("Loading shared access for:", currentUser.email);
+        
+        // Akses yang dibuat oleh user (owner)
+        const {data: asOwner, error: ownerError} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("owner_id", currentUser.id);
+        
+        if (ownerError) console.error("Owner error:", ownerError);
+        
+        // Akses yang diterima oleh user (receiver)
+        const {data: receiverData, error: receiverError} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email);
+        
+        if (receiverError) console.error("Receiver error:", receiverError);
+        
+        sharedAccess = [...(asOwner||[]), ...(receiverData||[])];
+        
+        // Buat map untuk akses yang diterima
+        sharedAccessMap = {};
+        if (receiverData) {
+            for (const access of receiverData) {
+                if (access.status === 'accepted') {
+                    sharedAccessMap[access.owner_id] = access.access_level;
+                }
+            }
+        }
+        
+        console.log("Shared access loaded:", sharedAccess.length);
+        console.log("Shared access map:", sharedAccessMap);
+        
+        // Auto accept pending
+        for (const access of (receiverData||[])) {
+            if (access.status === 'pending') {
+                await sb
+                    .from("shared_access")
+                    .update({ status: 'accepted' })
+                    .eq("id", access.id);
+                sharedAccessMap[access.owner_id] = access.access_level;
+            }
+        }
+        
+    } catch(e) { 
+        console.error("Load shared access error:", e);
+    } 
+}
+
+// Cek apakah user memiliki akses ke data user lain
+function hasAccessTo(userId) {
+    if (userId === currentUser?.id) return 'edit'; // Owner punya akses penuh
+    return sharedAccessMap[userId] || null;
+}
+
+function getAccessLevelLabel(userId) {
+    const level = hasAccessTo(userId);
+    if (!level) return null;
+    if (level === 'edit') return '✏️ Edit';
+    return '👁️ Lihat';
+}
+
+function canEdit(userId) {
+    if (userId === currentUser?.id) return true;
+    return sharedAccessMap[userId] === 'edit';
+}
+
+function canView(userId) {
+    if (userId === currentUser?.id) return true;
+    return sharedAccessMap[userId] !== undefined;
 }
 
 // ============================================
@@ -511,46 +581,7 @@ async function toggleTheme() {
 }
 
 // ============================================
-// SHARED ACCESS FUNCTIONS
-// ============================================
-async function loadSharedAccess() { 
-    if(!currentUser) return;
-    
-    try {
-        console.log("Loading shared access for:", currentUser.email);
-        
-        const {data: asOwner} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("owner_id", currentUser.id);
-        
-        const {data: receiverData, error: receiverError} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email);
-        
-        if (receiverError) console.error("Receiver error:", receiverError);
-        
-        sharedAccess = [...(asOwner||[]), ...(receiverData||[])];
-        console.log("Shared access loaded:", sharedAccess.length);
-        
-        // Auto accept pending
-        for (const access of (receiverData||[])) {
-            if (access.status === 'pending') {
-                await sb
-                    .from("shared_access")
-                    .update({ status: 'accepted' })
-                    .eq("id", access.id);
-            }
-        }
-        
-    } catch(e) { 
-        console.error("Load shared access error:", e);
-    } 
-}
-
-// ============================================
-// LOAD DATA FUNCTIONS
+// LOAD DATA FUNCTIONS - PERBAIKAN
 // ============================================
 async function loadCategories() { 
     if(!currentUser) return;
@@ -558,6 +589,7 @@ async function loadCategories() {
     try {
         console.log("Loading categories...");
         
+        // Ambil kategori milik sendiri
         const {data: ownCategories} = await sb
             .from("categories")
             .select("*")
@@ -565,26 +597,23 @@ async function loadCategories() {
         
         let allCategories = ownCategories || [];
         
-        const {data: accessList} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
+        // Ambil kategori dari user yang memberi akses
+        const ownerIds = Object.keys(sharedAccessMap);
+        console.log("Owner IDs with access:", ownerIds);
         
-        if (accessList && accessList.length > 0) {
-            for (const access of accessList) {
-                const {data: sharedCategories} = await sb
-                    .from("categories")
-                    .select("*")
-                    .eq("user_id", access.owner_id);
-                
-                if (sharedCategories) {
-                    allCategories = [...allCategories, ...sharedCategories];
-                }
+        for (const ownerId of ownerIds) {
+            const {data: sharedCategories} = await sb
+                .from("categories")
+                .select("*")
+                .eq("user_id", ownerId);
+            
+            if (sharedCategories) {
+                allCategories = [...allCategories, ...sharedCategories];
+                console.log(`Added ${sharedCategories.length} categories from ${ownerId}`);
             }
         }
         
-        // Hapus duplikat
+        // Hapus duplikat berdasarkan user_id + name
         const unique = [];
         const seen = new Set();
         for (const c of allCategories) {
@@ -609,24 +638,19 @@ async function loadTransactions() {
     try {
         console.log("Loading transactions...");
         
-        const { data: allTx } = await sb
+        // Ambil semua transaksi
+        const { data: allTx, error: txError } = await sb
             .from("transactions")
             .select("*");
         
-        const { data: accessList } = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
-        
-        const allowedUserIds = [currentUser.id];
-        if (accessList && accessList.length > 0) {
-            for (const access of accessList) {
-                if (access.owner_id && !allowedUserIds.includes(access.owner_id)) {
-                    allowedUserIds.push(access.owner_id);
-                }
-            }
+        if (txError) {
+            console.error("Transaction fetch error:", txError);
+            return;
         }
+        
+        // Filter: milik sendiri + milik user yang memberi akses
+        const allowedUserIds = [currentUser.id, ...Object.keys(sharedAccessMap)];
+        console.log("Allowed user IDs:", allowedUserIds);
         
         let filtered = [];
         if (allTx && allTx.length > 0) {
@@ -648,105 +672,79 @@ async function loadTransactions() {
 async function loadDebts() { 
     if(!currentUser) return;
     try {
-        const {data: ownData}=await sb.from("debts").select("*").eq("user_id",currentUser.id); 
-        let allDebts = ownData || [];
+        const allowedUserIds = [currentUser.id, ...Object.keys(sharedAccessMap)];
         
-        const {data: accessList} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
-        
-        if (accessList) {
-            for (const access of accessList) {
-                const {data: sharedData}=await sb.from("debts").select("*").eq("user_id", access.owner_id);
-                if (sharedData) allDebts = [...allDebts, ...sharedData];
-            }
+        const {data: allDebts, error} = await sb.from("debts").select("*");
+        if (error) {
+            console.error("Debt fetch error:", error);
+            return;
         }
         
-        const unique = [];
-        const seen = new Set();
-        for (const d of allDebts) {
-            if (!seen.has(d.id)) {
-                seen.add(d.id);
-                unique.push(d);
-            }
+        let filtered = [];
+        if (allDebts) {
+            filtered = allDebts.filter(d => allowedUserIds.includes(d.user_id));
         }
-        debts = unique;
+        debts = filtered;
+        console.log("Debts loaded:", debts.length);
     } catch(e) { console.error("Load debts error:", e); }
 }
 
 async function loadSavings() { 
     if(!currentUser) return;
     try {
-        const {data: ownData}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
+        // Tabungan hanya milik sendiri (tidak dibagikan)
+        const {data: ownData, error} = await sb.from("savings").select("*").eq("user_id", currentUser.id); 
+        if (error) {
+            console.error("Savings fetch error:", error);
+            return;
+        }
         savings = ownData || [];
+        console.log("Savings loaded:", savings.length);
     } catch(e) { console.error("Load savings error:", e); }
 }
 
 async function loadReminders() { 
     if(!currentUser) return;
     try {
-        const {data: ownData}=await sb.from("reminders").select("*").eq("user_id",currentUser.id); 
-        let allReminders = ownData || [];
+        const allowedUserIds = [currentUser.id, ...Object.keys(sharedAccessMap)];
         
-        const {data: accessList} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
-        
-        if (accessList) {
-            for (const access of accessList) {
-                const {data: sharedData}=await sb.from("reminders").select("*").eq("user_id", access.owner_id);
-                if (sharedData) allReminders = [...allReminders, ...sharedData];
-            }
+        const {data: allReminders, error} = await sb.from("reminders").select("*");
+        if (error) {
+            console.error("Reminder fetch error:", error);
+            return;
         }
         
-        const unique = [];
-        const seen = new Set();
-        for (const r of allReminders) {
-            if (!seen.has(r.id)) {
-                seen.add(r.id);
-                unique.push(r);
-            }
+        let filtered = [];
+        if (allReminders) {
+            filtered = allReminders.filter(r => allowedUserIds.includes(r.user_id));
         }
-        reminders = unique;
+        reminders = filtered;
+        console.log("Reminders loaded:", reminders.length);
     } catch(e) { console.error("Load reminders error:", e); }
 }
 
 async function loadTasks() { 
     if(!currentUser) return;
     try {
-        const {data: ownData}=await sb.from("tasks").select("*").eq("user_id",currentUser.id); 
-        let allTasks = ownData || [];
+        const allowedUserIds = [currentUser.id, ...Object.keys(sharedAccessMap)];
         
-        const {data: accessList} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
-        
-        if (accessList) {
-            for (const access of accessList) {
-                const {data: sharedData}=await sb.from("tasks").select("*").eq("user_id", access.owner_id);
-                if (sharedData) allTasks = [...allTasks, ...sharedData];
-            }
+        const {data: allTasks, error} = await sb.from("tasks").select("*");
+        if (error) {
+            console.error("Task fetch error:", error);
+            return;
         }
         
-        const unique = [];
-        const seen = new Set();
-        for (const t of allTasks) {
-            if (!seen.has(t.id)) {
-                seen.add(t.id);
-                unique.push(t);
-            }
+        let filtered = [];
+        if (allTasks) {
+            filtered = allTasks.filter(t => allowedUserIds.includes(t.user_id));
         }
-        tasks = unique;
+        tasks = filtered;
+        console.log("Tasks loaded:", tasks.length);
     } catch(e) { console.error("Load tasks error:", e); }
 }
 
 async function loadAllData() {
+    await loadSharedAccess(); // Harus pertama
     await loadCategories();
     await loadTransactions();
     await loadDebts();
@@ -931,6 +929,7 @@ function showDebtGroupDetail(contactName, debtsList) {
 async function showDebtDetail(debt) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const isShared = debt.user_id !== currentUser.id;
+    const canEditDebt = canEdit(debt.user_id);
     const accessLabel = getAccessLevelLabel(debt.user_id);
     
     modal.innerHTML = `
@@ -945,21 +944,62 @@ async function showDebtDetail(debt) {
             ${debt.description ? `<div class="detail-row"><span class="detail-label">Catatan</span><span class="detail-value">${escapeHtml(debt.description)}</span></div>` : ''}
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:${debt.status === 'lunas' ? '#10b981' : '#ef4444'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></div>
             <div class="modal-button-grid">
-                <button id="closeDebtDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+                ${canEditDebt ? `
+                    <button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                    <button id="toggleDebtStatusBtn" class="modal-btn ${debt.status === 'lunas' ? 'modal-btn-warning' : 'modal-btn-success'}">${debt.status === 'lunas' ? '↩️ Batal Lunas' : '✅ Tandai Lunas'}</button>
+                ` : `
+                    <button id="closeDebtDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+                `}
+                ${canEditDebt ? `<button id="deleteDebtDetailBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+                ${debt.wa_number ? `<button id="waDebtBtn" class="modal-btn modal-btn-wa modal-btn-full">💬 WhatsApp</button>` : ''}
             </div>
         </div>
     `;
     document.body.appendChild(modal);
-    document.getElementById("closeDebtDetailBtn").onclick = () => modal.remove();
+    
+    if (canEditDebt) {
+        document.getElementById("editDebtBtn").onclick = () => {
+            modal.remove();
+            openDebtModal(debt.id);
+        };
+        
+        document.getElementById("toggleDebtStatusBtn").onclick = async () => {
+            const newStatus = debt.status === 'lunas' ? 'belum_lunas' : 'lunas';
+            await sb.from("debts").update({ status: newStatus }).eq("id", debt.id);
+            showToast(newStatus === 'lunas' ? "✅ Ditandai lunas" : "↩️ Dibatalkan lunas");
+            modal.remove();
+            await loadDebts();
+            renderCurrentView();
+        };
+        
+        document.getElementById("deleteDebtDetailBtn").onclick = async () => {
+            if (confirm("Hapus data ini?")) {
+                await sb.from("debts").delete().eq("id", debt.id);
+                showToast("Data dihapus");
+                modal.remove();
+                await loadDebts();
+                renderCurrentView();
+            }
+        };
+    }
+    
+    if (debt.wa_number) {
+        document.getElementById("waDebtBtn").onclick = () => {
+            openWhatsApp(debt.wa_number, debt.contact_name, debt.amount);
+        };
+    }
+    
+    document.getElementById("closeDebtDetailBtn")?.addEventListener("click", () => modal.remove());
 }
 
 // ============================================
-// SHOW TRANSACTION DETAIL
+// SHOW TRANSACTION DETAIL - PERBAIKAN
 // ============================================
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
     const isShared = transaction.user_id !== currentUser.id;
+    const canEditTx = canEdit(transaction.user_id);
     const accessLabel = getAccessLevelLabel(transaction.user_id);
     
     const catDisplay = cat ? `
@@ -978,44 +1018,77 @@ async function showTransactionDetail(transaction) {
             <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${catDisplay}</span></div>
             <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
             <div class="modal-button-grid">
-                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+                ${canEditTx ? `
+                    <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                    <button id="deleteTxBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
+                ` : ''}
+                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary ${canEditTx ? '' : 'modal-btn-full'}">Tutup</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
+    
+    if (canEditTx) {
+        document.getElementById("editTxBtn").onclick = () => {
+            modal.remove();
+            openTransaksiModal(null, transaction.id);
+        };
+        
+        document.getElementById("deleteTxBtn").onclick = async () => {
+            if (confirm("Hapus transaksi ini?")) {
+                await sb.from("transactions").delete().eq("id", transaction.id);
+                showToast("Transaksi dihapus");
+                modal.remove();
+                await loadTransactions();
+                renderCurrentView();
+            }
+        };
+    }
+    
     document.getElementById("closeDetailBtn").onclick = () => modal.remove();
 }
 
 // ============================================
-// TRANSACTION MODAL
+// TRANSACTION MODAL - PERBAIKAN
 // ============================================
-function openTransaksiModal(predefinedType=null){
+function openTransaksiModal(predefinedType=null, editId=null){
+    const isEdit = !!editId;
+    const tx = isEdit ? transactions.find(t => t.id === editId) : null;
+    
+    if (isEdit && !canEdit(tx.user_id)) {
+        showToast("⚠️ Anda tidak memiliki akses edit untuk data ini");
+        return;
+    }
+    
     const today = new Date().toISOString().slice(0,10);
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
         <div class="modal-content">
-            <div class="modal-title">✨ Tambah Transaksi</div>
-            <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input">
-            <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input">
+            <div class="modal-title">${isEdit ? '✏️ Edit Transaksi' : '✨ Tambah Transaksi'}</div>
+            ${isEdit && tx.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;"><span class="edit-mode-badge">✏️ Mode Edit - Data Milik ${tx.user_id.slice(0,8)}</span></div>` : ''}
+            <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input" value="${isEdit ? escapeHtml(tx.description) : ''}">
+            <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input" value="${isEdit ? formatRupiah(tx.amount) : ''}">
             <select id="modalTipe" class="modal-select">
-                <option value="pemasukan" ${predefinedType==='pemasukan'?'selected':''}>💵 Pemasukan</option>
-                <option value="pengeluaran" ${predefinedType==='pengeluaran'?'selected':''}>💸 Pengeluaran</option>
+                <option value="pemasukan" ${(isEdit && tx.type === 'pemasukan') || predefinedType === 'pemasukan' ? 'selected':''}>💵 Pemasukan</option>
+                <option value="pengeluaran" ${(isEdit && tx.type === 'pengeluaran') || predefinedType === 'pengeluaran' ? 'selected':''}>💸 Pengeluaran</option>
             </select>
-            <input type="date" id="modalTanggal" class="modal-input" value="${today}">
+            <input type="date" id="modalTanggal" class="modal-input" value="${isEdit ? formatDateInput(tx.created_at) : today}">
             <select id="modalKat" class="modal-select">
                 <option value="">Pilih Kategori</option>
-                ${categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('')}
+                ${categories.map(c=>`<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected':''}>${c.icon} ${c.name}</option>`).join('')}
             </select>
             <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
-                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed"> <span>📌 Pengeluaran Tetap</span></label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed" ${isEdit && tx.is_fixed_expense ? 'checked':''}> <span>📌 Pengeluaran Tetap</span></label>
                 <p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p>
             </div>
+            ${!isEdit ? `
             <div style="background:linear-gradient(135deg, #f3e8ff, #f0f9ff); padding:12px; border-radius:16px; margin:12px 0">
                 <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label>
                 <p class="info-text">Centang untuk membuat transaksi otomatis di tanggal yang sama setiap bulan</p>
             </div>
+            ` : ''}
             <div class="modal-button-grid">
-                <button id="saveTransaksi" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="saveTransaksi" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
             </div>
         </div>
@@ -1030,25 +1103,45 @@ function openTransaksiModal(predefinedType=null){
         const tanggal=document.getElementById("modalTanggal").value;
         const catId=document.getElementById("modalKat").value;
         const isFixed=document.getElementById("modalFixed").checked;
-        const isRecurring=document.getElementById("modalRecurring").checked;
+        const isRecurring=document.getElementById("modalRecurring")?.checked || false;
         
         if(!desc||!amount) return alert("Isi dengan benar");
         
-        const data={user_id:currentUser.id,description:desc,amount:amount,type:type,is_fixed_expense:isFixed};
-        if(catId) data.category_id=catId;
-        if(tanggal) data.created_at=new Date(tanggal).toISOString();
+        const data={
+            description:desc,
+            amount:amount,
+            type:type,
+            is_fixed_expense:isFixed,
+            created_at:new Date(tanggal).toISOString()
+        };
+        if(catId) data.category_id = catId;
         
-        const {data: newTransaction, error}=await sb.from("transactions").insert(data).select();
-        if(error) alert(error.message);
-        else { 
-            showToast("✅ Transaksi ditambahkan");
-            if (isRecurring && newTransaction && newTransaction.length > 0) {
-                showToast("🔄 Membuat transaksi berulang...");
-                const created = await createRecurringTransaction(newTransaction[0], 12);
-                await loadTransactions();
-                showToast(`✅ Selesai! ${created} transaksi berulang ditambahkan`);
+        if (isEdit) {
+            // Update - gunakan user_id asli
+            const {error} = await sb.from("transactions").update(data).eq("id", editId);
+            if(error) alert(error.message);
+            else { 
+                showToast("✅ Transaksi diupdate");
+                modal.remove(); 
+                await loadTransactions(); 
+                renderCurrentView(); 
             }
-            modal.remove(); await loadTransactions(); renderCurrentView(); 
+        } else {
+            data.user_id = currentUser.id;
+            const {data: newTransaction, error}=await sb.from("transactions").insert(data).select();
+            if(error) alert(error.message);
+            else { 
+                showToast("✅ Transaksi ditambahkan");
+                if (isRecurring && newTransaction && newTransaction.length > 0) {
+                    showToast("🔄 Membuat transaksi berulang...");
+                    const created = await createRecurringTransaction(newTransaction[0], 12);
+                    await loadTransactions();
+                    showToast(`✅ Selesai! ${created} transaksi berulang ditambahkan`);
+                }
+                modal.remove(); 
+                await loadTransactions(); 
+                renderCurrentView(); 
+            }
         }
     };
     document.getElementById("closeModal").onclick=()=>modal.remove();
@@ -1073,8 +1166,9 @@ async function openCategoryManageModal() {
     const categoriesContainer = document.getElementById("categoriesList");
     if(categories.length === 0) categoriesContainer.innerHTML = '<div class="empty-state">Belum ada kategori</div>';
     else categoriesContainer.innerHTML = categories.map(c => `
-        <div class="category-item" data-id="${c.id}">
-            <div><span style="font-size:22px;">${c.icon}</span><span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span><span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span></div>
+        <div class="category-item" data-id="${c.id}" data-user="${c.user_id}" style="${c.user_id !== currentUser.id ? 'opacity:0.8;' : ''}">
+            <div><span style="font-size:22px;">${c.icon}</span><span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span><span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span>
+            ${c.user_id !== currentUser.id ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(c.user_id) || ''}</span>` : ''}</div>
             <div><span style="display:inline-block; width:24px; height:24px; background:${c.color}; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1);"></span></div>
         </div>
     `).join('');
@@ -1084,8 +1178,14 @@ async function openCategoryManageModal() {
     document.querySelectorAll(".category-item").forEach(el => { 
         el.onclick = () => { 
             const id = el.getAttribute("data-id"); 
-            modal.remove(); 
-            openCategoryFormModal(id); 
+            const cat = categories.find(c => c.id === id);
+            // Hanya owner yang bisa edit kategori
+            if (cat && cat.user_id === currentUser.id) {
+                modal.remove(); 
+                openCategoryFormModal(id);
+            } else {
+                showToast("⚠️ Anda tidak bisa mengedit kategori milik pengguna lain");
+            }
         }; 
     });
 }
@@ -1207,15 +1307,16 @@ async function renderHome() {
         </div>
         <div class="card">
             <div class="card-title">📊 Pengeluaran Teratas</div>
-            ${topExpenses.map((t,i)=>`<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
+            ${topExpenses.map((t,i)=>`<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}${t.user_id !== currentUser.id ? `<span class="shared-access-badge">📤</span>` : ''}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
         </div>
         <div class="card">
             <div class="card-title">📋 Transaksi Terbaru (${transactions.length})</div>
             ${recent.map(t=>{
                 const cat = getCategoryById(t.category_id);
                 const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>` : '';
+                const isShared = t.user_id !== currentUser.id;
                 return `<div class="transaction-item" data-id="${t.id}">
-                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}<br><small>${formatDate(t.created_at)}</small></div>
+                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}<br><small>${formatDate(t.created_at)}</small></div>
                     <div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
                 </div>`;
             }).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
@@ -1299,11 +1400,13 @@ async function renderTransaksi() {
     else container.innerHTML = data.map(t => {
         const cat = getCategoryById(t.category_id);
         const catDisplay = cat ? `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cat.color}; margin-right:6px;"></span>${cat.icon} ${cat.name}` : '-';
+        const isShared = t.user_id !== currentUser.id;
+        const canEditTx = canEdit(t.user_id);
         
         return `
-            <div class="transaction-item" data-id="${t.id}">
+            <div class="transaction-item" data-id="${t.id}" style="${isShared && canEditTx ? 'border-left:3px solid #f59e0b;' : isShared ? 'border-left:3px solid #8b5cf6;' : ''}">
                 <div style="flex:1">
-                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}</div>
+                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}${isShared && canEditTx ? `<span class="edit-mode-badge">✏️ Bisa Edit</span>` : ''}</div>
                     <div style="font-size:11px; margin-top:4px">📅 ${formatDate(t.created_at)}</div>
                     <div style="font-size:11px; margin-top:2px;">${catDisplay}</div>
                 </div>
@@ -1329,7 +1432,7 @@ async function renderTransaksi() {
 }
 
 // ============================================
-// RENDER HUTANG
+// RENDER HUTANG - PERBAIKAN
 // ============================================
 async function renderHutang() {
     await loadDebts();
@@ -1393,13 +1496,15 @@ async function renderHutang() {
             const color = total >= 0 ? '#10b981' : '#ef4444';
             
             const isShared = items.some(d => d.user_id !== currentUser.id);
+            const canEditAll = items.every(d => canEdit(d.user_id));
             
             htmlStr += `
-                <div class="debt-group" data-name="${escapeHtml(name)}">
+                <div class="debt-group" data-name="${escapeHtml(name)}" style="${isShared && canEditAll ? 'border-left-color:#f59e0b;' : isShared ? 'border-left-color:#8b5cf6;' : ''}">
                     <div class="debt-group-header">
                         <div>
                             <span class="debt-group-name">${escapeHtml(name)}</span>
                             ${isShared ? `<span class="shared-access-badge">📤</span>` : ''}
+                            ${isShared && canEditAll ? `<span class="edit-mode-badge">✏️ Bisa Edit</span>` : ''}
                             <span class="debt-group-count">${items.length} transaksi</span>
                         </div>
                         <span class="debt-group-total" style="color:${color}">${total >= 0 ? '+' : ''}Rp ${formatRupiah(Math.abs(total))}</span>
@@ -1425,23 +1530,33 @@ async function renderHutang() {
     });
 }
 
-function openDebtModal(){
+function openDebtModal(editId=null){
+    const isEdit = !!editId;
+    const debt = isEdit ? debts.find(d => d.id === editId) : null;
+    
+    if (isEdit && !canEdit(debt.user_id)) {
+        showToast("⚠️ Anda tidak memiliki akses edit untuk data ini");
+        return;
+    }
+    
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
         <div class="modal-content">
-            <div class="modal-title">💰 Tambah Hutang/Piutang</div>
-            <input id="debtName" placeholder="Nama orang" class="modal-input">
-            <input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input">
+            <div class="modal-title">${isEdit ? '✏️ Edit' : '💰 Tambah'} Hutang/Piutang</div>
+            ${isEdit && debt.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;"><span class="edit-mode-badge">✏️ Mode Edit - Data Milik ${debt.user_id.slice(0,8)}</span></div>` : ''}
+            <input id="debtName" placeholder="Nama orang" class="modal-input" value="${isEdit ? escapeHtml(debt.contact_name) : ''}">
+            <input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input" value="${isEdit ? formatRupiah(debt.amount) : ''}">
             <select id="debtType" class="modal-select">
-                <option value="piutang">💰 Piutang (orang berhutang ke saya)</option>
-                <option value="hutang">💸 Hutang (saya berhutang ke orang)</option>
+                <option value="piutang" ${isEdit && debt.type === 'piutang' ? 'selected':''}>💰 Piutang (orang berhutang ke saya)</option>
+                <option value="hutang" ${isEdit && debt.type === 'hutang' ? 'selected':''}>💸 Hutang (saya berhutang ke orang)</option>
             </select>
-            <input id="debtDue" type="date" class="modal-input">
-            <input id="debtWa" type="tel" placeholder="Nomor WhatsApp (contoh: 08123456789)" class="modal-input">
-            <textarea id="debtDesc" placeholder="Catatan" class="modal-textarea"></textarea>
+            <input id="debtDue" type="date" class="modal-input" value="${isEdit ? formatDateInput(debt.due_date) : ''}">
+            <input id="debtWa" type="tel" placeholder="Nomor WhatsApp (contoh: 08123456789)" class="modal-input" value="${isEdit ? escapeHtml(debt.wa_number || '') : ''}">
+            <textarea id="debtDesc" placeholder="Catatan" class="modal-textarea">${isEdit ? escapeHtml(debt.description || '') : ''}</textarea>
             <div class="modal-button-grid">
-                <button id="saveDebt" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="saveDebt" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteDebtBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
             </div>
         </div>
     `;
@@ -1461,19 +1576,45 @@ function openDebtModal(){
         if(!name||!amount) return alert("Isi dengan benar");
         if (wa) wa = formatWhatsAppNumber(wa);
         
-        const {error}=await sb.from("debts").insert({
-            user_id:currentUser.id,
-            contact_name:name,
-            amount:amount,
-            type:type,
-            description:desc,
-            due_date:due||null,
-            wa_number:wa||null,
-            status:'belum_lunas'
-        });
-        if(error) alert(error.message);
-        else { showToast("Ditambahkan"); modal.remove(); await loadDebts(); renderHutang(); }
+        if (isEdit) {
+            const {error}=await sb.from("debts").update({
+                contact_name:name,
+                amount:amount,
+                type:type,
+                description:desc,
+                due_date:due||null,
+                wa_number:wa||null
+            }).eq("id", editId);
+            if(error) alert(error.message);
+            else { showToast("✅ Data diupdate"); modal.remove(); await loadDebts(); renderHutang(); }
+        } else {
+            const {error}=await sb.from("debts").insert({
+                user_id:currentUser.id,
+                contact_name:name,
+                amount:amount,
+                type:type,
+                description:desc,
+                due_date:due||null,
+                wa_number:wa||null,
+                status:'belum_lunas'
+            });
+            if(error) alert(error.message);
+            else { showToast("Ditambahkan"); modal.remove(); await loadDebts(); renderHutang(); }
+        }
     };
+    
+    if (isEdit) {
+        document.getElementById("deleteDebtBtn").onclick = async () => {
+            if (confirm("Hapus data ini?")) {
+                await sb.from("debts").delete().eq("id", editId);
+                showToast("Data dihapus");
+                modal.remove();
+                await loadDebts();
+                renderHutang();
+            }
+        };
+    }
+    
     document.getElementById("closeDebt").onclick=()=>modal.remove();
 }
 
@@ -1601,15 +1742,19 @@ async function renderReminders() {
     
     const container=document.getElementById("remindersList");
     if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
-    else container.innerHTML=reminders.map(r=>`
-        <div class="reminder-item" data-id="${r.id}">
-            <div>
-                <div style="font-weight:600;">${escapeHtml(r.title)}</div>
-                <div style="font-size:12px; margin-top:4px">📅 ${formatDate(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>
-                ${r.description?`<div style="font-size:12px;">${escapeHtml(r.description)}</div>`:''}
+    else container.innerHTML=reminders.map(r=>{
+        const isShared = r.user_id !== currentUser.id;
+        const canEditRem = canEdit(r.user_id);
+        return `
+            <div class="reminder-item" data-id="${r.id}" style="${isShared && canEditRem ? 'border-left:3px solid #f59e0b;' : isShared ? 'border-left:3px solid #8b5cf6;' : ''}">
+                <div>
+                    <div style="font-weight:600;">${escapeHtml(r.title)}${isShared ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(r.user_id) || ''}</span>` : ''}${isShared && canEditRem ? `<span class="edit-mode-badge">✏️</span>` : ''}</div>
+                    <div style="font-size:12px; margin-top:4px">📅 ${formatDate(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>
+                    ${r.description?`<div style="font-size:12px;">${escapeHtml(r.description)}</div>`:''}
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     document.querySelectorAll(".reminder-item").forEach(el => { 
         el.onclick = () => openReminderModal(el.getAttribute("data-id")); 
@@ -1619,16 +1764,23 @@ async function renderReminders() {
 function openReminderModal(editId=null){
     const isEdit=!!editId;
     const r=isEdit?reminders.find(r=>r.id===editId):null;
+    
+    if (isEdit && !canEdit(r.user_id)) {
+        showToast("⚠️ Anda tidak memiliki akses edit untuk data ini");
+        return;
+    }
+    
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">${isEdit?'✏️ Edit Pengingat':'⏰ Tambah Pengingat'}</div>
+            ${isEdit && r.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;"><span class="edit-mode-badge">✏️ Mode Edit - Data Milik ${r.user_id.slice(0,8)}</span></div>` : ''}
             <input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}">
             <textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea>
             <input type="date" id="reminderDue" class="modal-input" value="${isEdit?formatDateInput(r.due_date):''}">
             <input type="text" id="reminderAmount" class="modal-input" placeholder="Estimasi biaya" value="${isEdit?formatRupiah(r.amount||0):''}">
             <div class="modal-button-grid">
-                <button id="saveReminder" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="saveReminder" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeReminder" class="modal-btn modal-btn-secondary">Batal</button>
                 ${isEdit ? `<button id="deleteReminderBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
             </div>
@@ -1643,9 +1795,14 @@ function openReminderModal(editId=null){
         const due=document.getElementById("reminderDue").value;
         const amount=parseRupiah(document.getElementById("reminderAmount").value);
         if(!title||!due) return alert("Judul dan tanggal harus diisi");
-        if(isEdit) await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",editId);
-        else await sb.from("reminders").insert({user_id:currentUser.id,title,description:desc,due_date:due,amount});
-        showToast(isEdit?"Pengingat diupdate":"Pengingat ditambahkan");
+        
+        if (isEdit) {
+            await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",editId);
+            showToast("Pengingat diupdate");
+        } else {
+            await sb.from("reminders").insert({user_id:currentUser.id,title,description:desc,due_date:due,amount});
+            showToast("Pengingat ditambahkan");
+        }
         modal.remove(); await loadReminders(); renderReminders();
     };
     if(isEdit){
@@ -1661,7 +1818,7 @@ function openReminderModal(editId=null){
 }
 
 // ============================================
-// RENDER TASKS
+// RENDER TASKS - PERBAIKAN
 // ============================================
 async function renderTasks() {
     await loadTasks();
@@ -1701,12 +1858,14 @@ async function renderTasks() {
     if(!filtered.length) container.innerHTML='<div class="empty-state">Belum ada tugas</div>';
     else container.innerHTML=filtered.map(t=>{
         const isOverdue = t.due_date && !t.is_completed && new Date(t.due_date) < new Date();
+        const isShared = t.user_id !== currentUser.id;
+        const canEditTask = canEdit(t.user_id);
         return `
-            <div class="task-item" data-id="${t.id}" style="${isOverdue?'background:#fee2e2; border-radius:16px; padding:12px; margin-bottom:8px':''}">
+            <div class="task-item" data-id="${t.id}" style="${isOverdue ? 'background:#fee2e2; border-radius:16px; padding:12px; margin-bottom:8px;' : ''}${isShared && canEditTask ? 'border-left:3px solid #f59e0b;' : isShared ? 'border-left:3px solid #8b5cf6;' : ''}">
                 <div style="display:flex; align-items:center; gap:12px; flex:1">
-                    <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}>
+                    <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''} ${!canEditTask ? 'disabled' : ''}>
                     <div>
-                        <div class="${t.is_completed?'task-completed':''}" style="font-weight:600;">${escapeHtml(t.title)}</div>
+                        <div class="${t.is_completed?'task-completed':''}" style="font-weight:600;">${escapeHtml(t.title)}${isShared ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}${isShared && canEditTask ? `<span class="edit-mode-badge">✏️</span>` : ''}</div>
                         ${t.description?`<div style="font-size:12px; margin-top:4px">📝 ${escapeHtml(t.description)}</div>`:''}
                         <div style="font-size:12px; margin-top:4px">📅 ${t.due_date?formatDate(t.due_date):'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div>
                     </div>
@@ -1718,7 +1877,14 @@ async function renderTasks() {
     document.querySelectorAll(".task-check").forEach(cb=>{ 
         cb.onclick = async (e) => { 
             e.stopPropagation(); 
-            await sb.from("tasks").update({is_completed:cb.checked}).eq("id",cb.getAttribute("data-id")); 
+            const id = cb.getAttribute("data-id");
+            const task = tasks.find(t => t.id === id);
+            if (!canEdit(task.user_id)) {
+                showToast("⚠️ Anda tidak memiliki akses edit untuk tugas ini");
+                cb.checked = !cb.checked;
+                return;
+            }
+            await sb.from("tasks").update({is_completed:cb.checked}).eq("id",id); 
             await loadTasks(); 
             renderTasks(); 
         }; 
@@ -1734,15 +1900,22 @@ async function renderTasks() {
 function openTaskModal(editId=null){
     const isEdit=!!editId;
     const t=isEdit?tasks.find(t=>t.id===editId):null;
+    
+    if (isEdit && !canEdit(t.user_id)) {
+        showToast("⚠️ Anda tidak memiliki akses edit untuk data ini");
+        return;
+    }
+    
     const modal=document.createElement('div');modal.className='modal-overlay';
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">${isEdit?'✏️ Edit Tugas':'✅ Tambah Tugas'}</div>
+            ${isEdit && t.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;"><span class="edit-mode-badge">✏️ Mode Edit - Data Milik ${t.user_id.slice(0,8)}</span></div>` : ''}
             <input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}">
             <textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit?escapeHtml(t.description||''):''}</textarea>
             <input type="date" id="taskDue" class="modal-input" value="${isEdit?formatDateInput(t.due_date):''}">
             <div class="modal-button-grid">
-                <button id="saveTask" class="modal-btn modal-btn-primary">Simpan</button>
+                <button id="saveTask" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeTask" class="modal-btn modal-btn-secondary">Batal</button>
                 ${isEdit ? `<button id="deleteTaskBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
             </div>
@@ -1755,9 +1928,14 @@ function openTaskModal(editId=null){
         const desc=document.getElementById("taskDesc").value;
         const due=document.getElementById("taskDue").value;
         if(!title) return alert("Judul harus diisi");
-        if(isEdit) await sb.from("tasks").update({title,description:desc,due_date:due||null}).eq("id",editId);
-        else await sb.from("tasks").insert({user_id:currentUser.id,title,description:desc,due_date:due||null});
-        showToast(isEdit?"Tugas diupdate":"Tugas ditambahkan");
+        
+        if (isEdit) {
+            await sb.from("tasks").update({title,description:desc,due_date:due||null}).eq("id",editId);
+            showToast("Tugas diupdate");
+        } else {
+            await sb.from("tasks").insert({user_id:currentUser.id,title,description:desc,due_date:due||null});
+            showToast("Tugas ditambahkan");
+        }
         modal.remove(); await loadTasks(); renderTasks();
     };
     if(isEdit){
@@ -1867,9 +2045,10 @@ async function renderLaporan() {
         for (const i of items) { 
             const cat=getCategoryById(i.category_id); 
             const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>${cat.icon} ${cat.name}` : '';
+            const isShared = i.user_id !== currentUser.id;
             detail+=`<div style="padding-left:20px; margin:8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" data-id="${i.id}">
                 <div>
-                    <span>${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}</span>
+                    <span>${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="shared-access-badge">📤</span>` : ''}</span>
                     ${catDisplay ? `<span style="font-size:11px; color:var(--text-secondary); margin-left:8px;">${catDisplay}</span>` : ''}
                 </div>
                 <span style="font-weight:600; color:${i.type==='pemasukan'?'#10b981':'#ef4444'}">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span>
@@ -1915,7 +2094,7 @@ async function renderLaporan() {
 }
 
 // ============================================
-// RENDER SETTINGS
+// RENDER SETTINGS - PERBAIKAN
 // ============================================
 async function renderSettings() {
     let html = `
@@ -2232,6 +2411,9 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
+    // Reset shared access map
+    sharedAccessMap = {};
+    
     await loadSharedAccess();
     await loadAllData();
     await initTheme();
@@ -2245,6 +2427,7 @@ async function onAuthSuccess(user) {
 async function logout() {
     try { await sb.auth.signOut(); } catch(e) { console.log("Logout error:", e); }
     currentUser = null;
+    sharedAccessMap = {};
     appReady = false;
     document.querySelector(".bottom-nav")?.remove();
     document.getElementById("appContainer").innerHTML = "";
