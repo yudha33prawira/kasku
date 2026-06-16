@@ -179,17 +179,6 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .refresh-btn {
-            background: #10b981;
-            border: none;
-            border-radius: 30px;
-            padding: 6px 12px;
-            color: white;
-            font-size: 11px;
-            cursor: pointer;
-            margin-left: 8px;
-        }
     </style>
 </head>
 <body>
@@ -407,20 +396,18 @@ async function toggleTheme() {
     showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
 }
 
-// ========== SHARED ACCESS FUNCTIONS (FIXED) ==========
+// ========== SHARED ACCESS FUNCTIONS ==========
 async function loadSharedAccess() { 
     if(!currentUser) return;
     
     try {
         console.log("Loading shared access for:", currentUser.email);
         
-        // Load as owner
         const {data: asOwner} = await sb
             .from("shared_access")
             .select("*")
             .eq("owner_id", currentUser.id);
         
-        // Load as receiver
         let asReceiver = [];
         const {data: receiverData, error: receiverError} = await sb
             .from("shared_access")
@@ -434,7 +421,6 @@ async function loadSharedAccess() {
         sharedAccess = [...(asOwner||[]), ...asReceiver];
         console.log("Shared access loaded:", sharedAccess.length);
         
-        // Auto accept pending
         for (const access of asReceiver) {
             if (access.status === 'pending') {
                 console.log("Auto accepting:", access.id);
@@ -492,11 +478,9 @@ async function loadTransactions() {
     try {
         console.log("=== LOADING TRANSACTIONS ===");
         
-        // 1. Load semua transaksi (dengan RLS yang sudah diatur)
         const { data: allTx, error: txError } = await sb
             .from("transactions")
-            .select("*")
-            .order("created_at", { ascending: false });
+            .select("*");
         
         if (txError) {
             console.error("Error loading transactions:", txError);
@@ -505,7 +489,6 @@ async function loadTransactions() {
         
         console.log("All transactions from DB:", allTx?.length || 0);
         
-        // 2. Ambil daftar owner yang berbagi akses dengan user ini
         const { data: accessList, error: accessError } = await sb
             .from("shared_access")
             .select("*")
@@ -518,7 +501,6 @@ async function loadTransactions() {
         
         console.log("Accepted shared access:", accessList?.length || 0);
         
-        // 3. Buat daftar user_id yang diizinkan (milik sendiri + owner yang berbagi)
         const allowedUserIds = [currentUser.id];
         if (accessList && accessList.length > 0) {
             for (const access of accessList) {
@@ -530,25 +512,28 @@ async function loadTransactions() {
         
         console.log("Allowed user IDs:", allowedUserIds);
         
-        // 4. Filter transaksi berdasarkan allowed user IDs
         let filtered = [];
         if (allTx && allTx.length > 0) {
             filtered = allTx.filter(t => allowedUserIds.includes(t.user_id));
         }
         
-        // 5. Simpan ke global transactions
+        // URUTKAN berdasarkan tanggal (terbaru di atas)
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateB - dateA;
+        });
+        
         transactions = filtered;
         
         console.log("FINAL TRANSACTIONS LOADED:", transactions.length);
         
-        // Log per user
         const byUser = {};
         for (const t of transactions) {
             byUser[t.user_id] = (byUser[t.user_id] || 0) + 1;
         }
         console.log("Transactions by user:", byUser);
         
-        // Jika ada transaksi dari shared owner, tampilkan notifikasi
         const sharedTx = transactions.filter(t => t.user_id !== currentUser.id);
         if (sharedTx.length > 0) {
             console.log(`✅ ${sharedTx.length} transaksi dari shared access dimuat`);
@@ -593,31 +578,9 @@ async function loadDebts() {
 async function loadSavings() { 
     if(!currentUser) return;
     try {
+        // HANYA LOAD TABUNGAN MILIK SENDIRI (TIDAK SHARED)
         const {data: ownData}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
-        let allSavings = ownData || [];
-        
-        const {data: accessList} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
-        
-        if (accessList) {
-            for (const access of accessList) {
-                const {data: sharedData}=await sb.from("savings").select("*").eq("user_id", access.owner_id);
-                if (sharedData) allSavings = [...allSavings, ...sharedData];
-            }
-        }
-        
-        const unique = [];
-        const seen = new Set();
-        for (const s of allSavings) {
-            if (!seen.has(s.id)) {
-                seen.add(s.id);
-                unique.push(s);
-            }
-        }
-        savings = unique;
+        savings = ownData || [];
     } catch(e) { console.error("Load savings error:", e); }
 }
 
@@ -690,15 +653,6 @@ async function loadAllData() {
     await loadSavings();
     await loadReminders();
     await loadTasks();
-}
-
-// Force reload shared data
-async function forceReloadSharedData() {
-    showToast("🔄 Memuat ulang data...");
-    await loadSharedAccess();
-    await loadAllData();
-    renderCurrentView();
-    showToast(`✅ ${transactions.length} transaksi dimuat`);
 }
 
 // Recurring Transaction
@@ -1207,11 +1161,12 @@ async function renderHome() {
         }
     }
     
-    const recent = [...transactions].sort((a,b)=>new Date(b.created_at) - new Date(a.created_at)).slice(0,5);
+    // Transaksi sudah terurut dari loadTransactions, ambil 5 teratas
+    const recent = transactions.slice(0, 5);
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔${overdueCount > 0 ? `<span class="reminder-badge">${overdueCount}</span>` : ''}</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1249,7 +1204,7 @@ async function renderHome() {
             ${recent.map(t=>`<div class="transaction-item" data-id="${t.id}">
                 <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? '<span class="shared-access-badge">📤</span>' : ''}<br><small>${formatDate(t.created_at)}</small></div>
                 <div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
-            </div>`).join('')||'<div class="empty-state">Belum ada transaksi. Klik Refresh jika sudah berbagi akses.</div>'}
+            </div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
         </div>
     `;
     document.getElementById("appContainer").innerHTML = html;
@@ -1297,7 +1252,7 @@ async function renderTransaksi() {
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1322,10 +1277,10 @@ async function renderTransaksi() {
     let data = [...transactions];
     if(transaksiFilter==='income') data=data.filter(t=>t.type==='pemasukan');
     if(transaksiFilter==='expense') data=data.filter(t=>t.type==='pengeluaran');
-    data.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    // Data sudah terurut dari loadTransactions
     
     const container = document.getElementById("transaksiList");
-    if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi. Klik Refresh jika sudah berbagi akses.</div>';
+    if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
     else container.innerHTML = data.map(t=>`
         <div class="transaction-item" data-id="${t.id}">
             <div style="flex:1">
@@ -1366,7 +1321,7 @@ async function renderHutang() {
     
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1479,10 +1434,11 @@ function openDebtModal(){
 
 // ========== TABUNGAN FUNCTIONS ==========
 async function renderSavings() {
-    await loadSavings();
+    await loadSavings(); // Hanya load milik sendiri
+    
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} <button onclick="forceReloadSharedData()" class="refresh-btn" style="margin-left:8px;">🔄 Refresh</button></div>
+            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1770,6 +1726,9 @@ async function renderLaporan() {
     await loadTransactions();
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
+    // Urutkan berdasarkan tanggal untuk laporan
+    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    
     let pemasukan=0,pengeluaran=0,catTotals={};
     for (const t of filtered) {
         if(t.type==='pemasukan') pemasukan+=Number(t.amount); 
@@ -1866,7 +1825,6 @@ async function renderSettings() {
                 </div>
             </div>
             <div id="sharedList"></div>
-            <button onclick="forceReloadSharedData()" style="margin-top:12px; width:100%; background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:40px; padding:10px; color:white; font-weight:600; cursor:pointer;">🔄 Refresh Data dari Owner</button>
         </div>
     `;
     document.getElementById("appContainer").innerHTML = html;
@@ -1974,9 +1932,9 @@ async function renderSettings() {
         btn.onclick = async () => { 
             const id = btn.getAttribute("data-id"); 
             await sb.from("shared_access").update({ status: 'accepted' }).eq("id", id); 
-            showToast("Akses diterima! Silakan refresh halaman."); 
+            showToast("Akses diterima!"); 
             await loadSharedAccess();
-            await forceReloadSharedData();
+            await loadAllData();
             renderSettings(); 
         }; 
     });
@@ -2034,9 +1992,6 @@ window.addEventListener('popstate', function(event) {
         event.preventDefault();
     }
 });
-
-// Make forceReloadSharedData global
-window.forceReloadSharedData = forceReloadSharedData;
 
 // ========== AUTH FUNCTIONS ==========
 async function handleLogin() {
