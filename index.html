@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Keuangan Keluarga - Money Manager</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -23,7 +23,6 @@
             --nav-bg: rgba(255,255,255,0.96);
             --input-bg: #f8fafc;
             --input-border: #e2e8f0;
-            --premium-gold: #f59e0b;
         }
         
         body.dark {
@@ -37,7 +36,6 @@
             --nav-bg: rgba(30,41,59,0.96);
             --input-bg: #334155;
             --input-border: #475569;
-            --premium-gold: #fbbf24;
         }
         
         body { 
@@ -53,8 +51,6 @@
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; animation: slideIn 0.4s ease-out; }
         .user-info { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 8px 18px; border-radius: 30px; font-size: 13px; font-weight: 500; color: white; border: 1px solid rgba(255,255,255,0.25); }
@@ -98,7 +94,7 @@
         .card:active { transform: scale(0.99); }
         .card-title { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
         
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; padding: 8px 16px 22px; border-top: 1px solid rgba(0,0,0,0.05); max-width: 450px; margin: 0 auto; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); border-radius: 28px 28px 0 0; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); backdrop-filter: blur(20px); display: flex; justify-content: space-around; align-items: center; padding: 8px 16px 22px; border-top: 1px solid rgba(0,0,0,0.05); max-width: 450px; margin: 0 auto; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; font-size: 11px; color: #94a3b8; cursor: pointer; padding: 8px 12px; border-radius: 30px; transition: all 0.2s ease; font-weight: 500; flex: 1; }
         .nav-item .nav-icon { font-size: 22px; transition: transform 0.2s ease; }
         .nav-item:active .nav-icon { transform: scale(0.9); }
@@ -132,7 +128,7 @@
         body.dark .filter-btn.active { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; animation: fadeInUp 0.2s ease-out; }
-        .modal-content { background: var(--card-bg); border-radius: 32px; padding: 24px; width: 100%; max-width: 350px; max-height: 85vh; overflow-y: auto; animation: scaleIn 0.3s ease-out; color: var(--text-primary); box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-content { background: var(--card-bg); border-radius: 32px; padding: 24px; width: 100%; max-width: 350px; max-height: 85vh; overflow-y: auto; animation: scaleIn 0.3s ease-out; color: var(--text-primary); }
         .modal-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         
         .modal-button-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
@@ -183,42 +179,12 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        /* Loading Screen */
-        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s ease; }
-        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
-        .loading-logo { font-size: 64px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite; }
-        .loading-title { color: white; font-size: 24px; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px; }
-        .loading-subtitle { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 30px; }
-        .loading-bar { width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
-        .loading-bar-fill { height: 100%; background: white; border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; background-size: 200% 100%; background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%); }
-        .loading-percent { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 12px; }
-        
-        .debt-group { background: var(--card-bg); border-radius: 16px; padding: 12px 16px; margin-bottom: 12px; box-shadow: var(--card-shadow); cursor: pointer; transition: all 0.2s ease; border-left: 4px solid #3b82f6; }
-        .debt-group:active { transform: scale(0.98); }
-        .debt-group-header { display: flex; justify-content: space-between; align-items: center; }
-        .debt-group-name { font-weight: 600; font-size: 16px; color: var(--text-primary); }
-        .debt-group-total { font-weight: 700; color: #ef4444; }
-        .debt-group-count { font-size: 12px; color: var(--text-secondary); }
-        .debt-group-item { padding: 8px 0 8px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-        .debt-group-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
-
-<!-- LOADING SCREEN -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-logo">💰</div>
-    <div class="loading-title">Keuangan Keluarga</div>
-    <div class="loading-subtitle">Memuat data Anda...</div>
-    <div class="loading-bar"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
-    <div class="loading-percent" id="loadingPercent">0%</div>
-</div>
-
 <div class="app-container" id="appContainer"></div>
 
-<!-- LOGIN MODAL -->
-<div id="loginModal" class="modal-overlay" style="display:none;">
+<div id="loginModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">💰 Keuangan Keluarga</div>
         <input type="email" id="emailInput" class="modal-input" placeholder="Email">
@@ -234,13 +200,13 @@
 </div>
 
 <script>
-// ============================================
-// SUPABASE CONFIG
-// ============================================
+// Supabase Config
 const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
 
-let sb = null;
+let sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Global Variables
 let currentUser = null;
 let categories = [];
 let transactions = [];
@@ -259,72 +225,8 @@ let isBalanceHidden = false;
 let transaksiFilter = "all";
 let taskFilter = "all";
 let navigationHistory = [];
-let appReady = false;
 
-// ============================================
-// INITIALIZATION
-// ============================================
-function initSupabase() {
-    if (typeof supabase !== 'undefined') {
-        sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log("Supabase initialized");
-        return true;
-    }
-    return false;
-}
-
-// Wait for Supabase to load
-function waitForSupabase() {
-    return new Promise((resolve) => {
-        if (typeof supabase !== 'undefined') {
-            resolve();
-            return;
-        }
-        let attempts = 0;
-        const interval = setInterval(() => {
-            attempts++;
-            if (typeof supabase !== 'undefined') {
-                clearInterval(interval);
-                resolve();
-            } else if (attempts > 50) {
-                clearInterval(interval);
-                console.error("Supabase failed to load");
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('loginModal').style.display = 'flex';
-                document.getElementById('loginError').innerText = "Gagal memuat Supabase. Refresh halaman.";
-                resolve();
-            }
-        }, 200);
-    });
-}
-
-// ============================================
-// LOADING FUNCTIONS
-// ============================================
-function showLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.classList.remove('hidden');
-    let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 10;
-        if (progress > 100) progress = 100;
-        const bar = document.getElementById('loadingBarFill');
-        const percent = document.getElementById('loadingPercent');
-        if (bar) bar.style.width = progress + '%';
-        if (percent) percent.textContent = Math.round(progress) + '%';
-        if (progress >= 100) clearInterval(interval);
-    }, 200);
-    return interval;
-}
-
-function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.classList.add('hidden');
-}
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
+// Utility Functions
 function pushHistory(nav) { navigationHistory.push(nav); }
 
 function goBack() {
@@ -367,10 +269,7 @@ function escapeHtml(str) {
     return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); 
 }
 
-function getCategoryById(id) { 
-    if (!id) return null;
-    return categories.find(c => c.id === id); 
-}
+function getCategoryById(id) { return categories.find(c => c.id === id); }
 
 function formatDate(dateString) {
     if (!dateString) return '-';
@@ -434,20 +333,7 @@ function formatWhatsAppNumber(input) {
     return number;
 }
 
-function getAccessLevelLabel(dataOwnerId) {
-    if (dataOwnerId === currentUser?.id) return null;
-    const access = sharedAccess.find(s => 
-        s.owner_id === dataOwnerId && 
-        s.shared_email === currentUser?.email && 
-        s.status === 'accepted'
-    );
-    if (!access) return null;
-    return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
-}
-
-// ============================================
-// THEME FUNCTIONS
-// ============================================
+// Theme Functions
 function applyTheme(isDark) {
     if (isDark) {
         document.body.classList.add("dark");
@@ -510,9 +396,7 @@ async function toggleTheme() {
     showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
 }
 
-// ============================================
-// SHARED ACCESS FUNCTIONS
-// ============================================
+// ========== SHARED ACCESS FUNCTIONS ==========
 async function loadSharedAccess() { 
     if(!currentUser) return;
     
@@ -524,19 +408,22 @@ async function loadSharedAccess() {
             .select("*")
             .eq("owner_id", currentUser.id);
         
+        let asReceiver = [];
         const {data: receiverData, error: receiverError} = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email);
         
-        if (receiverError) console.error("Receiver error:", receiverError);
+        if (!receiverError) {
+            asReceiver = receiverData || [];
+        }
         
-        sharedAccess = [...(asOwner||[]), ...(receiverData||[])];
+        sharedAccess = [...(asOwner||[]), ...asReceiver];
         console.log("Shared access loaded:", sharedAccess.length);
         
-        // Auto accept pending
-        for (const access of (receiverData||[])) {
+        for (const access of asReceiver) {
             if (access.status === 'pending') {
+                console.log("Auto accepting:", access.id);
                 await sb
                     .from("shared_access")
                     .update({ status: 'accepted' })
@@ -549,75 +436,70 @@ async function loadSharedAccess() {
     } 
 }
 
-// ============================================
-// LOAD DATA FUNCTIONS
-// ============================================
-async function loadCategories() { 
-    if(!currentUser) return;
+function hasEditAccess(dataOwnerId) {
+    if (!currentUser) return false;
+    if (dataOwnerId === currentUser.id) return true;
     
-    try {
-        console.log("Loading categories...");
-        
-        const {data: ownCategories} = await sb
-            .from("categories")
-            .select("*")
-            .eq("user_id", currentUser.id);
-        
-        let allCategories = ownCategories || [];
-        
-        const {data: accessList} = await sb
-            .from("shared_access")
-            .select("*")
-            .eq("shared_email", currentUser.email)
-            .eq("status", "accepted");
-        
-        if (accessList && accessList.length > 0) {
-            for (const access of accessList) {
-                const {data: sharedCategories} = await sb
-                    .from("categories")
-                    .select("*")
-                    .eq("user_id", access.owner_id);
-                
-                if (sharedCategories) {
-                    allCategories = [...allCategories, ...sharedCategories];
-                }
-            }
-        }
-        
-        // Hapus duplikat
-        const unique = [];
-        const seen = new Set();
-        for (const c of allCategories) {
-            const key = `${c.user_id}_${c.name}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                unique.push(c);
-            }
-        }
-        
-        categories = unique;
-        console.log("Categories loaded:", categories.length);
-        
-    } catch(e) { 
-        console.error("Load categories error:", e);
+    const access = sharedAccess.find(s => 
+        s.owner_id === dataOwnerId && 
+        s.shared_email === currentUser.email && 
+        s.status === 'accepted'
+    );
+    return access && access.access_level === 'edit';
+}
+
+function getAccessLevelLabel(dataOwnerId) {
+    if (dataOwnerId === currentUser.id) return null;
+    const access = sharedAccess.find(s => 
+        s.owner_id === dataOwnerId && 
+        s.shared_email === currentUser.email && 
+        s.status === 'accepted'
+    );
+    if (!access) return null;
+    return access.access_level === 'edit' ? '✏️ Edit' : '👁️ Lihat';
+}
+
+// ========== LOAD DATA FUNCTIONS ==========
+async function loadCategories() { 
+    if(currentUser) { 
+        try {
+            const {data}=await sb.from("categories").select("*").eq("user_id",currentUser.id); 
+            if(data) categories=data; 
+        } catch(e) { console.error("Load categories error:", e); }
     } 
 }
 
 async function loadTransactions() { 
-    if(!currentUser) return;
+    if(!currentUser) {
+        console.log("No current user");
+        return;
+    }
     
     try {
-        console.log("Loading transactions...");
+        console.log("=== LOADING TRANSACTIONS ===");
         
-        const { data: allTx } = await sb
+        const { data: allTx, error: txError } = await sb
             .from("transactions")
             .select("*");
         
-        const { data: accessList } = await sb
+        if (txError) {
+            console.error("Error loading transactions:", txError);
+            return;
+        }
+        
+        console.log("All transactions from DB:", allTx?.length || 0);
+        
+        const { data: accessList, error: accessError } = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
+        
+        if (accessError) {
+            console.error("Error loading shared access:", accessError);
+        }
+        
+        console.log("Accepted shared access:", accessList?.length || 0);
         
         const allowedUserIds = [currentUser.id];
         if (accessList && accessList.length > 0) {
@@ -628,17 +510,34 @@ async function loadTransactions() {
             }
         }
         
+        console.log("Allowed user IDs:", allowedUserIds);
+        
         let filtered = [];
         if (allTx && allTx.length > 0) {
             filtered = allTx.filter(t => allowedUserIds.includes(t.user_id));
         }
         
+        // URUTKAN berdasarkan tanggal (terbaru di atas)
         filtered.sort((a, b) => {
-            return new Date(b.created_at) - new Date(a.created_at);
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+            return dateB - dateA;
         });
         
         transactions = filtered;
-        console.log("Transactions loaded:", transactions.length);
+        
+        console.log("FINAL TRANSACTIONS LOADED:", transactions.length);
+        
+        const byUser = {};
+        for (const t of transactions) {
+            byUser[t.user_id] = (byUser[t.user_id] || 0) + 1;
+        }
+        console.log("Transactions by user:", byUser);
+        
+        const sharedTx = transactions.filter(t => t.user_id !== currentUser.id);
+        if (sharedTx.length > 0) {
+            console.log(`✅ ${sharedTx.length} transaksi dari shared access dimuat`);
+        }
         
     } catch(e) { 
         console.error("Load transactions error:", e);
@@ -679,6 +578,7 @@ async function loadDebts() {
 async function loadSavings() { 
     if(!currentUser) return;
     try {
+        // HANYA LOAD TABUNGAN MILIK SENDIRI (TIDAK SHARED)
         const {data: ownData}=await sb.from("savings").select("*").eq("user_id",currentUser.id); 
         savings = ownData || [];
     } catch(e) { console.error("Load savings error:", e); }
@@ -755,9 +655,7 @@ async function loadAllData() {
     await loadTasks();
 }
 
-// ============================================
-// CREATE RECURRING TRANSACTION
-// ============================================
+// Recurring Transaction
 async function createRecurringTransaction(originalTransaction, monthsAhead = 12) {
     if (!currentUser) return 0;
     let createdCount = 0;
@@ -792,9 +690,7 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
     return createdCount;
 }
 
-// ============================================
-// WHATSAPP & REMINDER FUNCTIONS
-// ============================================
+// WhatsApp & Reminder Functions
 function openWhatsApp(phoneNumber, name, amount) {
     if (!phoneNumber) { showToast("Nomor WhatsApp tidak tersedia"); return; }
     let cleanNumber = formatWhatsAppNumber(phoneNumber);
@@ -873,64 +769,108 @@ function showRemindersPopup() {
     document.getElementById("closeReminderPopup").onclick = () => modal.remove();
 }
 
-// ============================================
-// SHOW DEBT GROUP DETAIL
-// ============================================
-function showDebtGroupDetail(contactName, debtsList) {
+// ========== MODAL DETAIL FUNCTIONS ==========
+async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    let totalPiutang = 0, totalHutang = 0;
-    for (const d of debtsList) {
-        if (d.status !== 'lunas') {
-            if (d.type === 'piutang') totalPiutang += Number(d.amount) || 0;
-            else totalHutang += Number(d.amount) || 0;
-        }
-    }
+    const cat = getCategoryById(transaction.category_id);
+    const isShared = transaction.user_id !== currentUser.id;
+    const canEdit = hasEditAccess(transaction.user_id);
+    const accessLabel = getAccessLevelLabel(transaction.user_id);
     
     modal.innerHTML = `
         <div class="modal-content">
-            <div class="modal-title">📋 Detail ${escapeHtml(contactName)}</div>
-            <div class="detail-row"><span class="detail-label">Total Piutang</span><span class="detail-value" style="color:#10b981">Rp ${formatRupiah(totalPiutang)}</span></div>
-            <div class="detail-row"><span class="detail-label">Total Hutang</span><span class="detail-value" style="color:#ef4444">Rp ${formatRupiah(totalHutang)}</span></div>
-            <div style="margin-top:16px; max-height:300px; overflow-y:auto;">
-                ${debtsList.map(d => `
-                    <div class="debt-group-item" style="cursor:pointer;" data-id="${d.id}">
-                        <div>
-                            <span style="font-weight:500;">${d.type === 'piutang' ? '💰' : '💸'} ${d.type === 'piutang' ? 'Piutang' : 'Hutang'}</span>
-                            <span style="font-size:12px; color:var(--text-secondary); margin-left:8px;">${formatDate(d.created_at)}</span>
-                            <div style="font-size:12px; color:${d.status === 'lunas' ? '#10b981' : '#ef4444'}">${d.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</div>
-                            ${d.due_date ? `<div style="font-size:12px; color:var(--text-secondary)">Jatuh tempo: ${formatDate(d.due_date)}</div>` : ''}
-                        </div>
-                        <div style="font-weight:600; color:${d.type === 'piutang' ? '#10b981' : '#ef4444'}">Rp ${formatRupiah(d.amount)}</div>
-                    </div>
-                `).join('')}
-            </div>
+            <div class="modal-title">📋 Detail Transaksi</div>
+            ${isShared ? `<div class="detail-row"><span class="detail-label">Sumber</span><span class="detail-value"><span class="shared-access-badge">📤 Akses Bersama</span> ${accessLabel ? `<span class="${accessLabel === '✏️ Edit' ? 'edit-badge' : 'view-badge'}">${accessLabel}</span>` : ''}</span></div>` : ''}
+            <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div>
+            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
+            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
+            <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${cat ? `${cat.icon} ${cat.name}` : '-'}</span></div>
+            <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
             <div class="modal-button-grid">
-                <button id="closeDebtGroupDetail" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+                ${canEdit ? `<button id="editTransaksiBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>` : ''}
+                ${canEdit ? `<button id="deleteTransaksiBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
     
-    document.querySelectorAll('.debt-group-item').forEach(el => {
-        el.onclick = () => {
-            const id = el.getAttribute('data-id');
-            const debt = debts.find(d => d.id === id);
-            if (debt) {
-                modal.remove();
-                showDebtDetail(debt);
+    if (canEdit) {
+        document.getElementById("editTransaksiBtn").onclick = () => { modal.remove(); openEditTransactionModal(transaction.id); };
+        document.getElementById("deleteTransaksiBtn").onclick = async () => { 
+            if(confirm("Hapus transaksi ini?")){
+                await sb.from("transactions").delete().eq("id", transaction.id); 
+                showToast("Transaksi dihapus"); 
+                modal.remove(); 
+                await loadTransactions(); 
+                renderCurrentView(); 
             }
         };
-    });
-    
-    document.getElementById("closeDebtGroupDetail").onclick = () => modal.remove();
+    }
+    document.getElementById("closeDetailBtn").onclick = () => modal.remove();
 }
 
-// ============================================
-// SHOW DEBT DETAIL
-// ============================================
+async function openEditTransactionModal(transactionId) {
+    const transaction = transactions.find(t => t.id === transactionId);
+    if (!transaction) return;
+    
+    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">✏️ Edit Transaksi</div>
+            <input type="text" id="editDesk" class="modal-input" placeholder="Deskripsi" value="${escapeHtml(transaction.description)}">
+            <input type="text" id="editJum" class="modal-input" placeholder="Jumlah" value="${formatRupiah(transaction.amount)}">
+            <select id="editTipe" class="modal-select">
+                <option value="pemasukan" ${transaction.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
+                <option value="pengeluaran" ${transaction.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
+            </select>
+            <input type="date" id="editTanggal" class="modal-input" value="${formatDateInput(transaction.created_at)}">
+            <select id="editKat" class="modal-select">
+                <option value="">Pilih Kategori</option>
+                ${categories.map(c => `<option value="${c.id}" ${transaction.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+            </select>
+            <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="editFixed" ${transaction.is_fixed_expense ? 'checked' : ''}> 
+                    <span>📌 Pengeluaran Tetap</span>
+                </label>
+                <p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p>
+            </div>
+            <div class="modal-button-grid">
+                <button id="saveEditTransaksi" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="cancelEditModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    setupRupiahInput('editJum');
+    
+    document.getElementById("saveEditTransaksi").onclick = async () => {
+        const desc = document.getElementById("editDesk").value.trim();
+        const amount = parseRupiah(document.getElementById("editJum").value);
+        const type = document.getElementById("editTipe").value;
+        const tanggal = document.getElementById("editTanggal").value;
+        const catId = document.getElementById("editKat").value;
+        const isFixed = document.getElementById("editFixed").checked;
+        
+        if (!desc || !amount) { alert("Deskripsi dan jumlah harus diisi"); return; }
+        
+        const updateData = { description: desc, amount: amount, type: type, is_fixed_expense: isFixed };
+        if (catId) updateData.category_id = catId;
+        if (tanggal) updateData.created_at = new Date(tanggal).toISOString();
+        
+        const { error } = await sb.from("transactions").update(updateData).eq("id", transactionId);
+        if (error) alert("Gagal update: " + error.message);
+        else { showToast("Transaksi berhasil diupdate"); modal.remove(); await loadTransactions(); renderCurrentView(); }
+    };
+    document.getElementById("cancelEditModal").onclick = () => modal.remove();
+}
+
 async function showDebtDetail(debt) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const isShared = debt.user_id !== currentUser.id;
+    const canEdit = hasEditAccess(debt.user_id);
     const accessLabel = getAccessLevelLabel(debt.user_id);
     
     modal.innerHTML = `
@@ -945,50 +885,103 @@ async function showDebtDetail(debt) {
             ${debt.description ? `<div class="detail-row"><span class="detail-label">Catatan</span><span class="detail-value">${escapeHtml(debt.description)}</span></div>` : ''}
             <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:${debt.status === 'lunas' ? '#10b981' : '#ef4444'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></div>
             <div class="modal-button-grid">
+                ${canEdit && debt.status !== 'lunas' ? `<button id="lunasDebtBtn" class="modal-btn modal-btn-success">✓ Tandai Lunas</button>` : ''}
+                ${canEdit && debt.wa_number ? `<button id="waDebtBtn" class="modal-btn modal-btn-wa">💬 WhatsApp</button>` : ''}
+                ${canEdit ? `<button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>` : ''}
+                ${canEdit ? `<button id="deleteDebtBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
                 <button id="closeDebtDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
+    
+    if (canEdit && debt.status !== 'lunas') {
+        document.getElementById("lunasDebtBtn").onclick = async () => {
+            if(confirm("Tandai sebagai lunas?")){
+                const today = new Date();
+                const paidDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                await sb.from("debts").update({ status: 'lunas', paid_date: paidDate }).eq("id", debt.id);
+                showToast("Ditandai lunas");
+                modal.remove();
+                await loadDebts();
+                renderCurrentView();
+            }
+        };
+    }
+    if (canEdit && debt.wa_number) {
+        document.getElementById("waDebtBtn").onclick = () => openWhatsApp(debt.wa_number, debt.contact_name, debt.amount);
+    }
+    if (canEdit) {
+        document.getElementById("editDebtBtn").onclick = () => { modal.remove(); openEditDebtModal(debt.id); };
+        document.getElementById("deleteDebtBtn").onclick = async () => {
+            if(confirm("Hapus hutang/piutang ini?")){
+                await sb.from("debts").delete().eq("id", debt.id);
+                showToast("Dihapus");
+                modal.remove();
+                await loadDebts();
+                renderCurrentView();
+            }
+        };
+    }
     document.getElementById("closeDebtDetailBtn").onclick = () => modal.remove();
 }
 
-// ============================================
-// SHOW TRANSACTION DETAIL
-// ============================================
-async function showTransactionDetail(transaction) {
+async function openEditDebtModal(debtId) {
+    const debt = debts.find(d => d.id === debtId);
+    if (!debt) return;
+    
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    const cat = getCategoryById(transaction.category_id);
-    const isShared = transaction.user_id !== currentUser.id;
-    const accessLabel = getAccessLevelLabel(transaction.user_id);
-    
-    const catDisplay = cat ? `
-        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${cat.color}; margin-right:8px; vertical-align:middle;"></span>
-        ${cat.icon} ${cat.name}
-    ` : '-';
-    
     modal.innerHTML = `
         <div class="modal-content">
-            <div class="modal-title">📋 Detail Transaksi</div>
-            ${isShared ? `<div class="detail-row"><span class="detail-label">Sumber</span><span class="detail-value"><span class="shared-access-badge">📤 Akses Bersama</span> ${accessLabel ? `<span class="${accessLabel === '✏️ Edit' ? 'edit-badge' : 'view-badge'}">${accessLabel}</span>` : ''}</span></div>` : ''}
-            <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
-            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div>
-            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
-            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
-            <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${catDisplay}</span></div>
-            <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
+            <div class="modal-title">✏️ Edit ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
+            <input id="editDebtName" class="modal-input" placeholder="Nama orang" value="${escapeHtml(debt.contact_name)}">
+            <input type="text" id="editDebtAmount" class="modal-input" placeholder="Jumlah" value="${formatRupiah(debt.amount)}">
+            <select id="editDebtType" class="modal-select">
+                <option value="piutang" ${debt.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option>
+                <option value="hutang" ${debt.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option>
+            </select>
+            <input id="editDebtDue" type="date" class="modal-input" value="${debt.due_date ? debt.due_date.slice(0,10) : ''}">
+            <input id="editDebtWa" type="tel" placeholder="Nomor WhatsApp (contoh: 08123456789)" class="modal-input" value="${debt.wa_number || ''}">
+            <textarea id="editDebtDesc" placeholder="Catatan" class="modal-textarea">${escapeHtml(debt.description || '')}</textarea>
             <div class="modal-button-grid">
-                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
+                <button id="saveEditDebt" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="cancelEditDebt" class="modal-btn modal-btn-secondary">Batal</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
-    document.getElementById("closeDetailBtn").onclick = () => modal.remove();
+    setupRupiahInput('editDebtAmount');
+    setupWhatsAppInput('editDebtWa');
+    
+    document.getElementById("editDebtName").addEventListener('blur', function(e) { this.value = capitalizeName(this.value); });
+    
+    document.getElementById("saveEditDebt").onclick = async () => {
+        const name = capitalizeName(document.getElementById("editDebtName").value.trim());
+        const amount = parseRupiah(document.getElementById("editDebtAmount").value);
+        const type = document.getElementById("editDebtType").value;
+        const due = document.getElementById("editDebtDue").value;
+        let wa = document.getElementById("editDebtWa").value.trim();
+        const desc = document.getElementById("editDebtDesc").value;
+        
+        if (!name || !amount) return alert("Nama dan jumlah harus diisi");
+        if (wa) wa = formatWhatsAppNumber(wa);
+        
+        const { error } = await sb.from("debts").update({ 
+            contact_name: name, 
+            amount: amount, 
+            type: type, 
+            due_date: due || null, 
+            wa_number: wa || null, 
+            description: desc 
+        }).eq("id", debtId);
+        
+        if (error) alert("Gagal update: " + error.message);
+        else { showToast("Berhasil diupdate"); modal.remove(); await loadDebts(); renderCurrentView(); }
+    };
+    document.getElementById("cancelEditDebt").onclick = () => modal.remove();
 }
 
-// ============================================
-// TRANSACTION MODAL
-// ============================================
+// ========== TRANSACTION MODAL ==========
 function openTransaksiModal(predefinedType=null){
     const today = new Date().toISOString().slice(0,10);
     const modal=document.createElement('div');modal.className='modal-overlay';
@@ -1054,9 +1047,7 @@ function openTransaksiModal(predefinedType=null){
     document.getElementById("closeModal").onclick=()=>modal.remove();
 }
 
-// ============================================
-// CATEGORY MANAGEMENT
-// ============================================
+// ========== CATEGORY MANAGEMENT ==========
 async function openCategoryManageModal() {
     await loadCategories();
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
@@ -1147,9 +1138,7 @@ function openCategoryFormModal(editId=null) {
     document.getElementById("cancelCategoryBtn").onclick = () => { modal.remove(); openCategoryManageModal(); };
 }
 
-// ============================================
-// RENDER HOME
-// ============================================
+// ========== RENDER HOME ==========
 async function renderHome() {
     await loadTransactions();
     const totals = hitungTotalSaldo();
@@ -1172,6 +1161,7 @@ async function renderHome() {
         }
     }
     
+    // Transaksi sudah terurut dari loadTransactions, ambil 5 teratas
     const recent = transactions.slice(0, 5);
     
     let html = `
@@ -1211,14 +1201,10 @@ async function renderHome() {
         </div>
         <div class="card">
             <div class="card-title">📋 Transaksi Terbaru (${transactions.length})</div>
-            ${recent.map(t=>{
-                const cat = getCategoryById(t.category_id);
-                const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>` : '';
-                return `<div class="transaction-item" data-id="${t.id}">
-                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}<br><small>${formatDate(t.created_at)}</small></div>
-                    <div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
-                </div>`;
-            }).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
+            ${recent.map(t=>`<div class="transaction-item" data-id="${t.id}">
+                <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? '<span class="shared-access-badge">📤</span>' : ''}<br><small>${formatDate(t.created_at)}</small></div>
+                <div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
+            </div>`).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
         </div>
     `;
     document.getElementById("appContainer").innerHTML = html;
@@ -1260,9 +1246,7 @@ async function renderHome() {
     });
 }
 
-// ============================================
-// RENDER TRANSAKSI
-// ============================================
+// ========== RENDER TRANSAKSI ==========
 async function renderTransaksi() {
     await loadTransactions();
     
@@ -1293,24 +1277,20 @@ async function renderTransaksi() {
     let data = [...transactions];
     if(transaksiFilter==='income') data=data.filter(t=>t.type==='pemasukan');
     if(transaksiFilter==='expense') data=data.filter(t=>t.type==='pengeluaran');
+    // Data sudah terurut dari loadTransactions
     
     const container = document.getElementById("transaksiList");
     if(!data.length) container.innerHTML='<div class="empty-state">Tidak ada transaksi</div>';
-    else container.innerHTML = data.map(t => {
-        const cat = getCategoryById(t.category_id);
-        const catDisplay = cat ? `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cat.color}; margin-right:6px;"></span>${cat.icon} ${cat.name}` : '-';
-        
-        return `
-            <div class="transaction-item" data-id="${t.id}">
-                <div style="flex:1">
-                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? `<span class="shared-access-badge">📤 ${getAccessLevelLabel(t.user_id) || ''}</span>` : ''}</div>
-                    <div style="font-size:11px; margin-top:4px">📅 ${formatDate(t.created_at)}</div>
-                    <div style="font-size:11px; margin-top:2px;">${catDisplay}</div>
-                </div>
-                <div style="font-weight:700; font-size:16px; color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
+    else container.innerHTML = data.map(t=>`
+        <div class="transaction-item" data-id="${t.id}">
+            <div style="flex:1">
+                <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${t.user_id !== currentUser.id ? '<span class="shared-access-badge">📤</span>' : ''}</div>
+                <div style="font-size:11px; margin-top:4px">📅 ${formatDate(t.created_at)}</div>
+                <div style="font-size:11px">${t.category_id ? `• ${getCategoryById(t.category_id)?.icon || ''} ${getCategoryById(t.category_id)?.name || ''}` : ''}</div>
             </div>
-        `;
-    }).join('');
+            <div style="font-weight:700; font-size:16px; color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
+        </div>
+    `).join('');
     
     document.getElementById("openReportBtn")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="laporan"; updateNav(); renderLaporan(); });
     document.getElementById("manageCategoryBtn")?.addEventListener("click",()=>openCategoryManageModal());
@@ -1328,9 +1308,7 @@ async function renderTransaksi() {
     document.querySelectorAll(".filter-btn").forEach(btn=>btn.onclick=()=>{transaksiFilter=btn.getAttribute("data-filter"); renderTransaksi();});
 }
 
-// ============================================
-// RENDER HUTANG
-// ============================================
+// ========== HUTANG FUNCTIONS ==========
 async function renderHutang() {
     await loadDebts();
     let piutang=0, hutang=0;
@@ -1339,13 +1317,6 @@ async function renderHutang() {
             if (d.type === 'piutang') piutang += Number(d.amount) || 0;
             else hutang += Number(d.amount) || 0;
         }
-    }
-    
-    const groupedDebts = {};
-    for (const d of debts) {
-        const key = d.contact_name;
-        if (!groupedDebts[key]) groupedDebts[key] = [];
-        groupedDebts[key].push(d);
     }
     
     let html=`
@@ -1378,50 +1349,34 @@ async function renderHutang() {
     
     const container=document.getElementById("debtList");
     if(!debts.length) container.innerHTML='<div class="empty-state">Belum ada data hutang/piutang</div>';
-    else {
-        let htmlStr = '';
-        for (const [name, items] of Object.entries(groupedDebts)) {
-            items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            
-            let total = 0;
-            for (const d of items) {
-                if (d.status !== 'lunas') {
-                    if (d.type === 'piutang') total += Number(d.amount) || 0;
-                    else total -= Number(d.amount) || 0;
-                }
-            }
-            const color = total >= 0 ? '#10b981' : '#ef4444';
-            
-            const isShared = items.some(d => d.user_id !== currentUser.id);
-            
-            htmlStr += `
-                <div class="debt-group" data-name="${escapeHtml(name)}">
-                    <div class="debt-group-header">
-                        <div>
-                            <span class="debt-group-name">${escapeHtml(name)}</span>
-                            ${isShared ? `<span class="shared-access-badge">📤</span>` : ''}
-                            <span class="debt-group-count">${items.length} transaksi</span>
-                        </div>
-                        <span class="debt-group-total" style="color:${color}">${total >= 0 ? '+' : ''}Rp ${formatRupiah(Math.abs(total))}</span>
-                    </div>
-                    <div style="margin-top:8px; font-size:12px; color:var(--text-secondary);">
-                        ${items.slice(0, 2).map(d => `
-                            <span style="margin-right:12px;">${d.type === 'piutang' ? '💰' : '💸'} ${formatRupiah(d.amount)} ${d.status === 'lunas' ? '✅' : '⏳'}</span>
-                        `).join('')}
-                        ${items.length > 2 ? `<span>+${items.length - 2} lainnya</span>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-        container.innerHTML = htmlStr;
-    }
+    else container.innerHTML=debts.map(d=>`
+        <div class="debt-item" data-id="${d.id}">
+            <div style="flex:1">
+                <div style="font-weight:600;">${d.type==='piutang'?'💰':'💸'} ${escapeHtml(d.contact_name)}</div>
+                <div style="font-size:12px; margin-top:4px">Rp ${formatRupiah(d.amount)} • ${d.due_date?`Jatuh tempo: ${formatDate(d.due_date)}`:''}</div>
+                <div style="font-size:12px; margin-top:4px; color:${d.status==='lunas'?'#10b981':'#ef4444'}">${d.status==='lunas'?'✅ Lunas':'⏳ Belum Lunas'}</div>
+            </div>
+            ${d.wa_number ? `<button class="debt-wa-btn" data-wa="${d.wa_number}" data-name="${escapeHtml(d.contact_name)}" data-amount="${d.amount}">💬 WA</button>` : ''}
+        </div>
+    `).join('');
     
-    document.querySelectorAll(".debt-group").forEach(el => {
-        el.onclick = () => {
-            const name = el.getAttribute('data-name');
-            const items = debts.filter(d => d.contact_name === name);
-            showDebtGroupDetail(name, items);
-        };
+    document.querySelectorAll(".debt-item").forEach(el => { 
+        el.onclick = (e) => { 
+            if(!e.target.classList.contains('debt-wa-btn')) { 
+                const id = el.getAttribute("data-id"); 
+                const debt = debts.find(d => d.id === id); 
+                if (debt) showDebtDetail(debt); 
+            } 
+        }; 
+    });
+    document.querySelectorAll(".debt-wa-btn").forEach(btn => { 
+        btn.onclick = (e) => { 
+            e.stopPropagation(); 
+            const wa = btn.getAttribute("data-wa"); 
+            const name = btn.getAttribute("data-name"); 
+            const amount = btn.getAttribute("data-amount"); 
+            openWhatsApp(wa, name, amount); 
+        }; 
     });
 }
 
@@ -1477,11 +1432,9 @@ function openDebtModal(){
     document.getElementById("closeDebt").onclick=()=>modal.remove();
 }
 
-// ============================================
-// RENDER TABUNGAN
-// ============================================
+// ========== TABUNGAN FUNCTIONS ==========
 async function renderSavings() {
-    await loadSavings();
+    await loadSavings(); // Hanya load milik sendiri
     
     let html=`
         <div class="header">
@@ -1570,9 +1523,7 @@ function openSavingsModal(editId=null){
     document.getElementById("closeSavings").onclick=()=>modal.remove();
 }
 
-// ============================================
-// RENDER REMINDERS
-// ============================================
+// ========== REMINDERS FUNCTIONS ==========
 async function renderReminders() {
     await loadReminders();
     let html=`
@@ -1660,9 +1611,7 @@ function openReminderModal(editId=null){
     document.getElementById("closeReminder").onclick=()=>modal.remove();
 }
 
-// ============================================
-// RENDER TASKS
-// ============================================
+// ========== TASKS FUNCTIONS ==========
 async function renderTasks() {
     await loadTasks();
     let html=`
@@ -1772,13 +1721,12 @@ function openTaskModal(editId=null){
     document.getElementById("closeTask").onclick=()=>modal.remove();
 }
 
-// ============================================
-// RENDER LAPORAN
-// ============================================
+// ========== LAPORAN ==========
 async function renderLaporan() {
     await loadTransactions();
     const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
+    // Urutkan berdasarkan tanggal untuk laporan
     filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     
     let pemasukan=0,pengeluaran=0,catTotals={};
@@ -1788,26 +1736,12 @@ async function renderLaporan() {
         const cid=t.category_id||'uncategorized'; 
         catTotals[cid]=(catTotals[cid]||0)+Number(t.amount);
     }
-    
     const labels=[],data=[],colors=[];
     for (const [id,val] of Object.entries(catTotals)) {
-        if(id==='uncategorized'){ 
-            labels.push('📁 Tanpa Kategori'); 
-            colors.push('#94a3b8'); 
-        }
-        else { 
-            const cat=categories.find(c=>c.id===id); 
-            if(cat){ 
-                labels.push(`${cat.icon} ${cat.name}`); 
-                colors.push(cat.color);
-            } else {
-                labels.push('📁 Unknown'); 
-                colors.push('#94a3b8');
-            }
-        }
+        if(id==='uncategorized'){ labels.push('📁 Tanpa Kategori'); colors.push('#94a3b8'); }
+        else { const cat=categories.find(c=>c.id===id); if(cat){ labels.push(`${cat.icon} ${cat.name}`); colors.push(cat.color); } }
         data.push(val);
     }
-    
     let html=`
         <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'}</div><div class="header-actions"><button id="reminderBtn" class="icon-btn">🔔</button><button id="openSettingsBtn" class="icon-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
         ${renderRunningText()}
@@ -1825,98 +1759,27 @@ async function renderLaporan() {
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
     if(ctx && data.length > 0) {
         if(window.laporanChart && typeof window.laporanChart.destroy === 'function') window.laporanChart.destroy();
-        window.laporanChart = new Chart(ctx, { 
-            type: 'pie', 
-            data: { 
-                labels, 
-                datasets: [{ 
-                    data, 
-                    backgroundColor: colors, 
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }] 
-            }, 
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: true, 
-                plugins: { 
-                    legend: { 
-                        position: 'bottom', 
-                        labels: { 
-                            font: { size: 11 },
-                            padding: 10,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        } 
-                    } 
-                } 
-            } 
-        });
+        window.laporanChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } } });
     }
     
     const grouped = {};
-    for (const t of filtered) { 
-        const d=formatDate(t.created_at); 
-        if(!grouped[d]) grouped[d]=[]; 
-        grouped[d].push(t); 
-    }
+    for (const t of filtered) { const d=formatDate(t.created_at); if(!grouped[d]) grouped[d]=[]; grouped[d].push(t); }
     let detail='';
     for (const [date,items] of Object.entries(grouped)) {
         let total=items.reduce((s,i)=>s+(i.type==='pemasukan'?Number(i.amount):-Number(i.amount)),0); 
         detail+=`<div style="margin-top:16px"><strong>📌 ${date}</strong> <span style="color:${total>=0?'#10b981':'#ef4444'}">${total>=0?'+':'-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`; 
-        for (const i of items) { 
-            const cat=getCategoryById(i.category_id); 
-            const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>${cat.icon} ${cat.name}` : '';
-            detail+=`<div style="padding-left:20px; margin:8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" data-id="${i.id}">
-                <div>
-                    <span>${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}</span>
-                    ${catDisplay ? `<span style="font-size:11px; color:var(--text-secondary); margin-left:8px;">${catDisplay}</span>` : ''}
-                </div>
-                <span style="font-weight:600; color:${i.type==='pemasukan'?'#10b981':'#ef4444'}">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span>
-            </div>`; 
-        }
+        for (const i of items) { const cat=getCategoryById(i.category_id); detail+=`<div style="padding-left:20px; margin:8px 0; font-size:14px;">${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''} ${cat?`• ${cat.icon} ${cat.name}`:''} <span style="float:right; font-weight:600;">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span></div>`; }
     }
     document.getElementById("detailTransaksi").innerHTML=detail||'<div class="empty-state">Tidak ada transaksi</div>';
-    
-    document.querySelectorAll('#detailTransaksi > div > div').forEach(el => {
-        el.onclick = () => {
-            const id = el.getAttribute('data-id');
-            const transaction = transactions.find(t => t.id === id);
-            if (transaction) {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                setTimeout(() => showTransactionDetail(transaction), 300);
-            }
-        };
-    });
-    
     document.getElementById("logoutBtn")?.addEventListener("click",logout);
     document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ pushHistory(currentNav); previousNav = currentNav; currentNav = "settings"; updateNav(); renderSettings(); });
     document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     document.getElementById("prevMonth")?.addEventListener("click",()=>{if(currentMonth===0){currentMonth=11;currentYear--;}else currentMonth--; renderLaporan();});
     document.getElementById("nextMonth")?.addEventListener("click",()=>{if(currentMonth===11){currentMonth=0;currentYear++;}else currentMonth++; renderLaporan();});
-    document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{
-        try {
-            showToast("📑 Menyiapkan PDF...");
-            const element = document.createElement('div');
-            element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card:first-of-type')?.outerHTML;
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: `laporan_${currentYear}_${currentMonth+1}.pdf`,
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            await html2pdf().set(opt).from(element).save();
-            showToast("✅ PDF berhasil diexport!");
-        } catch(e) {
-            console.error("PDF error:", e);
-            showToast("❌ Gagal export PDF: " + e.message);
-        }
-    });
+    document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{const element = document.createElement('div'); element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card')?.outerHTML; const opt={margin:[10,10,10,10],filename:`laporan_${currentYear}_${currentMonth+1}.pdf`,html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}; html2pdf().set(opt).from(element).save(); showToast("Membuat PDF...");});
 }
 
-// ============================================
-// RENDER SETTINGS
-// ============================================
+// ========== SETTINGS ==========
 async function renderSettings() {
     let html = `
         <div class="header">
@@ -2083,11 +1946,8 @@ async function renderSettings() {
     });
 }
 
-// ============================================
-// RENDER CURRENT VIEW & NAVIGATION
-// ============================================
+// ========== RENDER CURRENT VIEW & NAVIGATION ==========
 function renderCurrentView() {
-    if(!appReady) return;
     if(currentNav==='home') renderHome();
     else if(currentNav==='transaksi') renderTransaksi();
     else if(currentNav==='laporan') renderLaporan();
@@ -2133,9 +1993,7 @@ window.addEventListener('popstate', function(event) {
     }
 });
 
-// ============================================
-// AUTH FUNCTIONS
-// ============================================
+// ========== AUTH FUNCTIONS ==========
 async function handleLogin() {
     const email = document.getElementById("emailInput").value.trim();
     const password = document.getElementById("passwordInput").value;
@@ -2147,14 +2005,10 @@ async function handleLogin() {
     }
     errorDiv.innerText = "";
     
-    const loadingInterval = showLoading();
-    
     if (isLoginMode) {
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { 
             errorDiv.innerText = error.message; 
-            clearInterval(loadingInterval);
-            hideLoading();
             return; 
         }
         if (data.user) {
@@ -2164,15 +2018,11 @@ async function handleLogin() {
     } else {
         if (password.length < 6) {
             errorDiv.innerText = "Password minimal 6 karakter";
-            clearInterval(loadingInterval);
-            hideLoading();
             return;
         }
         const { data, error } = await sb.auth.signUp({ email, password });
         if (error) { 
             errorDiv.innerText = error.message; 
-            clearInterval(loadingInterval);
-            hideLoading();
             return; 
         }
         if (data.user) {
@@ -2180,8 +2030,6 @@ async function handleLogin() {
             toggleMode();
             document.getElementById("emailInput").value = "";
             document.getElementById("passwordInput").value = "";
-            clearInterval(loadingInterval);
-            hideLoading();
         }
     }
 }
@@ -2190,14 +2038,10 @@ async function handleGuest() {
     const errorDiv = document.getElementById("loginError");
     errorDiv.innerText = "";
     
-    const loadingInterval = showLoading();
-    
     try {
         const { data, error } = await sb.auth.signInAnonymously();
         if (error) { 
             errorDiv.innerText = error.message; 
-            clearInterval(loadingInterval);
-            hideLoading();
             return; 
         }
         if (data.user) {
@@ -2206,8 +2050,6 @@ async function handleGuest() {
         }
     } catch(e) {
         errorDiv.innerText = "Gagal masuk sebagai tamu: " + e.message;
-        clearInterval(loadingInterval);
-        hideLoading();
     }
 }
 
@@ -2236,16 +2078,13 @@ async function onAuthSuccess(user) {
     await loadAllData();
     await initTheme();
     
-    appReady = true;
     addBottomNav();
     renderCurrentView();
-    hideLoading();
 }
 
 async function logout() {
     try { await sb.auth.signOut(); } catch(e) { console.log("Logout error:", e); }
     currentUser = null;
-    appReady = false;
     document.querySelector(".bottom-nav")?.remove();
     document.getElementById("appContainer").innerHTML = "";
     document.getElementById("loginModal").style.display = "flex";
@@ -2264,59 +2103,36 @@ async function logout() {
     applyTheme(false);
 }
 
-async function startApp() {
-    showLoading();
-    
-    // Wait for Supabase to load
-    await waitForSupabase();
-    
-    if (!initSupabase()) {
-        console.error("Failed to initialize Supabase");
-        document.getElementById('loadingOverlay').classList.add('hidden');
-        document.getElementById('loginModal').style.display = 'flex';
-        document.getElementById('loginError').innerText = "Gagal memuat Supabase. Refresh halaman.";
-        return;
-    }
-    
+async function checkSession() {
     try {
         const { data, error } = await sb.auth.getSession();
         if (error && error.message?.includes("Invalid Refresh Token")) { 
             localStorage.clear(); 
-            document.getElementById('loginModal').style.display = 'flex';
-            hideLoading();
+            document.getElementById("loginModal").style.display = "flex"; 
             return; 
         }
         if (data.session?.user) {
             await onAuthSuccess(data.session.user);
         } else { 
-            document.getElementById('loginModal').style.display = 'flex';
-            hideLoading();
+            document.getElementById("loginModal").style.display = "flex"; 
         }
     } catch(e) { 
         console.log("Session check error:", e);
-        document.getElementById('loginModal').style.display = 'flex';
-        hideLoading();
+        document.getElementById("loginModal").style.display = "flex"; 
     }
 }
 
-// ============================================
-// EVENT LISTENERS
-// ============================================
-document.getElementById("submitLoginBtn")?.addEventListener("click", handleLogin);
-document.getElementById("guestBtn")?.addEventListener("click", handleGuest);
-document.getElementById("switchText")?.addEventListener("click", toggleMode);
-document.getElementById("toggleLoginPassword")?.addEventListener("click", () => {
+// Event Listeners
+document.getElementById("submitLoginBtn").addEventListener("click", handleLogin);
+document.getElementById("guestBtn").addEventListener("click", handleGuest);
+document.getElementById("switchText").addEventListener("click", toggleMode);
+document.getElementById("toggleLoginPassword").addEventListener("click", () => {
     const inp = document.getElementById("passwordInput");
     if(inp.type === 'password'){ inp.type = 'text'; inp.nextElementSibling.textContent = '👁️‍🗨️'; }
     else{ inp.type = 'password'; inp.nextElementSibling.textContent = '👁️'; }
 });
 
-// Start the app when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
-} else {
-    startApp();
-}
+checkSession();
 </script>
 </body>
 </html>
