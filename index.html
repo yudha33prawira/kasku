@@ -471,8 +471,14 @@ async function toggleTheme() {
 }
 
 // ========== SHARED ACCESS FUNCTIONS ==========
-async function loadSharedAccess() { 
+async function loadSharedAccess(forceReload = false) { 
     if(!currentUser) return;
+    
+    // Jika sudah dimuat dan tidak force reload, skip
+    if (!forceReload && sharedAccess.length > 0) {
+        console.log("Shared access already loaded, skipping");
+        return;
+    }
     
     try {
         console.log("Loading shared access for:", currentUser.email);
@@ -494,44 +500,52 @@ async function loadSharedAccess() {
             .eq("shared_email", currentUser.email);
         
         if (receiverError) console.error("Receiver error:", receiverError);
-        console.log("As receiver:", receiverData);
-        
-        sharedAccess = [...(asOwner||[]), ...(receiverData||[])];
-        console.log("Total shared access loaded:", sharedAccess.length);
+        console.log("As receiver BEFORE update:", receiverData);
         
         // Auto accept pending
         let acceptedCount = 0;
-        for (const access of (receiverData||[])) {
-            if (access.status === 'pending') {
-                console.log("Auto accepting:", access.id);
-                const { error: updateError } = await sb
-                    .from("shared_access")
-                    .update({ status: 'accepted' })
-                    .eq("id", access.id);
-                
-                if (updateError) {
-                    console.error("Update error:", updateError);
-                } else {
-                    acceptedCount++;
-                    console.log("Accepted:", access.id);
+        if (receiverData && receiverData.length > 0) {
+            for (const access of receiverData) {
+                if (access.status === 'pending') {
+                    console.log("Auto accepting:", access.id, "from owner:", access.owner_id);
+                    
+                    const { error: updateError } = await sb
+                        .from("shared_access")
+                        .update({ 
+                            status: 'accepted',
+                            accepted_at: new Date().toISOString()
+                        })
+                        .eq("id", access.id);
+                    
+                    if (updateError) {
+                        console.error("Update error:", updateError);
+                    } else {
+                        acceptedCount++;
+                        console.log("Accepted:", access.id);
+                    }
                 }
             }
         }
         
+        // Reload shared access after accepting
+        const {data: updatedReceiver} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("shared_email", currentUser.email);
+        
+        const {data: updatedOwner} = await sb
+            .from("shared_access")
+            .select("*")
+            .eq("owner_id", currentUser.id);
+        
+        sharedAccess = [...(updatedOwner||[]), ...(updatedReceiver||[])];
+        console.log("FINAL shared access:", sharedAccess);
+        
         if (acceptedCount > 0) {
-            // Reload shared access after accepting
-            const {data: updatedReceiver} = await sb
-                .from("shared_access")
-                .select("*")
-                .eq("shared_email", currentUser.email);
-            
-            const {data: updatedOwner} = await sb
-                .from("shared_access")
-                .select("*")
-                .eq("owner_id", currentUser.id);
-            
-            sharedAccess = [...(updatedOwner||[]), ...(updatedReceiver||[])];
-            console.log("Updated shared access:", sharedAccess);
+            showToast(`✅ ${acceptedCount} akses bersama diterima`);
+            // Reload semua data setelah auto accept
+            await loadAllData();
+            renderCurrentView();
         }
         
     } catch(e) { 
@@ -540,9 +554,15 @@ async function loadSharedAccess() {
 }
 
 function hasEditAccess(dataOwnerId) {
-    if (!currentUser) return false;
+    if (!currentUser) {
+        console.log("No current user");
+        return false;
+    }
+    
+    console.log("=== hasEditAccess ===");
     console.log("Checking edit access for owner:", dataOwnerId);
-    console.log("Current user:", currentUser.id);
+    console.log("Current user ID:", currentUser.id);
+    console.log("Shared access data:", JSON.stringify(sharedAccess, null, 2));
     
     // Jika data milik sendiri, selalu bisa edit
     if (dataOwnerId === currentUser.id) {
@@ -550,7 +570,7 @@ function hasEditAccess(dataOwnerId) {
         return true;
     }
     
-    // Cek akses bersama dengan level 'edit'
+    // Cek akses bersama dengan level 'edit' dan status 'accepted'
     const access = sharedAccess.find(s => 
         s.owner_id === dataOwnerId && 
         s.shared_email === currentUser.email && 
@@ -558,7 +578,8 @@ function hasEditAccess(dataOwnerId) {
         s.access_level === 'edit'
     );
     
-    console.log("Found edit access:", access);
+    console.log("Matching access found:", access || "NONE");
+    console.log("Result:", access !== undefined);
     return access !== undefined;
 }
 
