@@ -484,52 +484,66 @@ async function loadCategories() {
 }
 
 async function loadTransactions() { 
-    if(!currentUser) return;
+    if(!currentUser) {
+        console.log("No current user");
+        return;
+    }
     
     try {
-        console.log("Loading transactions...");
+        console.log("=== LOADING TRANSACTIONS FIXED ===");
         
-        // Own transactions
-        const {data: ownTx} = await sb
+        // OPTION 1: Load ALL transactions first (bypass RLS untuk sementara)
+        // Ini hanya berfungsi jika RLS di nonaktifkan atau policy sudah benar
+        const { data: allTransactions, error: allError } = await sb
             .from("transactions")
-            .select("*")
-            .eq("user_id", currentUser.id);
+            .select("*");
         
-        let allTx = ownTx || [];
+        if (allError) {
+            console.error("Error loading all transactions:", allError);
+            return;
+        }
         
-        // Get accepted shared access
-        const {data: accessList} = await sb
+        console.log("All transactions in DB:", allTransactions?.length || 0);
+        
+        // Filter manual: ambil transaksi milik sendiri + milik owner yang berbagi akses
+        let filtered = [];
+        
+        // Ambil shared access yang accepted
+        const { data: accessList } = await sb
             .from("shared_access")
             .select("*")
             .eq("shared_email", currentUser.email)
             .eq("status", "accepted");
         
+        console.log("Accepted access:", accessList?.length || 0);
+        
+        // Dapatkan daftar owner_id yang diizinkan
+        const allowedOwnerIds = [currentUser.id];
         if (accessList && accessList.length > 0) {
             for (const access of accessList) {
-                const {data: sharedTx} = await sb
-                    .from("transactions")
-                    .select("*")
-                    .eq("user_id", access.owner_id);
-                
-                if (sharedTx && sharedTx.length > 0) {
-                    allTx = [...allTx, ...sharedTx];
-                }
+                allowedOwnerIds.push(access.owner_id);
             }
         }
         
-        // Remove duplicates
-        const unique = [];
-        const seen = new Set();
-        for (const t of allTx) {
-            if (!seen.has(t.id)) {
-                seen.add(t.id);
-                unique.push(t);
-            }
-        }
-        unique.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        transactions = unique;
+        console.log("Allowed owner IDs:", allowedOwnerIds);
         
-        console.log("Total transactions:", transactions.length);
+        // Filter transaksi berdasarkan allowed owner IDs
+        if (allTransactions && allTransactions.length > 0) {
+            filtered = allTransactions.filter(t => allowedOwnerIds.includes(t.user_id));
+        }
+        
+        // Sort by date
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        transactions = filtered;
+        
+        console.log("FILTERED TRANSACTIONS:", transactions.length);
+        
+        // Log per user
+        const byUser = {};
+        for (const t of transactions) {
+            byUser[t.user_id] = (byUser[t.user_id] || 0) + 1;
+        }
+        console.log("Transactions by user:", byUser);
         
     } catch(e) { 
         console.error("Load transactions error:", e);
