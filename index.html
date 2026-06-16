@@ -970,6 +970,13 @@ async function openEditTransactionModal(transactionId) {
     const transaction = transactions.find(t => t.id === transactionId);
     if (!transaction) return;
     
+    // Cek apakah user memiliki akses edit
+    const canEdit = canEditData(transaction.user_id);
+    if (!canEdit) {
+        showToast("❌ Anda tidak memiliki akses edit untuk transaksi ini");
+        return;
+    }
+    
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
@@ -1009,15 +1016,45 @@ async function openEditTransactionModal(transactionId) {
         const catId = document.getElementById("editKat").value;
         const isFixed = document.getElementById("editFixed").checked;
         
-        if (!desc || !amount) { alert("Deskripsi dan jumlah harus diisi"); return; }
+        if (!desc || !amount) { 
+            alert("Deskripsi dan jumlah harus diisi"); 
+            return; 
+        }
         
-        const updateData = { description: desc, amount: amount, type: type, is_fixed_expense: isFixed };
+        // Update data - TETAP menggunakan user_id yang sama (milik owner)
+        const updateData = { 
+            description: desc, 
+            amount: amount, 
+            type: type, 
+            is_fixed_expense: isFixed 
+        };
+        
         if (catId) updateData.category_id = catId;
         if (tanggal) updateData.created_at = new Date(tanggal).toISOString();
         
-        const { error } = await sb.from("transactions").update(updateData).eq("id", transactionId);
-        if (error) alert("Gagal update: " + error.message);
-        else { showToast("Transaksi berhasil diupdate"); modal.remove(); await loadTransactions(); renderCurrentView(); }
+        console.log("Updating transaction:", transactionId);
+        console.log("Update data:", updateData);
+        console.log("Current user can edit:", canEditData(transaction.user_id));
+        
+        try {
+            const { error } = await sb
+                .from("transactions")
+                .update(updateData)
+                .eq("id", transactionId);
+            
+            if (error) {
+                console.error("Update error:", error);
+                alert("Gagal update: " + error.message);
+            } else {
+                showToast("✅ Transaksi berhasil diupdate");
+                modal.remove();
+                await loadTransactions();
+                renderCurrentView();
+            }
+        } catch(e) {
+            console.error("Error:", e);
+            alert("Terjadi kesalahan: " + e.message);
+        }
     };
     document.getElementById("cancelEditModal").onclick = () => modal.remove();
 }
