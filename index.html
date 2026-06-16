@@ -968,16 +968,19 @@ async function showTransactionDetail(transaction) {
 
 async function openEditTransactionModal(transactionId) {
     const transaction = transactions.find(t => t.id === transactionId);
-    if (!transaction) return;
+    if (!transaction) {
+        showToast("❌ Transaksi tidak ditemukan");
+        return;
+    }
     
-    // Cek apakah user memiliki akses edit
     const canEdit = canEditData(transaction.user_id);
     if (!canEdit) {
         showToast("❌ Anda tidak memiliki akses edit untuk transaksi ini");
         return;
     }
     
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">✏️ Edit Transaksi</div>
@@ -998,6 +1001,9 @@ async function openEditTransactionModal(transactionId) {
                     <span>📌 Pengeluaran Tetap</span>
                 </label>
                 <p class="info-text">Centang jika ini adalah pengeluaran rutin bulanan</p>
+            </div>
+            <div style="background:#fef3c7; padding:12px; border-radius:16px; margin:12px 0; border:1px solid #f59e0b;">
+                <p style="font-size:12px; color:#92400e;">⚠️ Anda mengedit data milik: <strong>${transaction.user_id === currentUser.id ? 'Sendiri' : 'Pengguna Lain (Akses Edit)'}</strong></p>
             </div>
             <div class="modal-button-grid">
                 <button id="saveEditTransaksi" class="modal-btn modal-btn-primary">💾 Simpan</button>
@@ -1021,7 +1027,6 @@ async function openEditTransactionModal(transactionId) {
             return; 
         }
         
-        // Update data - TETAP menggunakan user_id yang sama (milik owner)
         const updateData = { 
             description: desc, 
             amount: amount, 
@@ -1030,32 +1035,43 @@ async function openEditTransactionModal(transactionId) {
         };
         
         if (catId) updateData.category_id = catId;
-        if (tanggal) updateData.created_at = new Date(tanggal).toISOString();
+        if (tanggal) {
+            // Pastikan tanggal dalam format ISO yang benar
+            const dateObj = new Date(tanggal);
+            updateData.created_at = dateObj.toISOString();
+        }
         
-        console.log("Updating transaction:", transactionId);
+        console.log("Saving update for transaction:", transactionId);
         console.log("Update data:", updateData);
-        console.log("Current user can edit:", canEditData(transaction.user_id));
         
         try {
-            const { error } = await sb
+            const { data, error } = await sb
                 .from("transactions")
                 .update(updateData)
-                .eq("id", transactionId);
+                .eq("id", transactionId)
+                .select();
             
             if (error) {
-                console.error("Update error:", error);
-                alert("Gagal update: " + error.message);
-            } else {
-                showToast("✅ Transaksi berhasil diupdate");
-                modal.remove();
-                await loadTransactions();
-                renderCurrentView();
+                console.error("Supabase error:", error);
+                alert("❌ Gagal update: " + error.message);
+                return;
             }
+            
+            console.log("Update result:", data);
+            showToast("✅ Transaksi berhasil diupdate!");
+            modal.remove();
+            
+            // ========== FORCE RELOAD ==========
+            await loadTransactions();
+            renderCurrentView();
+            // ================================
+            
         } catch(e) {
-            console.error("Error:", e);
-            alert("Terjadi kesalahan: " + e.message);
+            console.error("Exception:", e);
+            alert("❌ Terjadi kesalahan: " + e.message);
         }
     };
+    
     document.getElementById("cancelEditModal").onclick = () => modal.remove();
 }
 
