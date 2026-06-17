@@ -407,6 +407,45 @@ class CustomUserManager {
         }
     }
 
+    // Tambahkan method ini ke CustomUserManager class
+async updateProfile(data) {
+    if (!this.customUser) {
+        await this.setupCustomUser(this.authUser);
+    }
+    
+    if (!this.customUser) {
+        throw new Error('User not found');
+    }
+    
+    try {
+        const { error } = await this.sb
+            .from('users')
+            .update({
+                ...data,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', this.customUser.id);
+
+        if (error) throw error;
+        
+        // Refresh data
+        const { data: updated, error: fetchError } = await this.sb
+            .from('users')
+            .select('*')
+            .eq('id', this.customUser.id)
+            .single();
+        
+        if (fetchError) throw fetchError;
+        
+        this.customUser = updated;
+        console.log(`✅ Profile updated: ${updated.user_code}`);
+        return this.customUser;
+    } catch(e) {
+        console.error('Update profile error:', e);
+        throw e;
+    }
+}
+
     async getUserId() {
         if (!this.customUser) {
             await this.setupCustomUser(this.authUser);
@@ -787,7 +826,7 @@ async function loadAllData() {
     await loadSavings();
     await loadReminders();
     await loadTasks();
-}
+}    
 
 // ============================================
 // UTILITY FUNCTIONS
@@ -2394,7 +2433,92 @@ async function renderLaporan() {
 }
 
 // ============================================
-// RENDER SETTINGS - FAMILY VERSION
+// EDIT PROFILE MODAL
+// ============================================
+async function openEditProfileModal() {
+    const userData = await userManager.getUserData();
+    if (!userData) {
+        showToast("❌ Data user tidak ditemukan");
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">✏️ Edit Profil</div>
+            
+            <div style="margin-bottom:16px; padding:12px; background:rgba(59,130,246,0.1); border-radius:12px; text-align:center;">
+                <span style="font-size:14px; color:var(--text-secondary);">🆔 Kode User</span>
+                <div style="font-size:24px; font-weight:700; color:#3b82f6;">${userData.user_code || 'USR-???'}</div>
+            </div>
+            
+            <input type="text" id="editUsername" class="modal-input" placeholder="Username" value="${escapeHtml(userData.username || '')}">
+            <input type="text" id="editDisplayName" class="modal-input" placeholder="Nama Tampilan" value="${escapeHtml(userData.display_name || '')}">
+            <input type="email" id="editEmail" class="modal-input" placeholder="Email" value="${escapeHtml(userData.email || '')}" disabled style="opacity:0.6;">
+            
+            <div style="margin-top:12px; padding:12px; background:rgba(251,191,36,0.1); border-radius:12px; border-left:4px solid #fbbf24;">
+                <p style="font-size:12px; color:var(--text-secondary);">
+                    💡 <strong>Username</strong> digunakan untuk login dan identitas di aplikasi.<br>
+                    <strong>Nama Tampilan</strong> akan muncul di profil dan komentar.
+                </p>
+            </div>
+            
+            <div class="modal-button-grid">
+                <button id="saveProfileBtn" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="closeProfileModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Event: Simpan
+    document.getElementById("saveProfileBtn").onclick = async () => {
+        const username = document.getElementById("editUsername").value.trim();
+        const displayName = document.getElementById("editDisplayName").value.trim();
+
+        if (!username) {
+            showToast("❌ Username harus diisi");
+            return;
+        }
+
+        try {
+            showToast("⏳ Menyimpan perubahan...");
+            
+            const updated = await userManager.updateProfile({
+                username: username,
+                display_name: displayName || username
+            });
+
+            if (updated) {
+                currentCustomUser = updated;
+                showToast("✅ Profil berhasil diupdate!");
+                modal.remove();
+                renderSettings(); // Refresh halaman settings
+            } else {
+                showToast("❌ Gagal update profil");
+            }
+        } catch(e) {
+            console.error('Update profile error:', e);
+            showToast("❌ Error: " + e.message);
+        }
+    };
+
+    // Event: Batal
+    document.getElementById("closeProfileModal").onclick = () => {
+        modal.remove();
+    };
+
+    // Event: Click di luar modal
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+}
+
+// ============================================
+// RENDER SETTINGS - DIPERBAIKI
 // ============================================
 async function renderSettings() {
     await loadFamilyData();
@@ -2405,10 +2529,11 @@ async function renderSettings() {
     const userId = userData?.id || '?';
     const username = userData?.username || 'User';
     const email = userData?.email || currentUser?.email || '-';
+    const displayName = userData?.display_name || username;
     
     let html = `
         <div class="header">
-            <div class="user-info">${username} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${escapeHtml(displayName)} ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="backFromSettingsBtn" class="icon-btn" style="font-size:20px;">←</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
@@ -2423,8 +2548,12 @@ async function renderSettings() {
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">🆔 Kode User</span>
                     <span style="font-weight: 700; font-size: 18px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 4px 16px; border-radius: 20px;">
-                        ${userCode}
+                        ${escapeHtml(userCode)}
                     </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-secondary);">👤 Nama Tampilan</span>
+                    <span style="font-weight: 500;">${escapeHtml(displayName)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">📧 Email</span>
@@ -2443,7 +2572,7 @@ async function renderSettings() {
                     <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userData?.created_at ? formatDate(userData.created_at) : '-'}</span>
                 </div>
             </div>
-            <button id="editProfileBtn" class="modal-btn modal-btn-secondary" style="margin-top: 12px;">
+            <button id="editProfileBtn" class="modal-btn modal-btn-primary" style="margin-top: 12px; width:100%;">
                 ✏️ Edit Profil
             </button>
         </div>
@@ -2463,13 +2592,14 @@ async function renderSettings() {
                     </div>
                     <div style="margin-top:8px; max-height:150px; overflow-y:auto;">
                         ${familyMembers.map(m => {
-                            const memberName = m.users?.username || m.users?.display_name || `User ${m.user_id}`;
+                            const memberName = m.users?.display_name || m.users?.username || `User ${m.user_id}`;
                             const memberCode = m.users?.user_code || '???';
+                            const isOwner = m.role === 'owner';
                             return `
                             <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-color);">
                                 <span>${m.user_id === currentCustomUser?.id ? '👤' : '👥'} ${escapeHtml(memberName)}</span>
                                 <span style="font-size:11px; color:var(--text-secondary);">
-                                    ${memberCode} ${m.role === 'owner' ? '👑' : ''}
+                                    ${memberCode} ${isOwner ? '👑' : ''}
                                 </span>
                             </div>
                         `}).join('')}
@@ -2518,9 +2648,21 @@ async function renderSettings() {
     
     document.getElementById("appContainer").innerHTML = html;
     
-    // === EVENT LISTENERS ===
-    document.getElementById("logoutBtn")?.addEventListener("click",logout);
-    document.getElementById("backFromSettingsBtn")?.addEventListener("click",() => { 
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    
+    // 1. Edit Profile - PERBAIKAN UTAMA
+    document.getElementById("editProfileBtn")?.addEventListener("click", () => {
+        console.log("🖱️ Edit Profile clicked");
+        openEditProfileModal();
+    });
+    
+    // 2. Logout
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    
+    // 3. Back
+    document.getElementById("backFromSettingsBtn")?.addEventListener("click", () => { 
         if (previousNav && previousNav !== "settings") { 
             currentNav = previousNav; 
             updateNav(); 
@@ -2532,16 +2674,38 @@ async function renderSettings() {
         } 
     });
     
-    document.getElementById("changePassBtn")?.addEventListener("click",async()=>{
-        const old=document.getElementById("oldPass").value, newp=document.getElementById("newPass").value, conf=document.getElementById("confirmPass").value;
-        if(!old||!newp) return alert("Isi semua field");
-        if(newp.length<6) return alert("Password baru minimal 6 karakter");
-        if(newp!==conf) return alert("Konfirmasi password tidak cocok");
-        const {error}=await sb.auth.updateUser({password:newp});
-        if(error) alert(error.message);
-        else showToast("Password berhasil diubah");
+    // 4. Change Password
+    document.getElementById("changePassBtn")?.addEventListener("click", async () => {
+        const old = document.getElementById("oldPass").value;
+        const newp = document.getElementById("newPass").value;
+        const conf = document.getElementById("confirmPass").value;
+        
+        if (!old || !newp) {
+            showToast("❌ Isi semua field");
+            return;
+        }
+        if (newp.length < 6) {
+            showToast("❌ Password baru minimal 6 karakter");
+            return;
+        }
+        if (newp !== conf) {
+            showToast("❌ Konfirmasi password tidak cocok");
+            return;
+        }
+        
+        try {
+            const { error } = await sb.auth.updateUser({ password: newp });
+            if (error) throw error;
+            showToast("✅ Password berhasil diubah");
+            document.getElementById("oldPass").value = "";
+            document.getElementById("newPass").value = "";
+            document.getElementById("confirmPass").value = "";
+        } catch(e) {
+            showToast("❌ Gagal update password: " + e.message);
+        }
     });
     
+    // 5. Dark Mode
     const darkModeSwitch = document.getElementById("darkModeSwitch");
     if (darkModeSwitch) {
         darkModeSwitch.addEventListener("change", async (e) => { 
@@ -2549,45 +2713,56 @@ async function renderSettings() {
         });
     }
     
-    // === FAMILY EVENT LISTENERS ===
+    // 6. Create Family
     document.getElementById("createFamilyBtn")?.addEventListener("click", async () => {
         const name = document.getElementById("familyNameInput").value.trim();
-        if (!name) return alert("Masukkan nama keluarga");
+        if (!name) {
+            showToast("❌ Masukkan nama keluarga");
+            return;
+        }
         try {
             await createFamily(name);
             await loadAllData();
             renderSettings();
         } catch(e) {
-            alert("Gagal membuat keluarga: " + e.message);
+            showToast("❌ Gagal membuat keluarga: " + e.message);
         }
     });
     
+    // 7. Join Family
     document.getElementById("joinFamilyBtn")?.addEventListener("click", async () => {
         const familyId = document.getElementById("joinFamilyInput").value.trim();
-        if (!familyId) return alert("Masukkan ID Keluarga");
+        if (!familyId) {
+            showToast("❌ Masukkan ID Keluarga");
+            return;
+        }
         try {
             await joinFamily(familyId);
             await loadAllData();
             renderSettings();
         } catch(e) {
-            alert("Gagal bergabung: " + e.message);
+            showToast("❌ Gagal bergabung: " + e.message);
         }
     });
     
+    // 8. Invite Member
     document.getElementById("inviteMemberBtn")?.addEventListener("click", async () => {
         const email = document.getElementById("inviteEmail").value.trim();
-        if (!email) return alert("Masukkan email");
+        if (!email) {
+            showToast("❌ Masukkan email");
+            return;
+        }
         try {
-            // Cari user berdasarkan email di tabel users
             const { data: userData, error: userError } = await sb
                 .from("users")
                 .select("id")
                 .eq("email", email)
-                .single();
+                .maybeSingle();
             
-            if (userError || !userData) throw new Error("User tidak ditemukan atau belum memiliki akun");
+            if (userError || !userData) {
+                throw new Error("User tidak ditemukan atau belum memiliki akun");
+            }
             
-            // Cek apakah sudah jadi anggota
             const { data: existing, error: existError } = await sb
                 .from("family_members")
                 .select("*")
@@ -2595,7 +2770,9 @@ async function renderSettings() {
                 .eq("user_id", userData.id)
                 .maybeSingle();
             
-            if (existing) throw new Error("User sudah menjadi anggota");
+            if (existing) {
+                throw new Error("User sudah menjadi anggota");
+            }
             
             await sb.from("family_members").insert({
                 family_id: currentFamilyId,
@@ -2607,10 +2784,11 @@ async function renderSettings() {
             await loadFamilyData();
             renderSettings();
         } catch(e) {
-            alert("Gagal mengundang: " + e.message);
+            showToast("❌ Gagal mengundang: " + e.message);
         }
     });
     
+    // 9. Leave Family
     document.getElementById("leaveFamilyBtn")?.addEventListener("click", async () => {
         if (!confirm("Yakin ingin keluar dari keluarga?")) return;
         const userId = await userManager.getUserId();
@@ -2629,14 +2807,24 @@ async function renderSettings() {
             await loadAllData();
             renderSettings();
         } catch(e) {
-            alert("Gagal keluar: " + e.message);
+            showToast("❌ Gagal keluar: " + e.message);
         }
     });
     
-    document.querySelectorAll(".toggle-password").forEach(btn=>btn.onclick=()=>{
-        const inp=document.getElementById(btn.getAttribute("data-target"));
-        if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
-        else{inp.type='password';btn.textContent='👁️';}
+    // 10. Toggle Password
+    document.querySelectorAll(".toggle-password").forEach(btn => {
+        btn.onclick = () => {
+            const inp = document.getElementById(btn.getAttribute("data-target"));
+            if (inp) {
+                if (inp.type === 'password') {
+                    inp.type = 'text';
+                    btn.textContent = '🙈';
+                } else {
+                    inp.type = 'password';
+                    btn.textContent = '👁️';
+                }
+            }
+        };
     });
 }
 
