@@ -265,13 +265,15 @@ let navigationHistory = [];
 let appReady = false;
 
 // ============================================
-// CUSTOM USER MANAGER
+// CUSTOM USER MANAGER - FIX VERSION
 // ============================================
 class CustomUserManager {
     constructor(supabaseClient) {
         this.sb = supabaseClient;
         this.authUser = null;
         this.customUser = null;
+        this.retryCount = 0;
+        this.maxRetries = 3;
     }
 
     async setupCustomUser(authUser) {
@@ -281,7 +283,7 @@ class CustomUserManager {
         }
 
         try {
-            // Cek existing di tabel users
+            // Coba cek existing
             const { data: existing, error: findError } = await this.sb
                 .from('users')
                 .select('*')
@@ -289,12 +291,11 @@ class CustomUserManager {
                 .maybeSingle();
 
             if (findError) {
-                // Jika tabel belum ada, buat otomatis
-                if (findError.code === '42P01') {
-                    console.warn('⚠️ Tabel users belum ada, mencoba membuat...');
-                    await this.createUsersTable();
-                    // Coba lagi
-                    return await this.setupCustomUser(authUser);
+                // Jika error karena RLS atau tabel tidak ada
+                if (findError.code === '42501' || findError.code === '42P01') {
+                    console.warn('⚠️ RLS atau tabel error, mencoba metode alternatif...');
+                    // Coba langsung insert dengan auth_id
+                    return await this.createUserDirect(authUser);
                 }
                 throw findError;
             }
@@ -306,13 +307,27 @@ class CustomUserManager {
                 return this.customUser;
             }
 
-            // Buat baru - coba dengan 3 metode berbeda
-            let newUser = null;
+            // Jika belum ada, buat baru
+            return await this.createUserDirect(authUser);
+
+        } catch (e) {
+            console.error('❌ Setup custom user error:', e);
             
-            // Metode 1: Insert langsung
+            // Jika masih error karena RLS, coba pakai Supabase REST API
+            if (e.code === '42501' || e.message.includes('row-level security')) {
+                return await this.createUserViaRest(authUser);
+            }
+            
+            return null;
+        }
+    }
+
+    async createUserDirect(authUser) {
+        try {
             const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
             const displayName = authUser.user_metadata?.full_name || username;
             
+            // Coba insert langsung
             const { data: inserted, error: insertError } = await this.sb
                 .from('users')
                 .insert({
@@ -324,87 +339,115 @@ class CustomUserManager {
                 .select()
                 .single();
 
-            if (!insertError && inserted) {
-                newUser = inserted;
-            } else {
-                // Metode 2: Coba pakai upsert
-                console.warn('Insert failed, trying upsert...');
-                const { data: upserted, error: upsertError } = await this.sb
-                    .from('users')
-                    .upsert({
-                        auth_id: authUser.id,
-                        email: authUser.email,
-                        username: username,
-                        display_name: displayName
-                    })
-                    .select()
-                    .single();
-
-                if (!upsertError && upserted) {
-                    newUser = upserted;
-                } else {
-                    // Metode 3: Coba ambil lagi (mungkin trigger sudah membuat)
-                    const { data: retry, error: retryError } = await this.sb
+            if (insertError) {
+                // Jika error karena unique constraint, coba ambil lagi
+                if (insertError.code === '23505') {
+                    const { data: retry } = await this.sb
                         .from('users')
                         .select('*')
                         .eq('auth_id', authUser.id)
                         .maybeSingle();
-
+                    
                     if (retry) {
-                        newUser = retry;
-                    } else {
-                        throw new Error('Gagal membuat custom user: ' + (upsertError?.message || 'Unknown error'));
+                        this.customUser = retry;
+                        this.authUser = authUser;
+                        console.log(`✅ Custom user found: ID ${this.customUser.id}`);
+                        return this.customUser;
                     }
                 }
+                throw insertError;
             }
 
-            if (newUser) {
-                this.customUser = newUser;
+            if (inserted) {
+                this.customUser = inserted;
                 this.authUser = authUser;
                 console.log(`✅ Custom user created: ID ${this.customUser.id} - ${this.customUser.username}`);
                 return this.customUser;
             }
 
             throw new Error('Gagal membuat custom user');
-
-        } catch (e) {
-            console.error('❌ Setup custom user error:', e);
-            
-            // Jika error karena tabel tidak ada, tampilkan pesan setup
-            if (e.code === '42P01') {
-                showToast('⚠️ Tabel users belum dibuat! Jalankan setup database.');
-            }
-            return null;
+        } catch(e) {
+            console.error('❌ Create user direct error:', e);
+            throw e;
         }
     }
 
-    async createUsersTable() {
+    async createUserViaRest(authUser) {
         try {
-            const sql = `
-                CREATE TABLE IF NOT EXISTS public.users (
-                    id SERIAL PRIMARY KEY,
-                    auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    username VARCHAR(50) UNIQUE,
-                    display_name VARCHAR(100),
-                    avatar_url TEXT,
-                    created_at TIMESTAMP DEFAULT NOW(),
-                    updated_at TIMESTAMP DEFAULT NOW()
-                );
-                CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
-                CREATE INDEX IF NOT EXISTS idx_users_username ON public.users(username);
+            console.log('🔄 Mencoba via REST API...');
+            
+            const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+            
+            const response = await fetch(`${this.sb.supabaseUrl}/rest/v1/users`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': this.sb.supabaseKey,
+                    'Authorization': `Bearer ${this.sb.supabaseKey}`,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    auth_id: authUser.id,
+                    email: authUser.email,
+                    username: username,
+                    display_name: authUser.user_metadata?.full_name || username
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                // Coba cek apakah user sudah ada
+                const checkResponse = await fetch(`${this.sb.supabaseUrl}/rest/v1/users?auth_id=eq.${authUser.id}`, {
+                    headers: {
+                        'apikey': this.sb.supabaseKey,
+                        'Authorization': `Bearer ${this.sb.supabaseKey}`
+                    }
+                });
                 
-                ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
-            `;
-            
-            const { error } = await this.sb.rpc('exec_sql', { query: sql });
-            if (error) throw error;
-            
-            console.log('✅ Users table created!');
-            return true;
+                if (checkResponse.ok) {
+                    const data = await checkResponse.json();
+                    if (data && data.length > 0) {
+                        this.customUser = data[0];
+                        this.authUser = authUser;
+                        console.log(`✅ Custom user found via REST: ID ${this.customUser.id}`);
+                        return this.customUser;
+                    }
+                }
+                
+                throw new Error(`REST API error: ${errorText}`);
+            }
+
+            const data = await response.json();
+            if (data && data.length > 0) {
+                this.customUser = data[0];
+                this.authUser = authUser;
+                console.log(`✅ Custom user created via REST: ID ${this.customUser.id}`);
+                return this.customUser;
+            }
+
+            throw new Error('Gagal membuat user via REST');
         } catch(e) {
-            console.error('❌ Failed to create users table:', e);
-            return false;
+            console.error('❌ Create user via REST error:', e);
+            
+            // Last resort: coba ambil user yang sudah ada
+            try {
+                const { data: existing } = await this.sb
+                    .from('users')
+                    .select('*')
+                    .eq('auth_id', authUser.id)
+                    .maybeSingle();
+                
+                if (existing) {
+                    this.customUser = existing;
+                    this.authUser = authUser;
+                    console.log(`✅ Custom user found (last resort): ID ${this.customUser.id}`);
+                    return this.customUser;
+                }
+            } catch(lastError) {
+                console.error('❌ Last resort error:', lastError);
+            }
+            
+            return null;
         }
     }
 
@@ -412,7 +455,7 @@ class CustomUserManager {
         if (!this.customUser) {
             await this.setupCustomUser(this.authUser);
         }
-        return this.customUser?.id; // Angka: 1, 2, 3, ...
+        return this.customUser?.id;
     }
 
     async getUsername() {
@@ -2773,10 +2816,30 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    // Setup custom user
-    currentCustomUser = await userManager.setupCustomUser(user);
-    if (!currentCustomUser) {
-        showToast("⚠️ Gagal setup custom user. Coba refresh.");
+    // Setup custom user dengan retry
+    let retryCount = 0;
+    let customUser = null;
+    
+    while (retryCount < 3 && !customUser) {
+        customUser = await userManager.setupCustomUser(user);
+        if (!customUser) {
+            retryCount++;
+            console.log(`⏳ Retry ${retryCount}/3...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+    
+    if (!customUser) {
+        showToast("⚠️ Gagal setup user. Coba refresh halaman.");
+        // Coba pakai fallback: buat user dengan ID dari auth
+        currentCustomUser = {
+            id: user.id, // fallback ke auth ID
+            username: user.email.split('@')[0],
+            email: user.email,
+            auth_id: user.id
+        };
+    } else {
+        currentCustomUser = customUser;
     }
     
     await loadAllData();
