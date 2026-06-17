@@ -265,7 +265,7 @@ let navigationHistory = [];
 let appReady = false;
 
 // ============================================
-// CUSTOM USER MANAGER - FIX VERSION
+// CUSTOM USER MANAGER - DENGAN USER_CODE
 // ============================================
 class CustomUserManager {
     constructor(supabaseClient) {
@@ -291,10 +291,8 @@ class CustomUserManager {
                 .maybeSingle();
 
             if (findError) {
-                // Jika error karena RLS atau tabel tidak ada
                 if (findError.code === '42501' || findError.code === '42P01') {
-                    console.warn('⚠️ RLS atau tabel error, mencoba metode alternatif...');
-                    // Coba langsung insert dengan auth_id
+                    console.warn('⚠️ Error, mencoba metode alternatif...');
                     return await this.createUserDirect(authUser);
                 }
                 throw findError;
@@ -303,21 +301,17 @@ class CustomUserManager {
             if (existing) {
                 this.customUser = existing;
                 this.authUser = authUser;
-                console.log(`✅ Custom user loaded: ID ${this.customUser.id} - ${this.customUser.username}`);
+                console.log(`✅ Custom user loaded: ${existing.user_code} (ID: ${existing.id})`);
                 return this.customUser;
             }
 
-            // Jika belum ada, buat baru
             return await this.createUserDirect(authUser);
 
         } catch (e) {
             console.error('❌ Setup custom user error:', e);
-            
-            // Jika masih error karena RLS, coba pakai Supabase REST API
             if (e.code === '42501' || e.message.includes('row-level security')) {
                 return await this.createUserViaRest(authUser);
             }
-            
             return null;
         }
     }
@@ -327,7 +321,7 @@ class CustomUserManager {
             const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
             const displayName = authUser.user_metadata?.full_name || username;
             
-            // Coba insert langsung
+            // Insert tanpa user_code (trigger akan mengisi otomatis)
             const { data: inserted, error: insertError } = await this.sb
                 .from('users')
                 .insert({
@@ -340,7 +334,6 @@ class CustomUserManager {
                 .single();
 
             if (insertError) {
-                // Jika error karena unique constraint, coba ambil lagi
                 if (insertError.code === '23505') {
                     const { data: retry } = await this.sb
                         .from('users')
@@ -351,7 +344,7 @@ class CustomUserManager {
                     if (retry) {
                         this.customUser = retry;
                         this.authUser = authUser;
-                        console.log(`✅ Custom user found: ID ${this.customUser.id}`);
+                        console.log(`✅ Custom user found: ${retry.user_code}`);
                         return this.customUser;
                     }
                 }
@@ -361,7 +354,7 @@ class CustomUserManager {
             if (inserted) {
                 this.customUser = inserted;
                 this.authUser = authUser;
-                console.log(`✅ Custom user created: ID ${this.customUser.id} - ${this.customUser.username}`);
+                console.log(`✅ Custom user created: ${inserted.user_code} (ID: ${inserted.id})`);
                 return this.customUser;
             }
 
@@ -396,7 +389,6 @@ class CustomUserManager {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                // Coba cek apakah user sudah ada
                 const checkResponse = await fetch(`${this.sb.supabaseUrl}/rest/v1/users?auth_id=eq.${authUser.id}`, {
                     headers: {
                         'apikey': this.sb.supabaseKey,
@@ -409,7 +401,7 @@ class CustomUserManager {
                     if (data && data.length > 0) {
                         this.customUser = data[0];
                         this.authUser = authUser;
-                        console.log(`✅ Custom user found via REST: ID ${this.customUser.id}`);
+                        console.log(`✅ Custom user found via REST: ${data[0].user_code}`);
                         return this.customUser;
                     }
                 }
@@ -421,7 +413,7 @@ class CustomUserManager {
             if (data && data.length > 0) {
                 this.customUser = data[0];
                 this.authUser = authUser;
-                console.log(`✅ Custom user created via REST: ID ${this.customUser.id}`);
+                console.log(`✅ Custom user created via REST: ${data[0].user_code}`);
                 return this.customUser;
             }
 
@@ -429,7 +421,6 @@ class CustomUserManager {
         } catch(e) {
             console.error('❌ Create user via REST error:', e);
             
-            // Last resort: coba ambil user yang sudah ada
             try {
                 const { data: existing } = await this.sb
                     .from('users')
@@ -440,7 +431,7 @@ class CustomUserManager {
                 if (existing) {
                     this.customUser = existing;
                     this.authUser = authUser;
-                    console.log(`✅ Custom user found (last resort): ID ${this.customUser.id}`);
+                    console.log(`✅ Custom user found (last resort): ${existing.user_code}`);
                     return this.customUser;
                 }
             } catch(lastError) {
@@ -456,6 +447,13 @@ class CustomUserManager {
             await this.setupCustomUser(this.authUser);
         }
         return this.customUser?.id;
+    }
+
+    async getUserCode() {
+        if (!this.customUser) {
+            await this.setupCustomUser(this.authUser);
+        }
+        return this.customUser?.user_code || 'USR-???';
     }
 
     async getUsername() {
@@ -496,20 +494,46 @@ class CustomUserManager {
         }
     }
 
-    async getUsersByIds(userIds) {
-        if (!userIds || userIds.length === 0) return [];
+    async getUserByCode(userCode) {
+        if (!userCode) return null;
         try {
             const { data, error } = await this.sb
                 .from('users')
                 .select('*')
-                .in('id', userIds);
+                .eq('user_code', userCode)
+                .maybeSingle();
             
             if (error) throw error;
-            return data || [];
+            return data;
         } catch(e) {
-            console.error('Get users by IDs error:', e);
-            return [];
+            console.error('Get user by code error:', e);
+            return null;
         }
+    }
+
+    async updateProfile(data) {
+        if (!this.customUser) {
+            await this.setupCustomUser(this.authUser);
+        }
+        
+        const { error } = await this.sb
+            .from('users')
+            .update({
+                ...data,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', this.customUser.id);
+
+        if (error) throw error;
+        
+        const { data: updated } = await this.sb
+            .from('users')
+            .select('*')
+            .eq('id', this.customUser.id)
+            .single();
+        
+        this.customUser = updated;
+        return this.customUser;
     }
 }
 
@@ -2469,9 +2493,16 @@ async function renderLaporan() {
 async function renderSettings() {
     await loadFamilyData();
     
+    // Ambil data user
+    const userData = await userManager.getUserData();
+    const userCode = userData?.user_code || 'USR-???';
+    const userId = userData?.id || '?';
+    const username = userData?.username || 'User';
+    const email = userData?.email || currentUser?.email || '-';
+    
     let html = `
         <div class="header">
-            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${username} ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="backFromSettingsBtn" class="icon-btn" style="font-size:20px;">←</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
@@ -2479,6 +2510,39 @@ async function renderSettings() {
         </div>
         ${renderRunningText()}
         
+        <!-- ====== PROFIL USER ====== -->
+        <div class="card">
+            <div class="card-title">👤 Profil Saya</div>
+            <div style="display: grid; gap: 12px; padding: 8px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-secondary);">🆔 Kode User</span>
+                    <span style="font-weight: 700; font-size: 18px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 4px 16px; border-radius: 20px;">
+                        ${userCode}
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-secondary);">📧 Email</span>
+                    <span style="font-weight: 500;">${escapeHtml(email)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-secondary);">👤 Username</span>
+                    <span style="font-weight: 500;">${escapeHtml(username)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--text-secondary);">🆔 ID (Internal)</span>
+                    <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userId}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                    <span style="color: var(--text-secondary);">📅 Bergabung</span>
+                    <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userData?.created_at ? formatDate(userData.created_at) : '-'}</span>
+                </div>
+            </div>
+            <button id="editProfileBtn" class="modal-btn modal-btn-secondary" style="margin-top: 12px;">
+                ✏️ Edit Profil
+            </button>
+        </div>
+        
+        <!-- ====== KELUARGA ====== -->
         <div class="card">
             <div class="card-title">👨‍👩‍👧‍👦 Keluarga</div>
             ${currentFamilyId ? `
@@ -2493,11 +2557,14 @@ async function renderSettings() {
                     </div>
                     <div style="margin-top:8px; max-height:150px; overflow-y:auto;">
                         ${familyMembers.map(m => {
-                            const userName = m.users?.username || m.users?.display_name || `User ${m.user_id}`;
+                            const memberName = m.users?.username || m.users?.display_name || `User ${m.user_id}`;
+                            const memberCode = m.users?.user_code || '???';
                             return `
                             <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-color);">
-                                <span>${m.user_id === currentCustomUser?.id ? '👤' : '👥'} ${escapeHtml(userName)} (ID: ${m.user_id})</span>
-                                <span style="font-size:11px; color:var(--text-secondary);">${m.role === 'owner' ? '👑 Owner' : '👤 Anggota'}</span>
+                                <span>${m.user_id === currentCustomUser?.id ? '👤' : '👥'} ${escapeHtml(memberName)}</span>
+                                <span style="font-size:11px; color:var(--text-secondary);">
+                                    ${memberCode} ${m.role === 'owner' ? '👑' : ''}
+                                </span>
                             </div>
                         `}).join('')}
                     </div>
@@ -2517,13 +2584,11 @@ async function renderSettings() {
                         <input type="text" id="joinFamilyInput" placeholder="ID Keluarga" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
                         <button id="joinFamilyBtn" style="background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Gabung</button>
                     </div>
-                    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary);">
-                        💡 Bagikan ID Keluarga ke anggota lain agar bisa bergabung
-                    </div>
                 </div>
             `}
         </div>
         
+        <!-- ====== TEMA ====== -->
         <div class="card">
             <div class="card-title">🎨 Tampilan</div>
             <div class="theme-toggle" id="themeToggle">
@@ -2535,6 +2600,7 @@ async function renderSettings() {
             </div>
         </div>
         
+        <!-- ====== PASSWORD ====== -->
         <div class="card">
             <div class="card-title">🔐 Ubah Password</div>
             <div class="password-wrapper"><input type="password" id="oldPass" placeholder="Password Lama" class="modal-input"><button class="toggle-password" data-target="oldPass">👁️</button></div>
@@ -2543,6 +2609,7 @@ async function renderSettings() {
             <button id="changePassBtn" class="modal-btn modal-btn-primary">Update Password</button>
         </div>
     `;
+    
     document.getElementById("appContainer").innerHTML = html;
     
     // === EVENT LISTENERS ===
