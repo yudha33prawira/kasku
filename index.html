@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
+        /* ... CSS SAMA SEPERTI SEBELUMNYA ... */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root {
@@ -205,6 +206,7 @@
         .shared-owner-badge { background: #f59e0b; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
         .family-member-badge { background: #3b82f6; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
         .family-owner-badge { background: #8b5cf6; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
+        .custom-id-badge { background: #10b981; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
     </style>
 </head>
 <body>
@@ -243,6 +245,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 let sb = null;
 let currentUser = null;
+let currentCustomUser = null; // <-- CUSTOM USER (dengan ID angka)
 let categories = [];
 let transactions = [];
 let debts = [];
@@ -262,7 +265,218 @@ let navigationHistory = [];
 let appReady = false;
 
 // ============================================
-// FAMILY SYSTEM
+// CUSTOM USER MANAGER
+// ============================================
+class CustomUserManager {
+    constructor(supabaseClient) {
+        this.sb = supabaseClient;
+        this.authUser = null;
+        this.customUser = null;
+    }
+
+    async setupCustomUser(authUser) {
+        if (!authUser) {
+            console.error('❌ Auth user required');
+            return null;
+        }
+
+        try {
+            // Cek existing di tabel users
+            const { data: existing, error: findError } = await this.sb
+                .from('users')
+                .select('*')
+                .eq('auth_id', authUser.id)
+                .maybeSingle();
+
+            if (findError) {
+                // Jika tabel belum ada, buat otomatis
+                if (findError.code === '42P01') {
+                    console.warn('⚠️ Tabel users belum ada, mencoba membuat...');
+                    await this.createUsersTable();
+                    // Coba lagi
+                    return await this.setupCustomUser(authUser);
+                }
+                throw findError;
+            }
+
+            if (existing) {
+                this.customUser = existing;
+                this.authUser = authUser;
+                console.log(`✅ Custom user loaded: ID ${this.customUser.id} - ${this.customUser.username}`);
+                return this.customUser;
+            }
+
+            // Buat baru - coba dengan 3 metode berbeda
+            let newUser = null;
+            
+            // Metode 1: Insert langsung
+            const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+            const displayName = authUser.user_metadata?.full_name || username;
+            
+            const { data: inserted, error: insertError } = await this.sb
+                .from('users')
+                .insert({
+                    auth_id: authUser.id,
+                    email: authUser.email,
+                    username: username,
+                    display_name: displayName
+                })
+                .select()
+                .single();
+
+            if (!insertError && inserted) {
+                newUser = inserted;
+            } else {
+                // Metode 2: Coba pakai upsert
+                console.warn('Insert failed, trying upsert...');
+                const { data: upserted, error: upsertError } = await this.sb
+                    .from('users')
+                    .upsert({
+                        auth_id: authUser.id,
+                        email: authUser.email,
+                        username: username,
+                        display_name: displayName
+                    })
+                    .select()
+                    .single();
+
+                if (!upsertError && upserted) {
+                    newUser = upserted;
+                } else {
+                    // Metode 3: Coba ambil lagi (mungkin trigger sudah membuat)
+                    const { data: retry, error: retryError } = await this.sb
+                        .from('users')
+                        .select('*')
+                        .eq('auth_id', authUser.id)
+                        .maybeSingle();
+
+                    if (retry) {
+                        newUser = retry;
+                    } else {
+                        throw new Error('Gagal membuat custom user: ' + (upsertError?.message || 'Unknown error'));
+                    }
+                }
+            }
+
+            if (newUser) {
+                this.customUser = newUser;
+                this.authUser = authUser;
+                console.log(`✅ Custom user created: ID ${this.customUser.id} - ${this.customUser.username}`);
+                return this.customUser;
+            }
+
+            throw new Error('Gagal membuat custom user');
+
+        } catch (e) {
+            console.error('❌ Setup custom user error:', e);
+            
+            // Jika error karena tabel tidak ada, tampilkan pesan setup
+            if (e.code === '42P01') {
+                showToast('⚠️ Tabel users belum dibuat! Jalankan setup database.');
+            }
+            return null;
+        }
+    }
+
+    async createUsersTable() {
+        try {
+            const sql = `
+                CREATE TABLE IF NOT EXISTS public.users (
+                    id SERIAL PRIMARY KEY,
+                    auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    username VARCHAR(50) UNIQUE,
+                    display_name VARCHAR(100),
+                    avatar_url TEXT,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
+                CREATE INDEX IF NOT EXISTS idx_users_username ON public.users(username);
+                
+                ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
+            `;
+            
+            const { error } = await this.sb.rpc('exec_sql', { query: sql });
+            if (error) throw error;
+            
+            console.log('✅ Users table created!');
+            return true;
+        } catch(e) {
+            console.error('❌ Failed to create users table:', e);
+            return false;
+        }
+    }
+
+    async getUserId() {
+        if (!this.customUser) {
+            await this.setupCustomUser(this.authUser);
+        }
+        return this.customUser?.id; // Angka: 1, 2, 3, ...
+    }
+
+    async getUsername() {
+        if (!this.customUser) {
+            await this.setupCustomUser(this.authUser);
+        }
+        return this.customUser?.username || 'User';
+    }
+
+    async getDisplayName() {
+        if (!this.customUser) {
+            await this.setupCustomUser(this.authUser);
+        }
+        return this.customUser?.display_name || this.customUser?.username || 'User';
+    }
+
+    async getUserData() {
+        if (!this.customUser) {
+            await this.setupCustomUser(this.authUser);
+        }
+        return this.customUser;
+    }
+
+    async getUserById(userId) {
+        if (!userId) return null;
+        try {
+            const { data, error } = await this.sb
+                .from('users')
+                .select('*')
+                .eq('id', userId)
+                .maybeSingle();
+            
+            if (error) throw error;
+            return data;
+        } catch(e) {
+            console.error('Get user by ID error:', e);
+            return null;
+        }
+    }
+
+    async getUsersByIds(userIds) {
+        if (!userIds || userIds.length === 0) return [];
+        try {
+            const { data, error } = await this.sb
+                .from('users')
+                .select('*')
+                .in('id', userIds);
+            
+            if (error) throw error;
+            return data || [];
+        } catch(e) {
+            console.error('Get users by IDs error:', e);
+            return [];
+        }
+    }
+}
+
+// ============================================
+// INISIALISASI CUSTOM USER
+// ============================================
+const userManager = new CustomUserManager(null);
+
+// ============================================
+// FAMILY SYSTEM (dengan Custom ID)
 // ============================================
 let currentFamilyId = null;
 let familyMembers = [];
@@ -270,12 +484,18 @@ let familyInfo = null;
 
 async function createFamily(familyName) {
     if (!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) {
+        showToast("❌ User ID tidak ditemukan");
+        return;
+    }
+    
     try {
         const { data: family, error } = await sb
             .from("families")
             .insert({ 
                 name: familyName, 
-                created_by: currentUser.id 
+                created_by: userId  // ← Custom ID (angka)
             })
             .select()
             .single();
@@ -284,7 +504,7 @@ async function createFamily(familyName) {
         
         await sb.from("family_members").insert({
             family_id: family.id,
-            user_id: currentUser.id,
+            user_id: userId,  // ← Custom ID (angka)
             role: 'owner'
         });
         
@@ -300,8 +520,13 @@ async function createFamily(familyName) {
 
 async function joinFamily(familyId) {
     if (!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) {
+        showToast("❌ User ID tidak ditemukan");
+        return;
+    }
+    
     try {
-        // Cek apakah keluarga ada
         const { data: family, error: famError } = await sb
             .from("families")
             .select("*")
@@ -310,19 +535,18 @@ async function joinFamily(familyId) {
         
         if (famError || !family) throw new Error("Keluarga tidak ditemukan");
         
-        // Cek apakah sudah jadi anggota
         const { data: existing, error: existError } = await sb
             .from("family_members")
             .select("*")
             .eq("family_id", familyId)
-            .eq("user_id", currentUser.id)
+            .eq("user_id", userId)
             .maybeSingle();
         
         if (existing) throw new Error("Anda sudah menjadi anggota keluarga ini");
         
         await sb.from("family_members").insert({
             family_id: familyId,
-            user_id: currentUser.id,
+            user_id: userId,
             role: 'member'
         });
         
@@ -338,12 +562,14 @@ async function joinFamily(familyId) {
 
 async function loadFamilyData() {
     if (!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
-        // Cek apakah user sudah punya keluarga
         const { data: familyMember, error: fmError } = await sb
             .from("family_members")
             .select("family_id")
-            .eq("user_id", currentUser.id)
+            .eq("user_id", userId)
             .maybeSingle();
         
         if (fmError) throw fmError;
@@ -351,7 +577,6 @@ async function loadFamilyData() {
         if (familyMember) {
             currentFamilyId = familyMember.family_id;
             
-            // Load family info
             const { data: family, error: fError } = await sb
                 .from("families")
                 .select("*")
@@ -361,10 +586,9 @@ async function loadFamilyData() {
             if (fError) throw fError;
             familyInfo = family;
             
-            // Load members
             const { data: members, error: mError } = await sb
                 .from("family_members")
-                .select("*, users!user_id(email)")
+                .select("*, users!user_id(*)")
                 .eq("family_id", currentFamilyId);
             
             if (mError) throw mError;
@@ -393,9 +617,19 @@ function isFamilyMember(userId) {
     return getFamilyMemberIds().includes(userId);
 }
 
-function getUserEmail(userId) {
+async function getUserEmail(userId) {
     const member = familyMembers.find(m => m.user_id === userId);
-    return member?.users?.email || userId.slice(0,8);
+    if (member?.users) return member.users.email || member.users.username || `User ${userId}`;
+    
+    // Coba ambil dari database
+    const user = await userManager.getUserById(userId);
+    return user?.email || user?.username || `User ${userId}`;
+}
+
+async function getUserDisplay(userId) {
+    if (userId === currentCustomUser?.id) return '👤 Saya';
+    const user = await userManager.getUserById(userId);
+    return user?.username || user?.display_name || `User ${userId}`;
 }
 
 function getUserRole(userId) {
@@ -404,7 +638,7 @@ function getUserRole(userId) {
 }
 
 function getFamilyBadge(userId) {
-    if (userId === currentUser?.id) return '';
+    if (userId === currentCustomUser?.id) return '';
     const role = getUserRole(userId);
     if (role === 'owner') {
         return `<span class="family-owner-badge">👑 Owner</span>`;
@@ -417,19 +651,21 @@ function getFamilyBadge(userId) {
 // ============================================
 async function loadCategories() { 
     if(!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         let query = sb.from("categories").select("*");
         
         if (currentFamilyId) {
-            // Ambil kategori dari semua anggota keluarga
             const memberIds = getFamilyMemberIds();
             if (memberIds.length > 0) {
                 query = query.in("user_id", memberIds);
             } else {
-                query = query.eq("user_id", currentUser.id);
+                query = query.eq("user_id", userId);
             }
         } else {
-            query = query.eq("user_id", currentUser.id);
+            query = query.eq("user_id", userId);
         }
         
         const { data, error } = await query;
@@ -444,6 +680,9 @@ async function loadCategories() {
 
 async function loadTransactions() { 
     if(!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         let query = sb.from("transactions").select("*");
         
@@ -452,10 +691,10 @@ async function loadTransactions() {
             if (memberIds.length > 0) {
                 query = query.in("user_id", memberIds);
             } else {
-                query = query.eq("user_id", currentUser.id);
+                query = query.eq("user_id", userId);
             }
         } else {
-            query = query.eq("user_id", currentUser.id);
+            query = query.eq("user_id", userId);
         }
         
         const { data, error } = await query;
@@ -472,6 +711,9 @@ async function loadTransactions() {
 
 async function loadDebts() { 
     if(!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         let query = sb.from("debts").select("*");
         
@@ -480,10 +722,10 @@ async function loadDebts() {
             if (memberIds.length > 0) {
                 query = query.in("user_id", memberIds);
             } else {
-                query = query.eq("user_id", currentUser.id);
+                query = query.eq("user_id", userId);
             }
         } else {
-            query = query.eq("user_id", currentUser.id);
+            query = query.eq("user_id", userId);
         }
         
         const { data, error } = await query;
@@ -495,12 +737,15 @@ async function loadDebts() {
 
 async function loadSavings() { 
     if(!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         // Tabungan TETAP PRIVAT - hanya milik sendiri
         const {data, error} = await sb
             .from("savings")
             .select("*")
-            .eq("user_id", currentUser.id); 
+            .eq("user_id", userId); 
         savings = data || [];
         console.log("Savings loaded (private):", savings.length);
     } catch(e) { 
@@ -511,6 +756,9 @@ async function loadSavings() {
 
 async function loadReminders() { 
     if(!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         let query = sb.from("reminders").select("*");
         
@@ -519,10 +767,10 @@ async function loadReminders() {
             if (memberIds.length > 0) {
                 query = query.in("user_id", memberIds);
             } else {
-                query = query.eq("user_id", currentUser.id);
+                query = query.eq("user_id", userId);
             }
         } else {
-            query = query.eq("user_id", currentUser.id);
+            query = query.eq("user_id", userId);
         }
         
         const { data, error } = await query;
@@ -534,6 +782,9 @@ async function loadReminders() {
 
 async function loadTasks() { 
     if(!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         let query = sb.from("tasks").select("*");
         
@@ -542,10 +793,10 @@ async function loadTasks() {
             if (memberIds.length > 0) {
                 query = query.in("user_id", memberIds);
             } else {
-                query = query.eq("user_id", currentUser.id);
+                query = query.eq("user_id", userId);
             }
         } else {
-            query = query.eq("user_id", currentUser.id);
+            query = query.eq("user_id", userId);
         }
         
         const { data, error } = await query;
@@ -571,6 +822,7 @@ async function loadAllData() {
 function initSupabase() {
     if (typeof supabase !== 'undefined') {
         sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        userManager.sb = sb;
         console.log("Supabase initialized");
         return true;
     }
@@ -745,8 +997,11 @@ function applyTheme(isDark) {
 
 async function loadThemeFromDatabase() {
     if (!currentUser) return null;
+    const userId = await userManager.getUserId();
+    if (!userId) return null;
+    
     try {
-        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", currentUser.id).maybeSingle();
+        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", userId).maybeSingle();
         if (error) throw error;
         if (data && data.dark_mode !== undefined) {
             return data.dark_mode;
@@ -760,9 +1015,12 @@ async function loadThemeFromDatabase() {
 
 async function saveThemeToDatabase(isDark) {
     if (!currentUser) return;
+    const userId = await userManager.getUserId();
+    if (!userId) return;
+    
     try {
         const { error } = await sb.from("user_settings").upsert({ 
-            user_id: currentUser.id, 
+            user_id: userId, 
             dark_mode: isDark
         });
         if (error) throw error;
@@ -801,6 +1059,9 @@ async function toggleTheme() {
 // ============================================
 async function createRecurringTransaction(originalTransaction, monthsAhead = 12) {
     if (!currentUser) return 0;
+    const userId = await userManager.getUserId();
+    if (!userId) return 0;
+    
     let createdCount = 0;
     const originalDate = new Date(originalTransaction.created_at);
     const startDate = new Date(originalDate);
@@ -818,7 +1079,7 @@ async function createRecurringTransaction(originalTransaction, monthsAhead = 12)
         const key = `${originalTransaction.description}_${nextDate.getFullYear()}_${nextDate.getMonth()}`;
         if (!existingKeys.has(key)) {
             const insertData = {
-                user_id: currentUser.id,
+                user_id: userId, // ← Custom ID (angka)
                 description: originalTransaction.description + " (Ulang)",
                 amount: originalTransaction.amount,
                 type: originalTransaction.type,
@@ -915,9 +1176,9 @@ function showRemindersPopup() {
 }
 
 // ============================================
-// SHOW DEBT GROUP DETAIL
+// SHOW DEBT GROUP DETAIL (dengan Custom ID)
 // ============================================
-function showDebtGroupDetail(contactName, debtsList) {
+async function showDebtGroupDetail(contactName, debtsList) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     let totalPiutang = 0, totalHutang = 0;
     for (const d of debtsList) {
@@ -927,24 +1188,35 @@ function showDebtGroupDetail(contactName, debtsList) {
         }
     }
     
+    // Ambil info user untuk semua debt
+    const userIds = [...new Set(debtsList.map(d => d.user_id))];
+    const userMap = {};
+    for (const uid of userIds) {
+        const user = await userManager.getUserById(uid);
+        if (user) userMap[uid] = user;
+    }
+    
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail ${escapeHtml(contactName)}</div>
             <div class="detail-row"><span class="detail-label">Total Piutang</span><span class="detail-value" style="color:#10b981">Rp ${formatRupiah(totalPiutang)}</span></div>
             <div class="detail-row"><span class="detail-label">Total Hutang</span><span class="detail-value" style="color:#ef4444">Rp ${formatRupiah(totalHutang)}</span></div>
             <div style="margin-top:16px; max-height:300px; overflow-y:auto;">
-                ${debtsList.map(d => `
+                ${debtsList.map(d => {
+                    const user = userMap[d.user_id];
+                    const userName = user?.username || user?.display_name || `User ${d.user_id}`;
+                    return `
                     <div class="debt-group-item" style="cursor:pointer;" data-id="${d.id}">
                         <div>
                             <span style="font-weight:500;">${d.type === 'piutang' ? '💰' : '💸'} ${d.type === 'piutang' ? 'Piutang' : 'Hutang'}</span>
                             <span style="font-size:12px; color:var(--text-secondary); margin-left:8px;">${formatDate(d.created_at)}</span>
                             <div style="font-size:12px; color:${d.status === 'lunas' ? '#10b981' : '#ef4444'}">${d.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</div>
                             ${d.due_date ? `<div style="font-size:12px; color:var(--text-secondary)">Jatuh tempo: ${formatDate(d.due_date)}</div>` : ''}
-                            ${d.user_id !== currentUser.id ? `<div style="font-size:10px; color:#f59e0b;">👤 ${getUserEmail(d.user_id)} ${getFamilyBadge(d.user_id)}</div>` : ''}
+                            ${d.user_id !== currentCustomUser?.id ? `<div style="font-size:10px; color:#f59e0b;">👤 ${escapeHtml(userName)} ${getFamilyBadge(d.user_id)}</div>` : ''}
                         </div>
                         <div style="font-weight:600; color:${d.type === 'piutang' ? '#10b981' : '#ef4444'}">Rp ${formatRupiah(d.amount)}</div>
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>
             <div class="modal-button-grid">
                 <button id="closeDebtGroupDetail" class="modal-btn modal-btn-secondary modal-btn-full">Tutup</button>
@@ -968,16 +1240,18 @@ function showDebtGroupDetail(contactName, debtsList) {
 }
 
 // ============================================
-// SHOW DEBT DETAIL
+// SHOW DEBT DETAIL (dengan Custom ID)
 // ============================================
 async function showDebtDetail(debt) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    const isShared = debt.user_id !== currentUser.id;
+    const isShared = debt.user_id !== currentCustomUser?.id;
+    const user = isShared ? await userManager.getUserById(debt.user_id) : null;
+    const userName = user?.username || user?.display_name || `User ${debt.user_id}`;
     
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
-            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${getUserEmail(debt.user_id)} ${getFamilyBadge(debt.user_id)}</span></div>` : ''}
+            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${escapeHtml(userName)} ${getFamilyBadge(debt.user_id)}</span></div>` : ''}
             <div class="detail-row"><span class="detail-label">Nama</span><span class="detail-value">${escapeHtml(debt.contact_name)}</span></div>
             <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value">Rp ${formatRupiah(debt.amount)}</span></div>
             <div class="detail-row"><span class="detail-label">Tanggal Dibuat</span><span class="detail-value">${formatDate(debt.created_at)}</span></div>
@@ -1030,12 +1304,14 @@ async function showDebtDetail(debt) {
 }
 
 // ============================================
-// SHOW TRANSACTION DETAIL
+// SHOW TRANSACTION DETAIL (dengan Custom ID)
 // ============================================
 async function showTransactionDetail(transaction) {
     const modal = document.createElement('div'); modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
-    const isShared = transaction.user_id !== currentUser.id;
+    const isShared = transaction.user_id !== currentCustomUser?.id;
+    const user = isShared ? await userManager.getUserById(transaction.user_id) : null;
+    const userName = user?.username || user?.display_name || `User ${transaction.user_id}`;
     
     const catDisplay = cat ? `
         <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${cat.color}; margin-right:8px; vertical-align:middle;"></span>
@@ -1045,7 +1321,7 @@ async function showTransactionDetail(transaction) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail Transaksi</div>
-            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${getUserEmail(transaction.user_id)} ${getFamilyBadge(transaction.user_id)}</span></div>` : ''}
+            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${escapeHtml(userName)} ${getFamilyBadge(transaction.user_id)}</span></div>` : ''}
             <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
             <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div>
             <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
@@ -1080,7 +1356,7 @@ async function showTransactionDetail(transaction) {
 }
 
 // ============================================
-// TRANSACTION MODAL
+// TRANSACTION MODAL (dengan Custom ID)
 // ============================================
 function openTransaksiModal(predefinedType=null, editId=null){
     const isEdit = !!editId;
@@ -1091,7 +1367,7 @@ function openTransaksiModal(predefinedType=null, editId=null){
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit Transaksi' : '✨ Tambah Transaksi'}</div>
-            ${isEdit && tx.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari ${getUserEmail(tx.user_id)}</div>` : ''}
+            ${isEdit && tx.user_id !== currentCustomUser?.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari User ID ${tx.user_id}</div>` : ''}
             <input type="text" id="modalDesk" placeholder="Deskripsi" class="modal-input" value="${isEdit ? escapeHtml(tx.description) : ''}">
             <input type="text" id="modalJum" placeholder="Jumlah" class="modal-input" value="${isEdit ? formatRupiah(tx.amount) : ''}">
             <select id="modalTipe" class="modal-select">
@@ -1101,7 +1377,7 @@ function openTransaksiModal(predefinedType=null, editId=null){
             <input type="date" id="modalTanggal" class="modal-input" value="${isEdit ? formatDateInput(tx.created_at) : today}">
             <select id="modalKat" class="modal-select">
                 <option value="">Pilih Kategori</option>
-                ${categories.filter(c => getFamilyMemberIds().includes(c.user_id) || c.user_id === currentUser.id).map(c=>`<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected':''}>${c.icon} ${c.name} ${c.user_id !== currentUser.id ? '📤' : ''}</option>`).join('')}
+                ${categories.filter(c => getFamilyMemberIds().includes(c.user_id) || c.user_id === currentCustomUser?.id).map(c=>`<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected':''}>${c.icon} ${c.name} ${c.user_id !== currentCustomUser?.id ? '📤' : ''}</option>`).join('')}
             </select>
             <div style="background:#f0f9ff; padding:12px; border-radius:16px; margin:12px 0">
                 <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="modalFixed" ${isEdit && tx.is_fixed_expense ? 'checked':''}> <span>📌 Pengeluaran Tetap</span></label>
@@ -1133,6 +1409,9 @@ function openTransaksiModal(predefinedType=null, editId=null){
         
         if(!desc||!amount) return alert("Isi dengan benar");
         
+        const userId = await userManager.getUserId();
+        if (!userId) return alert("User ID tidak ditemukan");
+        
         const data={
             description:desc,
             amount:amount,
@@ -1152,7 +1431,7 @@ function openTransaksiModal(predefinedType=null, editId=null){
                 renderCurrentView(); 
             }
         } else {
-            data.user_id = currentUser.id;
+            data.user_id = userId; // ← Custom ID (angka)
             const {data: newTransaction, error}=await sb.from("transactions").insert(data).select();
             if(error) alert(error.message);
             else { 
@@ -1173,7 +1452,7 @@ function openTransaksiModal(predefinedType=null, editId=null){
 }
 
 // ============================================
-// CATEGORY MANAGEMENT
+// CATEGORY MANAGEMENT (dengan Custom ID)
 // ============================================
 async function openCategoryManageModal() {
     await loadCategories();
@@ -1189,8 +1468,8 @@ async function openCategoryManageModal() {
     document.body.appendChild(modal);
     
     const categoriesContainer = document.getElementById("categoriesList");
-    const ownCategories = categories.filter(c => c.user_id === currentUser.id);
-    const sharedCategories = categories.filter(c => c.user_id !== currentUser.id && getFamilyMemberIds().includes(c.user_id));
+    const ownCategories = categories.filter(c => c.user_id === currentCustomUser?.id);
+    const sharedCategories = categories.filter(c => c.user_id !== currentCustomUser?.id && getFamilyMemberIds().includes(c.user_id));
     
     if(categories.length === 0) categoriesContainer.innerHTML = '<div class="empty-state">Belum ada kategori</div>';
     else {
@@ -1208,7 +1487,7 @@ async function openCategoryManageModal() {
             html += `<div style="font-size:12px; color:var(--text-secondary); margin-top:16px; margin-bottom:8px;">📤 Kategori dari Anggota Keluarga:</div>`;
             html += sharedCategories.map(c => `
                 <div class="category-item" data-id="${c.id}" style="opacity:0.8; cursor:pointer;">
-                    <div><span style="font-size:22px;">${c.icon}</span><span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span><span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span><span class="family-member-badge">👤 ${getUserEmail(c.user_id)}</span></div>
+                    <div><span style="font-size:22px;">${c.icon}</span><span style="font-weight:600; margin-left:10px;">${escapeHtml(c.name)}</span><span style="font-size:12px; margin-left:8px;">${c.type === 'pemasukan' ? '💵' : '💸'}</span><span class="family-member-badge">👤 User ${c.user_id}</span></div>
                     <div><span style="display:inline-block; width:24px; height:24px; background:${c.color}; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1);"></span></div>
                 </div>
             `).join('');
@@ -1222,7 +1501,7 @@ async function openCategoryManageModal() {
         el.onclick = () => { 
             const id = el.getAttribute("data-id"); 
             const cat = categories.find(c => c.id === id);
-            if (cat && cat.user_id === currentUser.id) {
+            if (cat && cat.user_id === currentCustomUser?.id) {
                 modal.remove(); 
                 openCategoryFormModal(id);
             } else if (cat) {
@@ -1263,11 +1542,14 @@ function openCategoryFormModal(editId=null) {
         
         if (!name) return alert("Nama kategori harus diisi");
         
+        const userId = await userManager.getUserId();
+        if (!userId) return alert("User ID tidak ditemukan");
+        
         if (isEdit) {
             await sb.from("categories").update({ name, icon, type, color }).eq("id", editId);
             showToast("Kategori diupdate");
         } else {
-            await sb.from("categories").insert({ user_id: currentUser.id, name, icon, type, color });
+            await sb.from("categories").insert({ user_id: userId, name, icon, type, color });
             showToast("Kategori ditambahkan");
         }
         modal.remove();
@@ -1316,10 +1598,11 @@ async function renderHome() {
     
     const recent = transactions.slice(0, 5);
     const familyDisplay = currentFamilyId ? `🏠 ${familyInfo?.name || 'Keluarga'} (${familyMembers.length} anggota)` : '👤 Personal';
+    const userDisplay = currentCustomUser ? `${currentCustomUser.username || 'User'} (ID: ${currentCustomUser.id})` : 'Tamu';
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${userDisplay} ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔${overdueCount > 0 ? `<span class="reminder-badge">${overdueCount}</span>` : ''}</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1328,6 +1611,7 @@ async function renderHome() {
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <span style="font-size:12px; color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.1); padding:4px 12px; border-radius:20px;">${familyDisplay}</span>
+            <span style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:10px;">Custom ID: ${currentCustomUser?.id || '-'}</span>
         </div>
         ${renderRunningText()}
         <div class="balance-card">
@@ -1353,16 +1637,20 @@ async function renderHome() {
         </div>
         <div class="card">
             <div class="card-title">📊 Pengeluaran Teratas</div>
-            ${topExpenses.map((t,i)=>`<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}${t.user_id !== currentUser.id ? `<span class="family-member-badge">👤 ${getUserEmail(t.user_id)}</span>` : ''}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
+            ${topExpenses.map((t,i) => {
+                const userName = t.user_id === currentCustomUser?.id ? 'Saya' : `User ${t.user_id}`;
+                return `<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}${t.user_id !== currentCustomUser?.id ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`;
+            }).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
         </div>
         <div class="card">
             <div class="card-title">📋 Transaksi Terbaru (${transactions.length})</div>
             ${recent.map(t=>{
                 const cat = getCategoryById(t.category_id);
                 const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>` : '';
-                const isShared = t.user_id !== currentUser.id;
+                const isShared = t.user_id !== currentCustomUser?.id;
+                const userName = isShared ? `User ${t.user_id}` : 'Saya';
                 return `<div class="transaction-item" data-id="${t.id}">
-                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${getUserEmail(t.user_id)}</span>` : ''}<br><small>${formatDate(t.created_at)}</small></div>
+                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}<br><small>${formatDate(t.created_at)}</small></div>
                     <div style="font-weight:600;color:${t.type==='pemasukan'?'#10b981':'#ef4444'}">${t.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(t.amount)}</div>
                 </div>`;
             }).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
@@ -1408,14 +1696,14 @@ async function renderHome() {
 }
 
 // ============================================
-// RENDER TRANSAKSI
+// RENDER TRANSAKSI (dengan Custom ID)
 // ============================================
 async function renderTransaksi() {
     await loadTransactions();
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1446,12 +1734,13 @@ async function renderTransaksi() {
     else container.innerHTML = data.map(t => {
         const cat = getCategoryById(t.category_id);
         const catDisplay = cat ? `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${cat.color}; margin-right:6px;"></span>${cat.icon} ${cat.name}` : '-';
-        const isShared = t.user_id !== currentUser.id;
+        const isShared = t.user_id !== currentCustomUser?.id;
+        const userName = isShared ? `User ${t.user_id}` : 'Saya';
         
         return `
             <div class="transaction-item" data-id="${t.id}" style="${isShared ? 'border-left:3px solid #8b5cf6;' : ''}">
                 <div style="flex:1">
-                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${getUserEmail(t.user_id)}</span>` : ''}</div>
+                    <div>${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</div>
                     <div style="font-size:11px; margin-top:4px">📅 ${formatDate(t.created_at)}</div>
                     <div style="font-size:11px; margin-top:2px;">${catDisplay}</div>
                 </div>
@@ -1477,7 +1766,7 @@ async function renderTransaksi() {
 }
 
 // ============================================
-// RENDER HUTANG
+// RENDER HUTANG (dengan Custom ID)
 // ============================================
 async function renderHutang() {
     await loadDebts();
@@ -1498,7 +1787,7 @@ async function renderHutang() {
     
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1539,7 +1828,7 @@ async function renderHutang() {
                 }
             }
             const color = total >= 0 ? '#10b981' : '#ef4444';
-            const isShared = items.some(d => d.user_id !== currentUser.id);
+            const isShared = items.some(d => d.user_id !== currentCustomUser?.id);
             
             htmlStr += `
                 <div class="debt-group" data-name="${escapeHtml(name)}" style="${isShared ? 'border-left-color:#8b5cf6;' : ''}">
@@ -1553,7 +1842,7 @@ async function renderHutang() {
                     </div>
                     <div style="margin-top:8px; font-size:12px; color:var(--text-secondary);">
                         ${items.slice(0, 2).map(d => `
-                            <span style="margin-right:12px;">${d.type === 'piutang' ? '💰' : '💸'} ${formatRupiah(d.amount)} ${d.status === 'lunas' ? '✅' : '⏳'}${d.user_id !== currentUser.id ? ` 👤${getUserEmail(d.user_id)}` : ''}</span>
+                            <span style="margin-right:12px;">${d.type === 'piutang' ? '💰' : '💸'} ${formatRupiah(d.amount)} ${d.status === 'lunas' ? '✅' : '⏳'}${d.user_id !== currentCustomUser?.id ? ` 👤User ${d.user_id}` : ''}</span>
                         `).join('')}
                         ${items.length > 2 ? `<span>+${items.length - 2} lainnya</span>` : ''}
                     </div>
@@ -1580,7 +1869,7 @@ function openDebtModal(editId=null){
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '💰 Tambah'} Hutang/Piutang</div>
-            ${isEdit && debt.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari ${getUserEmail(debt.user_id)}</div>` : ''}
+            ${isEdit && debt.user_id !== currentCustomUser?.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari User ${debt.user_id}</div>` : ''}
             <input id="debtName" placeholder="Nama orang" class="modal-input" value="${isEdit ? escapeHtml(debt.contact_name) : ''}">
             <input type="text" id="debtAmount" placeholder="Jumlah" class="modal-input" value="${isEdit ? formatRupiah(debt.amount) : ''}">
             <select id="debtType" class="modal-select">
@@ -1613,6 +1902,9 @@ function openDebtModal(editId=null){
         if(!name||!amount) return alert("Isi dengan benar");
         if (wa) wa = formatWhatsAppNumber(wa);
         
+        const userId = await userManager.getUserId();
+        if (!userId) return alert("User ID tidak ditemukan");
+        
         if (isEdit) {
             const {error}=await sb.from("debts").update({
                 contact_name:name,
@@ -1626,7 +1918,7 @@ function openDebtModal(editId=null){
             else { showToast("✅ Data diupdate"); modal.remove(); await loadDebts(); renderHutang(); }
         } else {
             const {error}=await sb.from("debts").insert({
-                user_id:currentUser.id,
+                user_id:userId, // ← Custom ID (angka)
                 contact_name:name,
                 amount:amount,
                 type:type,
@@ -1656,14 +1948,14 @@ function openDebtModal(editId=null){
 }
 
 // ============================================
-// RENDER TABUNGAN (PRIVAT)
+// RENDER TABUNGAN (PRIVAT) - dengan Custom ID
 // ============================================
 async function renderSavings() {
     await loadSavings();
     
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1734,8 +2026,12 @@ function openSavingsModal(editId=null){
         const target=parseRupiah(document.getElementById("savingsTarget").value);
         const current=parseRupiah(document.getElementById("savingsCurrent").value);
         if(!name) return alert("Nama tabungan harus diisi");
+        
+        const userId = await userManager.getUserId();
+        if (!userId) return alert("User ID tidak ditemukan");
+        
         if(isEdit) await sb.from("savings").update({name,target_amount:target,current_amount:current}).eq("id",editId);
-        else await sb.from("savings").insert({user_id:currentUser.id,name,target_amount:target,current_amount:current});
+        else await sb.from("savings").insert({user_id:userId,name,target_amount:target,current_amount:current});
         showToast(isEdit?"Tabungan diupdate":"Tabungan ditambahkan");
         modal.remove(); await loadSavings(); renderSavings();
     };
@@ -1752,13 +2048,13 @@ function openSavingsModal(editId=null){
 }
 
 // ============================================
-// RENDER REMINDERS
+// RENDER REMINDERS (dengan Custom ID)
 // ============================================
 async function renderReminders() {
     await loadReminders();
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1783,11 +2079,12 @@ async function renderReminders() {
     const container=document.getElementById("remindersList");
     if(!reminders.length) container.innerHTML='<div class="empty-state">Belum ada pengingat</div>';
     else container.innerHTML=reminders.map(r=>{
-        const isShared = r.user_id !== currentUser.id;
+        const isShared = r.user_id !== currentCustomUser?.id;
+        const userName = isShared ? `User ${r.user_id}` : 'Saya';
         return `
             <div class="reminder-item" data-id="${r.id}" style="${isShared ? 'border-left:3px solid #8b5cf6;' : ''}">
                 <div>
-                    <div style="font-weight:600;">${escapeHtml(r.title)}${isShared ? `<span class="family-member-badge">👤 ${getUserEmail(r.user_id)}</span>` : ''}</div>
+                    <div style="font-weight:600;">${escapeHtml(r.title)}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</div>
                     <div style="font-size:12px; margin-top:4px">📅 ${formatDate(r.due_date)} ${r.is_done?'✅ Selesai':''}</div>
                     ${r.description?`<div style="font-size:12px;">${escapeHtml(r.description)}</div>`:''}
                 </div>
@@ -1808,7 +2105,7 @@ function openReminderModal(editId=null){
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">${isEdit?'✏️ Edit Pengingat':'⏰ Tambah Pengingat'}</div>
-            ${isEdit && r.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari ${getUserEmail(r.user_id)}</div>` : ''}
+            ${isEdit && r.user_id !== currentCustomUser?.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari User ${r.user_id}</div>` : ''}
             <input id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit?escapeHtml(r.title):''}">
             <textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit?escapeHtml(r.description||''):''}</textarea>
             <input type="date" id="reminderDue" class="modal-input" value="${isEdit?formatDateInput(r.due_date):''}">
@@ -1830,11 +2127,14 @@ function openReminderModal(editId=null){
         const amount=parseRupiah(document.getElementById("reminderAmount").value);
         if(!title||!due) return alert("Judul dan tanggal harus diisi");
         
+        const userId = await userManager.getUserId();
+        if (!userId) return alert("User ID tidak ditemukan");
+        
         if (isEdit) {
             await sb.from("reminders").update({title,description:desc,due_date:due,amount}).eq("id",editId);
             showToast("Pengingat diupdate");
         } else {
-            await sb.from("reminders").insert({user_id:currentUser.id,title,description:desc,due_date:due,amount});
+            await sb.from("reminders").insert({user_id:userId,title,description:desc,due_date:due,amount});
             showToast("Pengingat ditambahkan");
         }
         modal.remove(); await loadReminders(); renderReminders();
@@ -1852,13 +2152,13 @@ function openReminderModal(editId=null){
 }
 
 // ============================================
-// RENDER TASKS
+// RENDER TASKS (dengan Custom ID)
 // ============================================
 async function renderTasks() {
     await loadTasks();
     let html=`
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -1892,13 +2192,14 @@ async function renderTasks() {
     if(!filtered.length) container.innerHTML='<div class="empty-state">Belum ada tugas</div>';
     else container.innerHTML=filtered.map(t=>{
         const isOverdue = t.due_date && !t.is_completed && new Date(t.due_date) < new Date();
-        const isShared = t.user_id !== currentUser.id;
+        const isShared = t.user_id !== currentCustomUser?.id;
+        const userName = isShared ? `User ${t.user_id}` : 'Saya';
         return `
             <div class="task-item" data-id="${t.id}" style="${isOverdue ? 'background:#fee2e2; border-radius:16px; padding:12px; margin-bottom:8px;' : ''}${isShared ? 'border-left:3px solid #8b5cf6;' : ''}">
                 <div style="display:flex; align-items:center; gap:12px; flex:1">
                     <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''}>
                     <div>
-                        <div class="${t.is_completed?'task-completed':''}" style="font-weight:600;">${escapeHtml(t.title)}${isShared ? `<span class="family-member-badge">👤 ${getUserEmail(t.user_id)}</span>` : ''}</div>
+                        <div class="${t.is_completed?'task-completed':''}" style="font-weight:600;">${escapeHtml(t.title)}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</div>
                         ${t.description?`<div style="font-size:12px; margin-top:4px">📝 ${escapeHtml(t.description)}</div>`:''}
                         <div style="font-size:12px; margin-top:4px">📅 ${t.due_date?formatDate(t.due_date):'Tanpa deadline'} ${isOverdue?'⚠️ Terlewat':''}</div>
                     </div>
@@ -1932,7 +2233,7 @@ function openTaskModal(editId=null){
     modal.innerHTML=`
         <div class="modal-content">
             <div class="modal-title">${isEdit?'✏️ Edit Tugas':'✅ Tambah Tugas'}</div>
-            ${isEdit && t.user_id !== currentUser.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari ${getUserEmail(t.user_id)}</div>` : ''}
+            ${isEdit && t.user_id !== currentCustomUser?.id ? `<div style="text-align:center; margin-bottom:12px; font-size:12px; color:#f59e0b;">✏️ Edit data dari User ${t.user_id}</div>` : ''}
             <input id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit?escapeHtml(t.title):''}">
             <textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit?escapeHtml(t.description||''):''}</textarea>
             <input type="date" id="taskDue" class="modal-input" value="${isEdit?formatDateInput(t.due_date):''}">
@@ -1951,11 +2252,14 @@ function openTaskModal(editId=null){
         const due=document.getElementById("taskDue").value;
         if(!title) return alert("Judul harus diisi");
         
+        const userId = await userManager.getUserId();
+        if (!userId) return alert("User ID tidak ditemukan");
+        
         if (isEdit) {
             await sb.from("tasks").update({title,description:desc,due_date:due||null}).eq("id",editId);
             showToast("Tugas diupdate");
         } else {
-            await sb.from("tasks").insert({user_id:currentUser.id,title,description:desc,due_date:due||null});
+            await sb.from("tasks").insert({user_id:userId,title,description:desc,due_date:due||null});
             showToast("Tugas ditambahkan");
         }
         modal.remove(); await loadTasks(); renderTasks();
@@ -1973,7 +2277,7 @@ function openTaskModal(editId=null){
 }
 
 // ============================================
-// RENDER LAPORAN
+// RENDER LAPORAN (dengan Custom ID)
 // ============================================
 async function renderLaporan() {
     await loadTransactions();
@@ -2009,7 +2313,7 @@ async function renderLaporan() {
     }
     
     let html=`
-        <div class="header"><div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div><div class="header-actions"><button id="reminderBtn" class="icon-btn">🔔</button><button id="openSettingsBtn" class="icon-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
+        <div class="header"><div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div><div class="header-actions"><button id="reminderBtn" class="icon-btn">🔔</button><button id="openSettingsBtn" class="icon-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
         ${renderRunningText()}
         <div class="month-selector"><button id="prevMonth">◀</button><span style="font-weight:600;">${monthNames[currentMonth]} ${currentYear}</span><button id="nextMonth">▶</button></div>
         <div class="balance-card" style="padding:20px; cursor:default"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 ${pemasukan-pengeluaran >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(pemasukan-pengeluaran))}</div></div></div>
@@ -2067,10 +2371,11 @@ async function renderLaporan() {
         for (const i of items) { 
             const cat=getCategoryById(i.category_id); 
             const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>${cat.icon} ${cat.name}` : '';
-            const isShared = i.user_id !== currentUser.id;
+            const isShared = i.user_id !== currentCustomUser?.id;
+            const userName = isShared ? `User ${i.user_id}` : 'Saya';
             detail+=`<div style="padding-left:20px; margin:8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" data-id="${i.id}">
                 <div>
-                    <span>${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${getUserEmail(i.user_id)}</span>` : ''}</span>
+                    <span>${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</span>
                     ${catDisplay ? `<span style="font-size:11px; color:var(--text-secondary); margin-left:8px;">${catDisplay}</span>` : ''}
                 </div>
                 <span style="font-weight:600; color:${i.type==='pemasukan'?'#10b981':'#ef4444'}">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span>
@@ -2123,7 +2428,7 @@ async function renderSettings() {
     
     let html = `
         <div class="header">
-            <div class="user-info">${currentUser?.email?.slice(0,20)||'Tamu'} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="backFromSettingsBtn" class="icon-btn" style="font-size:20px;">←</button>
                 <button id="logoutBtn" class="logout-btn">Logout</button>
@@ -2144,12 +2449,14 @@ async function renderSettings() {
                         <button id="leaveFamilyBtn" style="background:#ef4444; border:none; border-radius:30px; padding:4px 12px; color:white; font-size:12px; cursor:pointer;">Keluar</button>
                     </div>
                     <div style="margin-top:8px; max-height:150px; overflow-y:auto;">
-                        ${familyMembers.map(m => `
+                        ${familyMembers.map(m => {
+                            const userName = m.users?.username || m.users?.display_name || `User ${m.user_id}`;
+                            return `
                             <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-color);">
-                                <span>${m.user_id === currentUser.id ? '👤' : '👥'} ${getUserEmail(m.user_id)}</span>
+                                <span>${m.user_id === currentCustomUser?.id ? '👤' : '👥'} ${escapeHtml(userName)} (ID: ${m.user_id})</span>
                                 <span style="font-size:11px; color:var(--text-secondary);">${m.role === 'owner' ? '👑 Owner' : '👤 Anggota'}</span>
                             </div>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 </div>
                 <div style="display:flex; gap:8px; margin-top:12px;">
@@ -2255,14 +2562,14 @@ async function renderSettings() {
         const email = document.getElementById("inviteEmail").value.trim();
         if (!email) return alert("Masukkan email");
         try {
-            // Cari user berdasarkan email
+            // Cari user berdasarkan email di tabel users
             const { data: userData, error: userError } = await sb
                 .from("users")
                 .select("id")
                 .eq("email", email)
                 .single();
             
-            if (userError || !userData) throw new Error("User tidak ditemukan");
+            if (userError || !userData) throw new Error("User tidak ditemukan atau belum memiliki akun");
             
             // Cek apakah sudah jadi anggota
             const { data: existing, error: existError } = await sb
@@ -2290,11 +2597,14 @@ async function renderSettings() {
     
     document.getElementById("leaveFamilyBtn")?.addEventListener("click", async () => {
         if (!confirm("Yakin ingin keluar dari keluarga?")) return;
+        const userId = await userManager.getUserId();
+        if (!userId) return;
+        
         try {
             await sb.from("family_members")
                 .delete()
                 .eq("family_id", currentFamilyId)
-                .eq("user_id", currentUser.id);
+                .eq("user_id", userId);
             
             currentFamilyId = null;
             familyInfo = null;
@@ -2315,7 +2625,8 @@ async function renderSettings() {
 }
 
 // ============================================
-// RENDER CURRENT VIEW & NAVIGATION// ============================================
+// RENDER CURRENT VIEW & NAVIGATION
+// ============================================
 function renderCurrentView() {
     if(!appReady) return;
     if(currentNav==='home') renderHome();
@@ -2462,6 +2773,12 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
+    // Setup custom user
+    currentCustomUser = await userManager.setupCustomUser(user);
+    if (!currentCustomUser) {
+        showToast("⚠️ Gagal setup custom user. Coba refresh.");
+    }
+    
     await loadAllData();
     await initTheme();
     
@@ -2474,6 +2791,7 @@ async function onAuthSuccess(user) {
 async function logout() {
     try { await sb.auth.signOut(); } catch(e) { console.log("Logout error:", e); }
     currentUser = null;
+    currentCustomUser = null;
     appReady = false;
     document.querySelector(".bottom-nav")?.remove();
     document.getElementById("appContainer").innerHTML = "";
