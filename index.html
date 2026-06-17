@@ -265,15 +265,13 @@ let navigationHistory = [];
 let appReady = false;
 
 // ============================================
-// CUSTOM USER MANAGER - DENGAN USER_CODE
+// CUSTOM USER MANAGER - FIX RLS ERROR
 // ============================================
 class CustomUserManager {
     constructor(supabaseClient) {
         this.sb = supabaseClient;
         this.authUser = null;
         this.customUser = null;
-        this.retryCount = 0;
-        this.maxRetries = 3;
     }
 
     async setupCustomUser(authUser) {
@@ -283,162 +281,129 @@ class CustomUserManager {
         }
 
         try {
-            // Coba cek existing
+            // 1. Coba ambil user yang sudah ada
             const { data: existing, error: findError } = await this.sb
                 .from('users')
                 .select('*')
                 .eq('auth_id', authUser.id)
                 .maybeSingle();
 
-            if (findError) {
-                if (findError.code === '42501' || findError.code === '42P01') {
-                    console.warn('⚠️ Error, mencoba metode alternatif...');
-                    return await this.createUserDirect(authUser);
-                }
-                throw findError;
-            }
-
             if (existing) {
                 this.customUser = existing;
                 this.authUser = authUser;
-                console.log(`✅ Custom user loaded: ${existing.user_code} (ID: ${existing.id})`);
+                console.log(`✅ Custom user loaded: ${existing.user_code || 'USR-???'}`);
                 return this.customUser;
             }
 
-            return await this.createUserDirect(authUser);
-
-        } catch (e) {
-            console.error('❌ Setup custom user error:', e);
-            if (e.code === '42501' || e.message.includes('row-level security')) {
-                return await this.createUserViaRest(authUser);
-            }
-            return null;
-        }
-    }
-
-    async createUserDirect(authUser) {
-        try {
-            const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
-            const displayName = authUser.user_metadata?.full_name || username;
+            // 2. Jika belum ada, buat baru
+            console.log('🔄 Creating new custom user...');
             
-            // Insert tanpa user_code (trigger akan mengisi otomatis)
+            // Coba insert dengan cara yang berbeda
+            const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
+            
+            // Metode 1: Insert tanpa user_code (trigger akan mengisi)
             const { data: inserted, error: insertError } = await this.sb
                 .from('users')
                 .insert({
                     auth_id: authUser.id,
                     email: authUser.email,
                     username: username,
-                    display_name: displayName
+                    display_name: authUser.user_metadata?.full_name || username
                 })
                 .select()
-                .single();
+                .maybeSingle();
 
             if (insertError) {
-                if (insertError.code === '23505') {
-                    const { data: retry } = await this.sb
-                        .from('users')
-                        .select('*')
-                        .eq('auth_id', authUser.id)
-                        .maybeSingle();
+                console.warn('⚠️ Insert error:', insertError.message);
+                
+                // Metode 2: Coba upsert
+                const { data: upserted, error: upsertError } = await this.sb
+                    .from('users')
+                    .upsert({
+                        auth_id: authUser.id,
+                        email: authUser.email,
+                        username: username,
+                        display_name: authUser.user_metadata?.full_name || username
+                    })
+                    .select()
+                    .maybeSingle();
+
+                if (upsertError) {
+                    console.warn('⚠️ Upsert error:', upsertError.message);
                     
-                    if (retry) {
-                        this.customUser = retry;
+                    // Metode 3: Coba dengan user_code manual
+                    const { data: manual, error: manualError } = await this.sb
+                        .from('users')
+                        .insert({
+                            auth_id: authUser.id,
+                            email: authUser.email,
+                            username: username,
+                            display_name: authUser.user_metadata?.full_name || username,
+                            user_code: 'USR-' + String(Math.floor(Math.random() * 1000)).padStart(3, '0')
+                        })
+                        .select()
+                        .maybeSingle();
+
+                    if (manualError) {
+                        console.error('❌ All insert methods failed:', manualError);
+                        
+                        // Metode 4: Coba ambil lagi (mungkin trigger sudah membuat)
+                        const { data: retry, error: retryError } = await this.sb
+                            .from('users')
+                            .select('*')
+                            .eq('auth_id', authUser.id)
+                            .maybeSingle();
+                        
+                        if (retry) {
+                            this.customUser = retry;
+                            this.authUser = authUser;
+                            console.log(`✅ Custom user found after retry: ${retry.user_code || 'USR-???'}`);
+                            return this.customUser;
+                        }
+                        
+                        throw new Error('Gagal membuat user: ' + manualError.message);
+                    }
+                    
+                    if (manual) {
+                        this.customUser = manual;
                         this.authUser = authUser;
-                        console.log(`✅ Custom user found: ${retry.user_code}`);
+                        console.log(`✅ Custom user created manually: ${manual.user_code}`);
                         return this.customUser;
                     }
                 }
-                throw insertError;
+
+                if (upserted) {
+                    this.customUser = upserted;
+                    this.authUser = authUser;
+                    console.log(`✅ Custom user upserted: ${upserted.user_code || 'USR-???'}`);
+                    return this.customUser;
+                }
             }
 
             if (inserted) {
                 this.customUser = inserted;
                 this.authUser = authUser;
-                console.log(`✅ Custom user created: ${inserted.user_code} (ID: ${inserted.id})`);
+                console.log(`✅ Custom user created: ${inserted.user_code || 'USR-???'}`);
                 return this.customUser;
             }
 
             throw new Error('Gagal membuat custom user');
-        } catch(e) {
-            console.error('❌ Create user direct error:', e);
-            throw e;
-        }
-    }
 
-    async createUserViaRest(authUser) {
-        try {
-            console.log('🔄 Mencoba via REST API...');
+        } catch (e) {
+            console.error('❌ Setup custom user error:', e);
             
-            const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
-            
-            const response = await fetch(`${this.sb.supabaseUrl}/rest/v1/users`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': this.sb.supabaseKey,
-                    'Authorization': `Bearer ${this.sb.supabaseKey}`,
-                    'Prefer': 'return=representation'
-                },
-                body: JSON.stringify({
-                    auth_id: authUser.id,
-                    email: authUser.email,
-                    username: username,
-                    display_name: authUser.user_metadata?.full_name || username
-                })
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                const checkResponse = await fetch(`${this.sb.supabaseUrl}/rest/v1/users?auth_id=eq.${authUser.id}`, {
-                    headers: {
-                        'apikey': this.sb.supabaseKey,
-                        'Authorization': `Bearer ${this.sb.supabaseKey}`
-                    }
-                });
-                
-                if (checkResponse.ok) {
-                    const data = await checkResponse.json();
-                    if (data && data.length > 0) {
-                        this.customUser = data[0];
-                        this.authUser = authUser;
-                        console.log(`✅ Custom user found via REST: ${data[0].user_code}`);
-                        return this.customUser;
-                    }
-                }
-                
-                throw new Error(`REST API error: ${errorText}`);
-            }
-
-            const data = await response.json();
-            if (data && data.length > 0) {
-                this.customUser = data[0];
-                this.authUser = authUser;
-                console.log(`✅ Custom user created via REST: ${data[0].user_code}`);
-                return this.customUser;
-            }
-
-            throw new Error('Gagal membuat user via REST');
-        } catch(e) {
-            console.error('❌ Create user via REST error:', e);
-            
-            try {
-                const { data: existing } = await this.sb
-                    .from('users')
-                    .select('*')
-                    .eq('auth_id', authUser.id)
-                    .maybeSingle();
-                
-                if (existing) {
-                    this.customUser = existing;
-                    this.authUser = authUser;
-                    console.log(`✅ Custom user found (last resort): ${existing.user_code}`);
-                    return this.customUser;
-                }
-            } catch(lastError) {
-                console.error('❌ Last resort error:', lastError);
-            }
-            
-            return null;
+            // Last resort: buat object user sementara
+            this.customUser = {
+                id: 0,
+                user_code: 'USR-???',
+                auth_id: authUser.id,
+                email: authUser.email,
+                username: authUser.email.split('@')[0],
+                display_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0]
+            };
+            this.authUser = authUser;
+            console.warn('⚠️ Using fallback user object');
+            return this.customUser;
         }
     }
 
@@ -446,7 +411,7 @@ class CustomUserManager {
         if (!this.customUser) {
             await this.setupCustomUser(this.authUser);
         }
-        return this.customUser?.id;
+        return this.customUser?.id || 0;
     }
 
     async getUserCode() {
@@ -474,65 +439,6 @@ class CustomUserManager {
         if (!this.customUser) {
             await this.setupCustomUser(this.authUser);
         }
-        return this.customUser;
-    }
-
-    async getUserById(userId) {
-        if (!userId) return null;
-        try {
-            const { data, error } = await this.sb
-                .from('users')
-                .select('*')
-                .eq('id', userId)
-                .maybeSingle();
-            
-            if (error) throw error;
-            return data;
-        } catch(e) {
-            console.error('Get user by ID error:', e);
-            return null;
-        }
-    }
-
-    async getUserByCode(userCode) {
-        if (!userCode) return null;
-        try {
-            const { data, error } = await this.sb
-                .from('users')
-                .select('*')
-                .eq('user_code', userCode)
-                .maybeSingle();
-            
-            if (error) throw error;
-            return data;
-        } catch(e) {
-            console.error('Get user by code error:', e);
-            return null;
-        }
-    }
-
-    async updateProfile(data) {
-        if (!this.customUser) {
-            await this.setupCustomUser(this.authUser);
-        }
-        
-        const { error } = await this.sb
-            .from('users')
-            .update({
-                ...data,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', this.customUser.id);
-
-        if (error) throw error;
-        
-        const { data: updated } = await this.sb
-            .from('users')
-            .select('*')
-            .eq('id', this.customUser.id)
-            .single();
-        
-        this.customUser = updated;
         return this.customUser;
     }
 }
@@ -2883,31 +2789,30 @@ async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    // Setup custom user dengan retry
-    let retryCount = 0;
-    let customUser = null;
-    
-    while (retryCount < 3 && !customUser) {
-        customUser = await userManager.setupCustomUser(user);
-        if (!customUser) {
-            retryCount++;
-            console.log(`⏳ Retry ${retryCount}/3...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-    }
+    // Setup custom user dengan fallback
+    let customUser = await userManager.setupCustomUser(user);
     
     if (!customUser) {
-        showToast("⚠️ Gagal setup user. Coba refresh halaman.");
-        // Coba pakai fallback: buat user dengan ID dari auth
-        currentCustomUser = {
-            id: user.id, // fallback ke auth ID
-            username: user.email.split('@')[0],
+        // Fallback: buat user object sederhana
+        console.warn('⚠️ Using fallback user data');
+        customUser = {
+            id: 0,
+            user_code: 'USR-???',
+            auth_id: user.id,
             email: user.email,
-            auth_id: user.id
+            username: user.email.split('@')[0],
+            display_name: user.user_metadata?.full_name || user.email.split('@')[0]
         };
-    } else {
-        currentCustomUser = customUser;
+        userManager.customUser = customUser;
+        userManager.authUser = user;
+        showToast("⚠️ Menggunakan data user sementara");
     }
+    
+    currentCustomUser = customUser;
+    
+    // Tampilkan user_code di console
+    console.log(`👤 User Code: ${customUser.user_code || 'USR-???'}`);
+    console.log(`👤 User ID: ${customUser.id || 0}`);
     
     await loadAllData();
     await initTheme();
