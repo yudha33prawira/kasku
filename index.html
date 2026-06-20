@@ -3142,7 +3142,7 @@ async function openEditProfileModal() {
 }
 
 // ============================================
-// RENDER SETTINGS - FULL FUNCTION
+// RENDER SETTINGS - FULL FIX
 // ============================================
 async function renderSettings() {
     // Load ulang data keluarga terlebih dahulu
@@ -3160,7 +3160,6 @@ async function renderSettings() {
     // Debug
     console.log("🔍 Render Settings - currentFamilyId:", currentFamilyId);
     console.log("🔍 Render Settings - familyInfo:", familyInfo);
-    console.log("🔍 Render Settings - userData:", userData);
     
     // Generate HTML
     let html = `
@@ -3185,7 +3184,7 @@ async function renderSettings() {
                     </span>
                 </div>
                 
-                <!-- ID Keluarga - DI PROFIL -->
+                <!-- ID Keluarga -->
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); background: ${currentFamilyId ? 'rgba(59,130,246,0.05)' : 'transparent'}; border-radius: 8px; padding: 8px 12px;">
                     <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                         <span style="font-size: 18px;">🔑</span> ID Keluarga
@@ -3240,7 +3239,6 @@ async function renderSettings() {
                 ✏️ Edit Profil
             </button>
             
-            <!-- Tombol Copy ID (jika punya keluarga) -->
             ${currentFamilyId ? `
                 <button id="copyFamilyIdFromProfileBtn" style="margin-top: 8px; width:100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 60px; padding: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                     📋 Copy ID Keluarga
@@ -3251,9 +3249,7 @@ async function renderSettings() {
         <!-- ====== MANAJEMEN KELUARGA ====== -->
         <div class="card">
             <div class="card-title">👨‍👩‍👧‍👦 Manajemen Keluarga</div>
-            
             ${currentFamilyId && familyInfo ? `
-                <!-- SUDAH PUNYA KELUARGA -->
                 <div style="margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div>
@@ -3263,7 +3259,6 @@ async function renderSettings() {
                         <button id="leaveFamilyBtn" style="background:#ef4444; border:none; border-radius:30px; padding:4px 12px; color:white; font-size:12px; cursor:pointer;">Keluar</button>
                     </div>
                     
-                    <!-- DAFTAR ANGGOTA -->
                     <div style="margin-top:12px;">
                         <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
                             👥 Anggota Keluarga (${familyMembers.length})
@@ -3286,7 +3281,6 @@ async function renderSettings() {
                     </div>
                 </div>
                 
-                <!-- FORM UNDANG -->
                 <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; border-top:1px solid var(--border-color); padding-top:16px;">
                     <input type="email" id="inviteEmail" placeholder="📧 Email anggota baru" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
                     <button id="inviteMemberBtn" style="background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
@@ -3294,11 +3288,9 @@ async function renderSettings() {
                     </button>
                 </div>
             ` : `
-                <!-- BELUM PUNYA KELUARGA -->
                 <div style="margin-bottom:12px;">
                     <p style="color:var(--text-secondary); margin-bottom:16px;">Bergabung dengan keluarga untuk berbagi data keuangan</p>
                     
-                    <!-- Buat Keluarga -->
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
                         <input type="text" id="familyNameInput" placeholder="Nama Keluarga" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
                         <button id="createFamilyBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
@@ -3306,7 +3298,6 @@ async function renderSettings() {
                         </button>
                     </div>
                     
-                    <!-- Gabung Keluarga -->
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <input type="text" id="joinFamilyInput" placeholder="ID Keluarga (UUID)" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
                         <button id="joinFamilyBtn" style="background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
@@ -3323,22 +3314,20 @@ async function renderSettings() {
             `}
         </div>
         
-// Di dalam renderSettings, bagian Dark Mode:
-
-<!-- ====== TEMA ====== -->
-<div class="card">
-    <div class="card-title">🎨 Tampilan</div>
-    <div class="theme-toggle" id="themeToggle">
-        <span class="theme-toggle-label">🌙 Mode Gelap</span>
-        <label class="theme-switch">
-            <input type="checkbox" id="darkModeSwitch" ${document.body.classList.contains("dark") ? 'checked' : ''}>
-            <span class="slider"></span>
-        </label>
-    </div>
-    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary);">
-        ${currentUser ? '✅ Tersimpan di akun Anda' : 'ℹ️ Login untuk menyimpan preferensi'}
-    </div>
-</div>
+        <!-- ====== TEMA ====== -->
+        <div class="card">
+            <div class="card-title">🎨 Tampilan</div>
+            <div class="theme-toggle" id="themeToggle">
+                <span class="theme-toggle-label">🌙 Mode Gelap</span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="darkModeSwitch" ${document.body.classList.contains("dark") ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div style="margin-top:8px; font-size:11px; color:var(--text-secondary);">
+                ${currentUser ? '✅ Tersimpan di akun Anda' : 'ℹ️ Login untuk menyimpan preferensi'}
+            </div>
+        </div>
         
         <!-- ====== PASSWORD ====== -->
         <div class="card">
@@ -3412,10 +3401,14 @@ async function renderSettings() {
         }
     });
     
-    // 6. Dark Mode
+    // 6. Dark Mode - HANYA SATU DEKLARASI
     const darkModeSwitch = document.getElementById("darkModeSwitch");
     if (darkModeSwitch) {
-        darkModeSwitch.addEventListener("change", async (e) => { 
+        // Clone untuk menghapus listener lama (mencegah duplikasi)
+        const newSwitch = darkModeSwitch.cloneNode(true);
+        darkModeSwitch.parentNode.replaceChild(newSwitch, darkModeSwitch);
+        
+        newSwitch.addEventListener("change", async (e) => { 
             await toggleTheme(); 
         });
     }
@@ -3448,7 +3441,6 @@ async function renderSettings() {
             return;
         }
         try {
-            // Cari user berdasarkan email
             const { data: userData, error: userError } = await sb
                 .from("users")
                 .select("id")
@@ -3459,7 +3451,6 @@ async function renderSettings() {
                 throw new Error("User tidak ditemukan atau belum memiliki akun");
             }
             
-            // Cek apakah sudah jadi anggota
             const { data: existing, error: existError } = await sb
                 .from("family_members")
                 .select("*")
@@ -3471,7 +3462,6 @@ async function renderSettings() {
                 throw new Error("User sudah menjadi anggota");
             }
             
-            // Tambahkan anggota
             await sb.from("family_members").insert({
                 family_id: currentFamilyId,
                 user_id: userData.id,
@@ -3493,18 +3483,15 @@ async function renderSettings() {
         if (!userId) return;
         
         try {
-            // Hapus dari family_members
             await sb.from("family_members")
                 .delete()
                 .eq("family_id", currentFamilyId)
                 .eq("user_id", userId);
             
-            // Hapus dari user_settings
             await sb.from("user_settings")
                 .update({ family_id: null })
                 .eq("user_id", userId);
             
-            // Reset state
             currentFamilyId = null;
             familyInfo = null;
             familyMembers = [];
@@ -3531,14 +3518,6 @@ async function renderSettings() {
             }
         };
     });
-
-    // 12. Event listener untuk dark mode
-    const darkModeSwitch = document.getElementById("darkModeSwitch");
-    if (darkModeSwitch) {
-        darkModeSwitch.addEventListener("change", async (e) => { 
-            await toggleTheme(); 
-        });
-    }
 }
     
 // ============================================
