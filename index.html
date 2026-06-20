@@ -121,6 +121,15 @@
         .family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
         .family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
         
+        /* Category item */
+        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); }
+        .category-item:last-child { border-bottom: none; }
+        .category-item:active { opacity: 0.7; }
+        .category-item .left { display: flex; align-items: center; gap: 10px; }
+        .category-item .left .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); flex-shrink: 0; }
+        .category-item .left .name { font-weight: 500; font-size: 14px; }
+        .category-item .left .type-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); }
+        
         .bottom-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; z-index: 100; height: var(--nav-height); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: var(--radius-sm); transition: var(--transition); flex: 1; position: relative; min-width: 0; }
         .nav-item .nav-icon { font-size: 20px; transition: var(--transition); }
@@ -551,6 +560,111 @@ function showRemindersPopup() {
 }
 
 // ============================================
+// CATEGORY FUNCTIONS
+// ============================================
+async function renderKategori() {
+    await loadCategories();
+    const html = `
+        <div class="header">
+            <div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div>
+            <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div>
+        </div>
+        <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openCategoryFormModal()">➕ Tambah Kategori</button>
+        <div class="card"><div id="categoryList"></div></div>
+    `;
+    document.getElementById('appContainer').innerHTML = html;
+    const container = document.getElementById('categoryList');
+    if (!categories.length) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">🏷️</div><div class="title">Belum ada kategori</div><div class="desc">Tambahkan kategori untuk mengelompokkan transaksi</div></div>';
+        return;
+    }
+    // Pisahkan pemasukan dan pengeluaran
+    const incomeCats = categories.filter(c => c.type === 'pemasukan');
+    const expenseCats = categories.filter(c => c.type === 'pengeluaran');
+    let htmlList = '';
+    if (expenseCats.length) {
+        htmlList += `<div style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;">💸 Pengeluaran</div>`;
+        htmlList += expenseCats.map(c => `
+            <div class="category-item" onclick="openCategoryFormModal('${c.id}')">
+                <div class="left">
+                    <span class="color-dot" style="background:${c.color || '#3b82f6'}"></span>
+                    <span class="name">${c.icon || '📁'} ${escapeHtml(c.name)}</span>
+                </div>
+                <span class="type-badge">${c.user_id !== currentCustomUser?.id ? '📤' : ''}</span>
+            </div>
+        `).join('');
+    }
+    if (incomeCats.length) {
+        htmlList += `<div style="font-size:12px;color:var(--text-secondary);margin:12px 0 4px;">💵 Pemasukan</div>`;
+        htmlList += incomeCats.map(c => `
+            <div class="category-item" onclick="openCategoryFormModal('${c.id}')">
+                <div class="left">
+                    <span class="color-dot" style="background:${c.color || '#3b82f6'}"></span>
+                    <span class="name">${c.icon || '📁'} ${escapeHtml(c.name)}</span>
+                </div>
+                <span class="type-badge">${c.user_id !== currentCustomUser?.id ? '📤' : ''}</span>
+            </div>
+        `).join('');
+    }
+    container.innerHTML = htmlList;
+}
+
+function openCategoryFormModal(editId = null) {
+    const isEdit = !!editId;
+    const cat = isEdit ? categories.find(c => c.id === editId) : null;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">${isEdit ? '✏️ Edit' : '➕ Tambah'} Kategori</div>
+            <input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit ? escapeHtml(cat.name) : ''}">
+            <input type="text" id="catIcon" class="modal-input" placeholder="Icon (contoh: 🍔, 🚗)" value="${isEdit ? cat.icon || '📁' : '📁'}">
+            <select id="catType" class="modal-select">
+                <option value="pengeluaran" ${isEdit && cat.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
+                <option value="pemasukan" ${isEdit && cat.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
+            </select>
+            <input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color || '#3b82f6' : '#3b82f6'}">
+            <div class="modal-button-grid">
+                <button id="saveCategory" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
+                <button id="closeCategory" class="modal-btn modal-btn-secondary">Batal</button>
+                ${isEdit ? `<button id="deleteCategory" class="modal-btn modal-btn-danger">🗑️ Hapus</button>` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('saveCategory').onclick = async () => {
+        const name = document.getElementById('catName').value.trim();
+        const icon = document.getElementById('catIcon').value.trim() || '📁';
+        const type = document.getElementById('catType').value;
+        const color = document.getElementById('catColor').value;
+        if (!name) { showToast('❌ Nama harus diisi'); return; }
+        const uid = await userManager.getUserId();
+        if (isEdit) {
+            await sb.from('categories').update({ name, icon, type, color }).eq('id', editId);
+            showToast('✅ Kategori diupdate');
+        } else {
+            await sb.from('categories').insert({ user_id: uid, name, icon, type, color });
+            showToast('✅ Kategori ditambahkan');
+        }
+        modal.remove();
+        await loadCategories();
+        renderKategori();
+    };
+    if (isEdit) {
+        document.getElementById('deleteCategory').onclick = async () => {
+            if (confirm('Hapus kategori?')) {
+                await sb.from('categories').delete().eq('id', editId);
+                showToast('✅ Kategori dihapus');
+                modal.remove();
+                await loadCategories();
+                renderKategori();
+            }
+        };
+    }
+    document.getElementById('closeCategory').onclick = () => modal.remove();
+}
+
+// ============================================
 // TASK MODAL
 // ============================================
 function openTaskModal(editId = null) {
@@ -587,7 +701,7 @@ function openTaskModal(editId = null) {
 }
 
 // ============================================
-// RENDER TASKS (FULL PAGE)
+// RENDER TASKS
 // ============================================
 async function renderTasks() {
     await loadTasks();
@@ -1470,6 +1584,7 @@ function addBottomNav() {
                 <button class="menu-popup-item" data-nav="hutang"><span class="icon">💰</span>Hutang</button>
                 <button class="menu-popup-item" data-nav="savings"><span class="icon">🏦</span>Tabungan</button>
                 <button class="menu-popup-item" data-nav="reminders"><span class="icon">⏰</span>Pengingat</button>
+                <button class="menu-popup-item" data-nav="kategori"><span class="icon">🏷️</span>Kategori</button>
                 <button class="menu-popup-item" data-nav="laporan"><span class="icon">📊</span>Laporan</button>
                 <button class="menu-popup-item" data-nav="settings"><span class="icon">⚙️</span>Settings</button>
             </div>
@@ -1547,6 +1662,7 @@ function renderCurrentView() {
         hutang: renderHutang,
         savings: renderSavings,
         reminders: renderReminders,
+        kategori: renderKategori,
         laporan: renderLaporan
     };
     if (views[currentNav]) views[currentNav]();
