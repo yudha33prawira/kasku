@@ -1506,74 +1506,188 @@ function formatWhatsAppNumber(input) {
 }
 
 // ============================================
-// THEME FUNCTIONS
+// APPLY THEME
 // ============================================
 function applyTheme(isDark) {
     if (isDark) {
         document.body.classList.add("dark");
+        console.log("🌙 Dark mode applied");
     } else {
         document.body.classList.remove("dark");
+        console.log("☀️ Light mode applied");
     }
+    
+    // Simpan ke localStorage sebagai cache
     localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    
+    // Update switch jika ada
+    const darkModeSwitch = document.getElementById("darkModeSwitch");
+    if (darkModeSwitch) {
+        darkModeSwitch.checked = isDark;
+    }
 }
-
+    
+// ============================================
+// LOAD THEME DARI DATABASE
+// ============================================
 async function loadThemeFromDatabase() {
     if (!currentUser) return null;
+    
     const userId = await userManager.getUserId();
-    if (!userId) return null;
+    if (!userId) {
+        console.warn("⚠️ User ID not found for theme");
+        return null;
+    }
     
     try {
-        const { data, error } = await sb.from("user_settings").select("dark_mode").eq("user_id", userId).maybeSingle();
-        if (error) throw error;
-        if (data && data.dark_mode !== undefined) {
-            return data.dark_mode;
+        // Gunakan .select() tanpa .single() untuk menghindari error
+        const { data: settings, error } = await sb
+            .from("user_settings")
+            .select("dark_mode")
+            .eq("user_id", userId);
+        
+        if (error) {
+            console.error("Load theme error:", error);
+            return null;
         }
+        
+        if (settings && settings.length > 0) {
+            const darkMode = settings[0].dark_mode;
+            console.log("✅ Theme loaded from database:", darkMode ? 'Dark' : 'Light');
+            return darkMode;
+        }
+        
+        console.log("ℹ️ No theme settings found, using default");
         return null;
     } catch(e) { 
-        console.log("Theme load error:", e);
+        console.error("Theme load error:", e);
         return null;
     }
 }
-
+    
+// ============================================
+// SAVE THEME KE DATABASE
+// ============================================
 async function saveThemeToDatabase(isDark) {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.warn("⚠️ No user to save theme");
+        return;
+    }
+    
     const userId = await userManager.getUserId();
-    if (!userId) return;
+    if (!userId) {
+        console.warn("⚠️ User ID not found for saving theme");
+        return;
+    }
     
     try {
-        const { error } = await sb.from("user_settings").upsert({ 
-            user_id: userId, 
-            dark_mode: isDark
-        });
-        if (error) throw error;
-    } catch(e) { console.log("Theme save error:", e); }
+        console.log("💾 Saving theme to database:", isDark ? 'Dark' : 'Light');
+        
+        // Cek apakah sudah ada settings
+        const { data: existingSettings, error: checkError } = await sb
+            .from("user_settings")
+            .select("id")
+            .eq("user_id", userId)
+            .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') {
+            console.error("Check existing settings error:", checkError);
+            return;
+        }
+        
+        if (existingSettings) {
+            // Update existing
+            const { error: updateError } = await sb
+                .from("user_settings")
+                .update({ 
+                    dark_mode: isDark,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("user_id", userId);
+            
+            if (updateError) {
+                console.error("Update theme error:", updateError);
+            } else {
+                console.log("✅ Theme updated in database:", isDark ? 'Dark' : 'Light');
+            }
+        } else {
+            // Insert new
+            const { error: insertError } = await sb
+                .from("user_settings")
+                .insert({
+                    user_id: userId,
+                    dark_mode: isDark
+                });
+            
+            if (insertError) {
+                console.error("Insert theme error:", insertError);
+            } else {
+                console.log("✅ Theme inserted in database:", isDark ? 'Dark' : 'Light');
+            }
+        }
+    } catch(e) { 
+        console.error("Save theme error:", e);
+    }
 }
 
+// ============================================
+// INIT THEME - DARI DATABASE
+// ============================================
 async function initTheme() {
+    console.log("🎨 Initializing theme...");
+    
+    // 1. Coba dari database (jika user login)
     if (currentUser) {
         const dbTheme = await loadThemeFromDatabase();
         if (dbTheme !== null) {
             applyTheme(dbTheme);
+            console.log("✅ Theme loaded from database:", dbTheme ? 'Dark' : 'Light');
             return;
         }
     }
+    
+    // 2. Coba dari localStorage (cache)
     const localTheme = localStorage.getItem('theme_mode');
     if (localTheme === 'dark') {
         applyTheme(true);
-    } else {
+        console.log("✅ Theme loaded from localStorage: Dark");
+        return;
+    } else if (localTheme === 'light') {
         applyTheme(false);
+        console.log("✅ Theme loaded from localStorage: Light");
+        return;
     }
+    
+    // 3. Default: Light mode
+    applyTheme(false);
+    console.log("✅ Theme loaded from default: Light");
 }
 
+// ============================================
+// TOGGLE THEME
+// ============================================
 async function toggleTheme() {
     const isDark = !document.body.classList.contains("dark");
+    
+    // 1. Apply theme di UI
     applyTheme(isDark);
+    
+    // 2. Simpan ke localStorage (cache)
+    localStorage.setItem('theme_mode', isDark ? 'dark' : 'light');
+    
+    // 3. Simpan ke database (jika user login)
     if (currentUser) {
         await saveThemeToDatabase(isDark);
     }
+    
+    // 4. Update switch
     const darkModeSwitch = document.getElementById("darkModeSwitch");
-    if (darkModeSwitch) darkModeSwitch.checked = isDark;
-    showToast(isDark ? "Mode Gelap aktif" : "Mode Terang aktif");
+    if (darkModeSwitch) {
+        darkModeSwitch.checked = isDark;
+    }
+    
+    showToast(isDark ? "🌙 Mode Gelap aktif" : "☀️ Mode Terang aktif");
+    console.log("✅ Theme toggled to:", isDark ? 'Dark' : 'Light');
 }
 
 // ============================================
@@ -3209,17 +3323,22 @@ async function renderSettings() {
             `}
         </div>
         
-        <!-- ====== TEMA ====== -->
-        <div class="card">
-            <div class="card-title">🎨 Tampilan</div>
-            <div class="theme-toggle" id="themeToggle">
-                <span class="theme-toggle-label">🌙 Mode Gelap</span>
-                <label class="theme-switch">
-                    <input type="checkbox" id="darkModeSwitch" ${document.body.classList.contains("dark") ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-        </div>
+// Di dalam renderSettings, bagian Dark Mode:
+
+<!-- ====== TEMA ====== -->
+<div class="card">
+    <div class="card-title">🎨 Tampilan</div>
+    <div class="theme-toggle" id="themeToggle">
+        <span class="theme-toggle-label">🌙 Mode Gelap</span>
+        <label class="theme-switch">
+            <input type="checkbox" id="darkModeSwitch" ${document.body.classList.contains("dark") ? 'checked' : ''}>
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary);">
+        ${currentUser ? '✅ Tersimpan di akun Anda' : 'ℹ️ Login untuk menyimpan preferensi'}
+    </div>
+</div>
         
         <!-- ====== PASSWORD ====== -->
         <div class="card">
@@ -3412,8 +3531,16 @@ async function renderSettings() {
             }
         };
     });
-}
 
+    // 12. Event listener untuk dark mode
+    const darkModeSwitch = document.getElementById("darkModeSwitch");
+    if (darkModeSwitch) {
+        darkModeSwitch.addEventListener("change", async (e) => { 
+            await toggleTheme(); 
+        });
+    }
+}
+    
 // ============================================
 // GLOBAL FUNCTIONS
 // ============================================
@@ -3451,6 +3578,11 @@ async function openEditProfileModal() {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">✏️ Edit Profil</div>
+
+            <div style="margin-top:8px; padding:8px 12px; background:rgba(59,130,246,0.05); border-radius:8px; font-size:12px; color:var(--text-secondary);">
+                🌙 Mode: ${document.body.classList.contains("dark") ? 'Gelap' : 'Terang'} 
+                ${currentUser ? '✅ Tersimpan' : '⚠️ Belum tersimpan'}
+            </div>
             
             <div style="margin-bottom:16px; padding:12px; background:rgba(59,130,246,0.1); border-radius:12px; text-align:center;">
                 <span style="font-size:14px; color:var(--text-secondary);">🆔 Kode User</span>
@@ -3666,16 +3798,18 @@ function toggleMode() {
     }
 }
 
+// ============================================
+// ON AUTH SUCCESS
+// ============================================
 async function onAuthSuccess(user) {
     currentUser = user;
     document.getElementById("loginModal").style.display = "none";
     
-    // Setup custom user dengan fallback
+    // Setup custom user
     let customUser = await userManager.setupCustomUser(user);
     
     if (!customUser) {
-        // Fallback: buat user object sederhana
-        console.warn('⚠️ Using fallback user data');
+        // Fallback
         customUser = {
             id: 0,
             user_code: 'USR-???',
@@ -3686,16 +3820,17 @@ async function onAuthSuccess(user) {
         };
         userManager.customUser = customUser;
         userManager.authUser = user;
-        showToast("⚠️ Menggunakan data user sementara");
     }
     
     currentCustomUser = customUser;
     
-    // Tampilkan user_code di console
     console.log(`👤 User Code: ${customUser.user_code || 'USR-???'}`);
     console.log(`👤 User ID: ${customUser.id || 0}`);
     
+    // Load data
     await loadAllData();
+    
+    // INIT THEME - PASTIKAN INI DIPANGGIL
     await initTheme();
     
     appReady = true;
