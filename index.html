@@ -3159,24 +3159,223 @@ async function renderLaporan() {
     document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
     document.getElementById("prevMonth")?.addEventListener("click",()=>{if(currentMonth===0){currentMonth=11;currentYear--;}else currentMonth--; renderLaporan();});
     document.getElementById("nextMonth")?.addEventListener("click",()=>{if(currentMonth===11){currentMonth=0;currentYear++;}else currentMonth++; renderLaporan();});
-    document.getElementById("exportPdfBtn")?.addEventListener("click",async()=>{
-        try {
-            showToast("📑 Menyiapkan PDF...");
-            const element = document.createElement('div');
-            element.innerHTML = document.querySelector('.balance-card')?.outerHTML + document.querySelector('.card:first-of-type')?.outerHTML;
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: `laporan_${currentYear}_${currentMonth+1}.pdf`,
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            await html2pdf().set(opt).from(element).save();
-            showToast("✅ PDF berhasil diexport!");
-        } catch(e) {
-            console.error("PDF error:", e);
-            showToast("❌ Gagal export PDF: " + e.message);
+// ============================================
+// EXPORT PDF - DIPERBAIKI
+// ============================================
+document.getElementById("exportPdfBtn")?.addEventListener("click", async () => {
+    try {
+        showToast("📑 Menyiapkan PDF...", 3000);
+        
+        // Tampilkan loading
+        const btn = document.getElementById("exportPdfBtn");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Memproses...';
+        btn.disabled = true;
+        
+        // Tunggu sebentar agar UI update
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 1. Siapkan elemen untuk PDF
+        const element = document.createElement('div');
+        element.style.cssText = `
+            padding: 20px;
+            background: white;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+        `;
+        
+        // 2. Ambil data dari laporan
+        const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        const title = `Laporan Keuangan ${monthNames[currentMonth]} ${currentYear}`;
+        
+        // 3. Buat konten PDF
+        let content = `
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #1e293b; font-size: 24px;">💰 Laporan Keuangan</h1>
+                <h2 style="color: #64748b; font-size: 18px; font-weight: normal;">${title}</h2>
+                <hr style="border: 1px solid #e2e8f0; margin: 20px 0;">
+            </div>
+        `;
+        
+        // 4. Ambil data dari balance card yang sudah ada
+        const balanceCard = document.querySelector('.balance-card');
+        if (balanceCard) {
+            // Clone dan bersihkan
+            const clone = balanceCard.cloneNode(true);
+            // Hapus tombol toggle
+            const toggleBtn = clone.querySelector('#toggleBalanceBtn');
+            if (toggleBtn) toggleBtn.remove();
+            // Hapus style animation
+            clone.style.animation = 'none';
+            clone.style.transform = 'none';
+            content += clone.outerHTML;
         }
-    });
+        
+        // 5. Ambil data dari chart (jika ada)
+        const chartCanvas = document.getElementById('laporanChart');
+        if (chartCanvas && window.laporanChart) {
+            try {
+                const chartImage = window.laporanChart.toBase64Image();
+                content += `
+                    <div style="text-align: center; margin: 20px 0;">
+                        <img src="${chartImage}" style="max-width: 100%; height: auto; border-radius: 12px;" />
+                    </div>
+                `;
+            } catch(e) {
+                console.warn('Chart export error:', e);
+            }
+        }
+        
+        // 6. Ambil data detail transaksi
+        const detailDiv = document.getElementById('detailTransaksi');
+        if (detailDiv) {
+            const detailClone = detailDiv.cloneNode(true);
+            // Hapus cursor pointer
+            detailClone.style.cursor = 'default';
+            // Hapus event listeners (tidak perlu di PDF)
+            content += `
+                <div style="margin-top: 20px;">
+                    <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">📋 Detail Transaksi</h3>
+                    ${detailClone.innerHTML}
+                </div>
+            `;
+        }
+        
+        // 7. Tambahkan footer
+        content += `
+            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
+                Dicetak pada: ${new Date().toLocaleString('id-ID')}
+                <br>
+                © ${new Date().getFullYear()} Keuangan Keluarga
+            </div>
+        `;
+        
+        element.innerHTML = content;
+        
+        // 8. Siapkan opsi PDF
+        const opt = {
+            margin: [15, 15, 15, 15],
+            filename: `laporan_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                logging: false,
+                letterRendering: true,
+                width: 800
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        // 9. Generate PDF
+        await html2pdf().set(opt).from(element).save();
+        
+        // 10. Sukses
+        showToast("✅ PDF berhasil diexport!", 3000);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+    } catch(e) {
+        console.error("PDF error:", e);
+        showToast("❌ Gagal export PDF: " + e.message, 4000);
+        
+        // Reset tombol
+        const btn = document.getElementById("exportPdfBtn");
+        if (btn) {
+            btn.innerHTML = '📑 Export PDF';
+            btn.disabled = false;
+        }
+    }
+});
+
+// ============================================
+// EXPORT PDF ALTERNATIF - PRINT TO PDF
+// ============================================
+function exportPDFViaPrint() {
+    try {
+        showToast("📑 Menyiapkan print preview...", 2000);
+        
+        // Buat elemen temporary
+        const printDiv = document.createElement('div');
+        printDiv.style.cssText = `
+            padding: 40px;
+            background: white;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+        `;
+        
+        // Clone konten yang akan di-print
+        const content = document.querySelector('.balance-card')?.outerHTML || '';
+        const chart = document.getElementById('laporanChart')?.outerHTML || '';
+        const detail = document.getElementById('detailTransaksi')?.outerHTML || '';
+        
+        const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        const title = `Laporan Keuangan ${monthNames[currentMonth]} ${currentYear}`;
+        
+        printDiv.innerHTML = `
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #1e293b; font-size: 24px;">💰 Laporan Keuangan</h1>
+                <h2 style="color: #64748b; font-size: 18px; font-weight: normal;">${title}</h2>
+                <hr style="border: 1px solid #e2e8f0; margin: 20px 0;">
+            </div>
+            ${content}
+            <div style="margin: 20px 0;">${chart}</div>
+            <div style="margin-top: 20px;">
+                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">📋 Detail Transaksi</h3>
+                ${detail}
+            </div>
+            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
+                Dicetak pada: ${new Date().toLocaleString('id-ID')}
+            </div>
+        `;
+        
+        // Buka jendela print
+        const win = window.open('', '_blank', 'width=800,height=600');
+        if (win) {
+            win.document.write(`
+                <html>
+                    <head>
+                        <title>${title}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            .balance-card { background: #1e293b; color: white; padding: 20px; border-radius: 12px; margin: 10px 0; }
+                            .balance-amount { font-size: 28px; font-weight: bold; }
+                            .stat-item { display: inline-block; margin-right: 30px; }
+                            .stat-value.income { color: #4ade80; }
+                            .stat-value.expense { color: #f87171; }
+                            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                            th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+                            @media print { body { padding: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        ${printDiv.innerHTML}
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                    window.close();
+                                }, 500);
+                            };
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            win.document.close();
+        } else {
+            showToast("❌ Popup diblokir. Izinkan popup untuk export PDF.", 4000);
+        }
+    } catch(e) {
+        console.error("Print error:", e);
+        showToast("❌ Gagal print: " + e.message, 4000);
+    }
 }
 
 // ============================================
