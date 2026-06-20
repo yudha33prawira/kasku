@@ -2281,77 +2281,6 @@ function openTransaksiModal(predefinedType = null, editId = null) {
 }
 
 // ============================================
-// SHOW TRANSACTION DETAIL - DENGAN BUKTI
-// ============================================
-async function showTransactionDetail(transaction) {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    const cat = getCategoryById(transaction.category_id);
-    const isShared = transaction.user_id !== currentUser?.id;
-    
-    const catDisplay = cat ? `
-        <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${cat.color}; margin-right:8px; vertical-align:middle;"></span>
-        ${cat.icon} ${cat.name}
-    ` : '-';
-    
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-title">📋 Detail Transaksi</div>
-            
-            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${getUserEmail(transaction.user_id)} ${getFamilyBadge(transaction.user_id)}</span></div>` : ''}
-            
-            <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
-            
-            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type === 'pemasukan' ? '#10b981' : '#ef4444'}">${transaction.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(transaction.amount)}</span></div>
-            
-            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type === 'pemasukan' ? '💵 Pemasukan' : '💸 Pengeluaran'}</span></div>
-            
-            <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
-            
-            <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${catDisplay}</span></div>
-            
-            <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
-            
-            <!-- ====== BUKTI TRANSAKSI ====== -->
-            ${transaction.proof_url ? `
-                <div style="margin:12px 0; padding:12px; background:rgba(59,130,246,0.05); border-radius:12px;">
-                    <div style="font-weight:600; margin-bottom:8px;">📸 Bukti Transaksi</div>
-                    <img src="${transaction.proof_url}" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--border-color); cursor:pointer;" onclick="window.open('${transaction.proof_url}', '_blank')" />
-                </div>
-            ` : ''}
-            
-            <div class="modal-button-grid">
-                <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
-                <button id="deleteTxBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
-                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    document.getElementById("editTxBtn").onclick = () => {
-        modal.remove();
-        openTransaksiModal(null, transaction.id);
-    };
-    
-    document.getElementById("deleteTxBtn").onclick = async () => {
-        if (confirm("Hapus transaksi ini?")) {
-            // Hapus bukti jika ada
-            if (transaction.proof_url) {
-                await deleteProof(transaction.id);
-            }
-            await sb.from("transactions").delete().eq("id", transaction.id);
-            showToast("Transaksi dihapus");
-            modal.remove();
-            await loadTransactions();
-            renderCurrentView();
-        }
-    };
-    
-    document.getElementById("closeDetailBtn").onclick = () => modal.remove();
-}
-
-// ============================================
 // APPLY THEME
 // ============================================
 function applyTheme(isDark) {
@@ -2786,14 +2715,13 @@ async function showDebtDetail(debt) {
 }
 
 // ============================================
-// SHOW TRANSACTION DETAIL (dengan Custom ID)
+// SHOW TRANSACTION DETAIL - DENGAN BUKTI
 // ============================================
 async function showTransactionDetail(transaction) {
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     const cat = getCategoryById(transaction.category_id);
-    const isShared = transaction.user_id !== currentCustomUser?.id;
-    const user = isShared ? await userManager.getUserById(transaction.user_id) : null;
-    const userName = user?.username || user?.display_name || `User ${transaction.user_id}`;
+    const isShared = transaction.user_id !== currentUser?.id;
     
     const catDisplay = cat ? `
         <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${cat.color}; margin-right:8px; vertical-align:middle;"></span>
@@ -2803,13 +2731,29 @@ async function showTransactionDetail(transaction) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail Transaksi</div>
-            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${escapeHtml(userName)} ${getFamilyBadge(transaction.user_id)}</span></div>` : ''}
+            
+            ${isShared ? `<div class="detail-row"><span class="detail-label">Dibuat Oleh</span><span class="detail-value">${getUserEmail(transaction.user_id)} ${getFamilyBadge(transaction.user_id)}</span></div>` : ''}
+            
             <div class="detail-row"><span class="detail-label">Deskripsi</span><span class="detail-value">${escapeHtml(transaction.description)}</span></div>
-            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type==='pemasukan'?'#10b981':'#ef4444'}">${transaction.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(transaction.amount)}</span></div>
-            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type==='pemasukan'?'💵 Pemasukan':'💸 Pengeluaran'}</span></div>
+            
+            <div class="detail-row"><span class="detail-label">Jumlah</span><span class="detail-value" style="color:${transaction.type === 'pemasukan' ? '#10b981' : '#ef4444'}">${transaction.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(transaction.amount)}</span></div>
+            
+            <div class="detail-row"><span class="detail-label">Jenis</span><span class="detail-value">${transaction.type === 'pemasukan' ? '💵 Pemasukan' : '💸 Pengeluaran'}</span></div>
+            
             <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${formatDate(transaction.created_at)}</span></div>
+            
             <div class="detail-row"><span class="detail-label">Kategori</span><span class="detail-value">${catDisplay}</span></div>
+            
             <div class="detail-row"><span class="detail-label">Pengeluaran Tetap</span><span class="detail-value">${transaction.is_fixed_expense ? '✅ Ya' : '❌ Tidak'}</span></div>
+            
+            <!-- ====== BUKTI TRANSAKSI ====== -->
+            ${transaction.proof_url ? `
+                <div style="margin:12px 0; padding:12px; background:rgba(59,130,246,0.05); border-radius:12px;">
+                    <div style="font-weight:600; margin-bottom:8px;">📸 Bukti Transaksi</div>
+                    <img src="${transaction.proof_url}" style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid var(--border-color); cursor:pointer;" onclick="window.open('${transaction.proof_url}', '_blank')" />
+                </div>
+            ` : ''}
+            
             <div class="modal-button-grid">
                 <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
                 <button id="deleteTxBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
@@ -2826,6 +2770,10 @@ async function showTransactionDetail(transaction) {
     
     document.getElementById("deleteTxBtn").onclick = async () => {
         if (confirm("Hapus transaksi ini?")) {
+            // Hapus bukti jika ada
+            if (transaction.proof_url) {
+                await deleteProof(transaction.id);
+            }
             await sb.from("transactions").delete().eq("id", transaction.id);
             showToast("Transaksi dihapus");
             modal.remove();
