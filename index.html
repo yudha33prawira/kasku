@@ -2905,7 +2905,7 @@ async function openEditProfileModal() {
 }
 
 // ============================================
-// RENDER SETTINGS - TAMPILAN ID KELUARGA
+// RENDER SETTINGS - ID KELUARGA DI PROFIL
 // ============================================
 async function renderSettings() {
     // Load ulang data keluarga terlebih dahulu
@@ -2937,41 +2937,80 @@ async function renderSettings() {
         <div class="card">
             <div class="card-title">👤 Profil Saya</div>
             <div style="display: grid; gap: 12px; padding: 8px 0;">
+                <!-- Kode User -->
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">🆔 Kode User</span>
                     <span style="font-weight: 700; font-size: 18px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 4px 16px; border-radius: 20px;">
                         ${escapeHtml(userCode)}
                     </span>
                 </div>
+                
+                <!-- ====== ID KELUARGA - DI PROFIL ====== -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); background: ${currentFamilyId ? 'rgba(59,130,246,0.05)' : 'transparent'}; border-radius: 8px; padding: 8px 12px;">
+                    <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 18px;">🔑</span> ID Keluarga
+                    </span>
+                    ${currentFamilyId ? `
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                            <span style="font-family: 'Courier New', monospace; font-size: 13px; color: #60a5fa; font-weight: 600; background: rgba(59,130,246,0.1); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(59,130,246,0.2);">
+                                ${currentFamilyId}
+                            </span>
+                            <button onclick="copyFamilyId()" style="background: #3b82f6; border: none; border-radius: 30px; padding: 4px 12px; color: white; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                📋 Copy
+                            </button>
+                        </div>
+                    ` : `
+                        <span style="color: var(--text-secondary); font-size: 13px;">Belum punya keluarga</span>
+                    `}
+                </div>
+                
+                <!-- Nama Tampilan -->
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">👤 Nama Tampilan</span>
                     <span style="font-weight: 500;">${escapeHtml(displayName)}</span>
                 </div>
+                
+                <!-- Email -->
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">📧 Email</span>
                     <span style="font-weight: 500;">${escapeHtml(email)}</span>
                 </div>
+                
+                <!-- Username -->
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">👤 Username</span>
                     <span style="font-weight: 500;">${escapeHtml(username)}</span>
                 </div>
+                
+                <!-- ID Internal -->
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
                     <span style="color: var(--text-secondary);">🆔 ID (Internal)</span>
                     <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userId}</span>
                 </div>
+                
+                <!-- Bergabung -->
                 <div style="display: flex; justify-content: space-between; padding: 8px 0;">
                     <span style="color: var(--text-secondary);">📅 Bergabung</span>
                     <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userData?.created_at ? formatDate(userData.created_at) : '-'}</span>
                 </div>
             </div>
+            
+            <!-- Tombol Edit Profil -->
             <button id="editProfileBtn" class="modal-btn modal-btn-primary" style="margin-top: 12px; width:100%;">
                 ✏️ Edit Profil
             </button>
+            
+            <!-- Tombol Copy ID (jika punya keluarga) -->
+            ${currentFamilyId ? `
+                <button id="copyFamilyIdFromProfileBtn" style="margin-top: 8px; width:100%; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 60px; padding: 12px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                    📋 Copy ID Keluarga
+                </button>
+            ` : ''}
         </div>
         
         <!-- ====== KELUARGA ====== -->
         <div class="card">
-            <div class="card-title">👨‍👩‍👧‍👦 Keluarga</div>
+            <div class="card-title">👨‍👩‍👧‍👦 Manajemen Keluarga</div>
             
             ${currentFamilyId && familyInfo ? `
                 <!-- ====== SUDAH PUNYA KELUARGA ====== -->
@@ -2984,31 +3023,8 @@ async function renderSettings() {
                         <button id="leaveFamilyBtn" style="background:#ef4444; border:none; border-radius:30px; padding:4px 12px; color:white; font-size:12px; cursor:pointer;">Keluar</button>
                     </div>
                     
-                    <!-- ====== ID KELUARGA - BOX KHUSUS ====== -->
-                    <div style="margin-top:16px; padding:16px; background:linear-gradient(135deg, #1e293b, #0f172a); border-radius:12px; border:2px solid #3b82f6; box-shadow: 0 4px 15px rgba(59,130,246,0.2);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                            <div style="flex:1; min-width:150px;">
-                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-                                    <span style="font-size:24px;">🔑</span>
-                                    <span style="font-size:14px; font-weight:700; color: #60a5fa; letter-spacing: 1px;">ID KELUARGA</span>
-                                </div>
-                                <div style="font-family: 'Courier New', monospace; font-size:16px; color: #93c5fd; font-weight:700; word-break:break-all; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:8px; border:1px solid rgba(59,130,246,0.2);">
-                                    ${currentFamilyId}
-                                </div>
-                            </div>
-                            <button id="copyFamilyIdBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:30px; padding:10px 24px; color:white; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">
-                                📋 Copy ID
-                            </button>
-                        </div>
-                        <div style="margin-top:12px; padding:10px 14px; background:rgba(251,191,36,0.1); border-radius:8px; border-left:4px solid #fbbf24;">
-                            <span style="font-size:13px; color: #fcd34d;">
-                                💡 <strong>Bagikan ID ini</strong> ke anggota keluarga lain agar bisa bergabung
-                            </span>
-                        </div>
-                    </div>
-                    
                     <!-- ====== DAFTAR ANGGOTA ====== -->
-                    <div style="margin-top:16px;">
+                    <div style="margin-top:12px;">
                         <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
                             👥 Anggota Keluarga (${familyMembers.length})
                         </div>
@@ -3095,25 +3111,8 @@ async function renderSettings() {
     // EVENT LISTENERS
     // ============================================
     
-    // 1. Copy Family ID
-    document.getElementById("copyFamilyIdBtn")?.addEventListener("click", () => {
-        if (currentFamilyId) {
-            navigator.clipboard.writeText(currentFamilyId).then(() => {
-                showToast("✅ ID Keluarga disalin!");
-            }).catch(() => {
-                // Fallback
-                const textArea = document.createElement('textarea');
-                textArea.value = currentFamilyId;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showToast("✅ ID Keluarga disalin!");
-            });
-        } else {
-            showToast("❌ Tidak ada keluarga");
-        }
-    });
+    // 1. Copy Family ID dari Profil
+    document.getElementById("copyFamilyIdFromProfileBtn")?.addEventListener("click", copyFamilyId);
     
     // 2. Edit Profile
     document.getElementById("editProfileBtn")?.addEventListener("click", () => {
@@ -3183,7 +3182,6 @@ async function renderSettings() {
             return;
         }
         await createFamily(name);
-        // RenderSettings sudah dipanggil di dalam createFamily
     });
     
     // 8. Join Family
@@ -3194,7 +3192,6 @@ async function renderSettings() {
             return;
         }
         await joinFamily(familyId);
-        // RenderSettings sudah dipanggil di dalam joinFamily
     });
     
     // 9. Invite Member
@@ -3278,6 +3275,28 @@ async function renderSettings() {
             }
         };
     });
+}
+
+// ============================================
+// FUNGSI COPY FAMILY ID (Global)
+// ============================================
+function copyFamilyId() {
+    if (currentFamilyId) {
+        navigator.clipboard.writeText(currentFamilyId).then(() => {
+            showToast("✅ ID Keluarga disalin!", 3000);
+        }).catch(() => {
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = currentFamilyId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast("✅ ID Keluarga disalin!", 3000);
+        });
+    } else {
+        showToast("❌ Tidak ada keluarga", 2000);
+    }
 }
 
 // ============================================
