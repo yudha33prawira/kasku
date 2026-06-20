@@ -577,7 +577,7 @@ let familyMembers = [];
 let familyInfo = null;
 
 // ============================================
-// CREATE FAMILY - SIMPAN KE USER_SETTINGS
+// CREATE FAMILY - FIXED
 // ============================================
 async function createFamily(familyName) {
     if (!currentUser) {
@@ -643,7 +643,7 @@ async function createFamily(familyName) {
         currentFamilyId = family.id;
         familyInfo = family;
         
-        // 4. SIMPAN KE USER_SETTINGS
+        // 4. Simpan ke user_settings (cache)
         try {
             // Cek apakah sudah ada settings
             const { data: existingSettings } = await sb
@@ -653,7 +653,6 @@ async function createFamily(familyName) {
                 .maybeSingle();
             
             if (existingSettings) {
-                // Update
                 await sb
                     .from("user_settings")
                     .update({ 
@@ -662,7 +661,6 @@ async function createFamily(familyName) {
                     })
                     .eq("user_id", userId);
             } else {
-                // Insert
                 await sb
                     .from("user_settings")
                     .insert({
@@ -885,20 +883,21 @@ async function loadFamilyDataFromCache() {
     if (!userId) return null;
     
     try {
-        const { data: settings, error } = await sb
+        // Gunakan .select() tanpa .single() untuk menghindari error
+        const { data: settingsData, error } = await sb
             .from("user_settings")
             .select("family_id")
-            .eq("user_id", userId)
-            .maybeSingle();
+            .eq("user_id", userId);
         
         if (error) {
             console.error("Load settings error:", error);
             return null;
         }
         
-        if (settings?.family_id) {
-            console.log("✅ Family ID from cache:", settings.family_id);
-            return settings.family_id;
+        if (settingsData && settingsData.length > 0) {
+            const familyId = settingsData[0].family_id;
+            console.log("✅ Family ID from cache:", familyId);
+            return familyId;
         }
         
         return null;
@@ -954,8 +953,9 @@ function showJoinSuccessPopup(familyName) {
         }
     };
 }
+    
 // ============================================
-// LOAD FAMILY DATA - SIMPAN KE USER_SETTINGS
+// LOAD FAMILY DATA - FIX MULTIPLE ROWS
 // ============================================
 async function loadFamilyData() {
     if (!currentUser) return;
@@ -972,23 +972,12 @@ async function loadFamilyData() {
     try {
         console.log("🔄 Loading family data for user:", userId);
         
-        // 1. Cek dari user_settings dulu (cache)
-        const { data: settings, error: settingsError } = await sb
-            .from("user_settings")
-            .select("family_id")
-            .eq("user_id", userId)
-            .maybeSingle();
-        
-        if (settingsError) {
-            console.error("Load settings error:", settingsError);
-        }
-        
-        // 2. Cek dari family_members
-        const { data: familyMember, error: fmError } = await sb
+        // 1. Cek dari family_members (sumber utama)
+        // Gunakan .select() tanpa .maybeSingle() untuk menghindari error multiple rows
+        const { data: familyMemberData, error: fmError } = await sb
             .from("family_members")
             .select("family_id")
-            .eq("user_id", userId)
-            .maybeSingle();
+            .eq("user_id", userId);
         
         if (fmError) {
             console.error("Load family member error:", fmError);
@@ -998,38 +987,51 @@ async function loadFamilyData() {
             return;
         }
         
-        // 3. Update currentFamilyId
+        // Ambil data pertama (seharusnya hanya 1, tapi amankan)
+        const familyMember = familyMemberData && familyMemberData.length > 0 ? familyMemberData[0] : null;
+        
         if (familyMember) {
             currentFamilyId = familyMember.family_id;
             console.log("✅ Family found, ID:", currentFamilyId);
             
-            // 4. Simpan ke user_settings (cache)
-            if (settings) {
-                // Update existing
-                await sb
+            // 2. Simpan ke user_settings sebagai cache
+            try {
+                // Cek apakah sudah ada settings
+                const { data: existingSettings } = await sb
                     .from("user_settings")
-                    .update({ 
-                        family_id: currentFamilyId,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq("user_id", userId);
-            } else {
-                // Insert new
-                await sb
-                    .from("user_settings")
-                    .insert({
-                        user_id: userId,
-                        family_id: currentFamilyId
-                    });
+                    .select("id")
+                    .eq("user_id", userId)
+                    .maybeSingle();
+                
+                if (existingSettings) {
+                    // Update
+                    await sb
+                        .from("user_settings")
+                        .update({ 
+                            family_id: currentFamilyId,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq("user_id", userId);
+                } else {
+                    // Insert
+                    await sb
+                        .from("user_settings")
+                        .insert({
+                            user_id: userId,
+                            family_id: currentFamilyId
+                        });
+                }
+                console.log("✅ Family ID saved to user_settings");
+            } catch(e) {
+                console.error("Save to user_settings error:", e);
             }
-            console.log("✅ Family ID saved to user_settings");
             
-            // 5. Load family info
+            // 3. Load family info
             const { data: family, error: fError } = await sb
                 .from("families")
                 .select("*")
                 .eq("id", currentFamilyId)
-                .single();
+                .maybeSingle();
             
             if (fError) {
                 console.error("Load family info error:", fError);
@@ -1039,7 +1041,7 @@ async function loadFamilyData() {
                 console.log("✅ Family name:", familyInfo?.name);
             }
             
-            // 6. Load members
+            // 4. Load members
             const { data: members, error: mError } = await sb
                 .from("family_members")
                 .select("*, users!user_id(*)")
@@ -3019,17 +3021,9 @@ async function openEditProfileModal() {
 }
 
 // ============================================
-// RENDER SETTINGS - ID KELUARGA DI PROFIL
+// RENDER SETTINGS - FULL FUNCTION
 // ============================================
 async function renderSettings() {
-        const cachedFamilyId = await loadFamilyDataFromCache();
-    
-    if (cachedFamilyId && !currentFamilyId) {
-        currentFamilyId = cachedFamilyId;
-        await loadFamilyData(); // Refresh data
-    } else {
-        await loadFamilyData();
-    }
     // Load ulang data keluarga terlebih dahulu
     await loadFamilyData();
     
@@ -3040,11 +3034,14 @@ async function renderSettings() {
     const username = userData?.username || 'User';
     const email = userData?.email || currentUser?.email || '-';
     const displayName = userData?.display_name || username;
+    const userCreatedAt = userData?.created_at ? formatDate(userData.created_at) : '-';
     
-    // DEBUG: Cek state
+    // Debug
     console.log("🔍 Render Settings - currentFamilyId:", currentFamilyId);
     console.log("🔍 Render Settings - familyInfo:", familyInfo);
+    console.log("🔍 Render Settings - userData:", userData);
     
+    // Generate HTML
     let html = `
         <div class="header">
             <div class="user-info">${escapeHtml(displayName)} ${currentFamilyId ? '🏠' : ''}</div>
@@ -3067,7 +3064,7 @@ async function renderSettings() {
                     </span>
                 </div>
                 
-                <!-- ====== ID KELUARGA - DI PROFIL ====== -->
+                <!-- ID Keluarga - DI PROFIL -->
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); background: ${currentFamilyId ? 'rgba(59,130,246,0.05)' : 'transparent'}; border-radius: 8px; padding: 8px 12px;">
                     <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                         <span style="font-size: 18px;">🔑</span> ID Keluarga
@@ -3113,7 +3110,7 @@ async function renderSettings() {
                 <!-- Bergabung -->
                 <div style="display: flex; justify-content: space-between; padding: 8px 0;">
                     <span style="color: var(--text-secondary);">📅 Bergabung</span>
-                    <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userData?.created_at ? formatDate(userData.created_at) : '-'}</span>
+                    <span style="font-weight: 500; font-size: 13px; color: var(--text-secondary);">${userCreatedAt}</span>
                 </div>
             </div>
             
@@ -3130,12 +3127,12 @@ async function renderSettings() {
             ` : ''}
         </div>
         
-        <!-- ====== KELUARGA ====== -->
+        <!-- ====== MANAJEMEN KELUARGA ====== -->
         <div class="card">
             <div class="card-title">👨‍👩‍👧‍👦 Manajemen Keluarga</div>
             
             ${currentFamilyId && familyInfo ? `
-                <!-- ====== SUDAH PUNYA KELUARGA ====== -->
+                <!-- SUDAH PUNYA KELUARGA -->
                 <div style="margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div>
@@ -3145,7 +3142,7 @@ async function renderSettings() {
                         <button id="leaveFamilyBtn" style="background:#ef4444; border:none; border-radius:30px; padding:4px 12px; color:white; font-size:12px; cursor:pointer;">Keluar</button>
                     </div>
                     
-                    <!-- ====== DAFTAR ANGGOTA ====== -->
+                    <!-- DAFTAR ANGGOTA -->
                     <div style="margin-top:12px;">
                         <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
                             👥 Anggota Keluarga (${familyMembers.length})
@@ -3168,7 +3165,7 @@ async function renderSettings() {
                     </div>
                 </div>
                 
-                <!-- ====== FORM UNDANG ====== -->
+                <!-- FORM UNDANG -->
                 <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; border-top:1px solid var(--border-color); padding-top:16px;">
                     <input type="email" id="inviteEmail" placeholder="📧 Email anggota baru" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
                     <button id="inviteMemberBtn" style="background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
@@ -3176,7 +3173,7 @@ async function renderSettings() {
                     </button>
                 </div>
             ` : `
-                <!-- ====== BELUM PUNYA KELUARGA ====== -->
+                <!-- BELUM PUNYA KELUARGA -->
                 <div style="margin-bottom:12px;">
                     <p style="color:var(--text-secondary); margin-bottom:16px;">Bergabung dengan keluarga untuk berbagi data keuangan</p>
                     
@@ -3227,6 +3224,7 @@ async function renderSettings() {
         </div>
     `;
     
+    // Render ke container
     document.getElementById("appContainer").innerHTML = html;
     
     // ============================================
@@ -3324,6 +3322,7 @@ async function renderSettings() {
             return;
         }
         try {
+            // Cari user berdasarkan email
             const { data: userData, error: userError } = await sb
                 .from("users")
                 .select("id")
@@ -3334,6 +3333,7 @@ async function renderSettings() {
                 throw new Error("User tidak ditemukan atau belum memiliki akun");
             }
             
+            // Cek apakah sudah jadi anggota
             const { data: existing, error: existError } = await sb
                 .from("family_members")
                 .select("*")
@@ -3345,6 +3345,7 @@ async function renderSettings() {
                 throw new Error("User sudah menjadi anggota");
             }
             
+            // Tambahkan anggota
             await sb.from("family_members").insert({
                 family_id: currentFamilyId,
                 user_id: userData.id,
@@ -3366,11 +3367,18 @@ async function renderSettings() {
         if (!userId) return;
         
         try {
+            // Hapus dari family_members
             await sb.from("family_members")
                 .delete()
                 .eq("family_id", currentFamilyId)
                 .eq("user_id", userId);
             
+            // Hapus dari user_settings
+            await sb.from("user_settings")
+                .update({ family_id: null })
+                .eq("user_id", userId);
+            
+            // Reset state
             currentFamilyId = null;
             familyInfo = null;
             familyMembers = [];
@@ -3382,7 +3390,7 @@ async function renderSettings() {
         }
     });
     
-    // 11. Toggle Password
+    // 11. Toggle Password Visibility
     document.querySelectorAll(".toggle-password").forEach(btn => {
         btn.onclick = () => {
             const inp = document.getElementById(btn.getAttribute("data-target"));
@@ -3400,8 +3408,10 @@ async function renderSettings() {
 }
 
 // ============================================
-// FUNGSI COPY FAMILY ID (Global)
+// GLOBAL FUNCTIONS
 // ============================================
+
+// Copy Family ID
 function copyFamilyId() {
     if (currentFamilyId) {
         navigator.clipboard.writeText(currentFamilyId).then(() => {
@@ -3419,6 +3429,89 @@ function copyFamilyId() {
     } else {
         showToast("❌ Tidak ada keluarga", 2000);
     }
+}
+
+// Open Edit Profile Modal
+async function openEditProfileModal() {
+    const userData = await userManager.getUserData();
+    if (!userData) {
+        showToast("❌ Data user tidak ditemukan");
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">✏️ Edit Profil</div>
+            
+            <div style="margin-bottom:16px; padding:12px; background:rgba(59,130,246,0.1); border-radius:12px; text-align:center;">
+                <span style="font-size:14px; color:var(--text-secondary);">🆔 Kode User</span>
+                <div style="font-size:24px; font-weight:700; color:#3b82f6;">${userData.user_code || 'USR-???'}</div>
+            </div>
+            
+            <input type="text" id="editUsername" class="modal-input" placeholder="Username" value="${escapeHtml(userData.username || '')}">
+            <input type="text" id="editDisplayName" class="modal-input" placeholder="Nama Tampilan" value="${escapeHtml(userData.display_name || '')}">
+            <input type="email" id="editEmail" class="modal-input" placeholder="Email" value="${escapeHtml(userData.email || '')}" disabled style="opacity:0.6;">
+            
+            <div style="margin-top:12px; padding:12px; background:rgba(251,191,36,0.1); border-radius:12px; border-left:4px solid #fbbf24;">
+                <p style="font-size:12px; color:var(--text-secondary);">
+                    💡 <strong>Username</strong> digunakan untuk login dan identitas di aplikasi.<br>
+                    <strong>Nama Tampilan</strong> akan muncul di profil dan komentar.
+                </p>
+            </div>
+            
+            <div class="modal-button-grid">
+                <button id="saveProfileBtn" class="modal-btn modal-btn-primary">💾 Simpan</button>
+                <button id="closeProfileModal" class="modal-btn modal-btn-secondary">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Event: Simpan
+    document.getElementById("saveProfileBtn").onclick = async () => {
+        const username = document.getElementById("editUsername").value.trim();
+        const displayName = document.getElementById("editDisplayName").value.trim();
+
+        if (!username) {
+            showToast("❌ Username harus diisi");
+            return;
+        }
+
+        try {
+            showToast("⏳ Menyimpan perubahan...");
+            
+            const updated = await userManager.updateProfile({
+                username: username,
+                display_name: displayName || username
+            });
+
+            if (updated) {
+                currentCustomUser = updated;
+                showToast("✅ Profil berhasil diupdate!");
+                modal.remove();
+                renderSettings();
+            } else {
+                showToast("❌ Gagal update profil");
+            }
+        } catch(e) {
+            console.error('Update profile error:', e);
+            showToast("❌ Error: " + e.message);
+        }
+    };
+
+    // Event: Batal
+    document.getElementById("closeProfileModal").onclick = () => {
+        modal.remove();
+    };
+
+    // Event: Click di luar modal
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
 }
 
 // ============================================
