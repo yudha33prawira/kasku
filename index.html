@@ -2208,14 +2208,19 @@ function openCategoryFormModal(editId=null) {
 }
 
 // ============================================
-// RENDER HOME
+// RENDER HOME - VERSION DENGAN TOMBOL TUGAS
 // ============================================
 async function renderHome() {
     await loadTransactions();
+    await loadTasks(); // ← Tambahkan ini untuk load tugas
     const totals = hitungTotalSaldo();
     const totalSavings = hitungTotalTabungan();
     const overdueCount = getOverdueCount();
     const now = new Date();
+    
+    // Hitung tugas yang belum selesai
+    const pendingTasks = tasks.filter(t => !t.is_completed);
+    const pendingCount = pendingTasks.length;
     
     const bulanIni = [];
     for (const t of transactions) {
@@ -2234,11 +2239,14 @@ async function renderHome() {
     
     const recent = transactions.slice(0, 5);
     const familyDisplay = currentFamilyId ? `🏠 ${familyInfo?.name || 'Keluarga'} (${familyMembers.length} anggota)` : '👤 Personal';
-    const userDisplay = currentCustomUser ? `${currentCustomUser.username || 'User'} (ID: ${currentCustomUser.id})` : 'Tamu';
+    const userDisplay = currentCustomUser ? `${currentCustomUser.username || 'User'} (${currentCustomUser.user_code || 'USR-???'})` : 'Tamu';
+    
+    // Tampilkan tugas terbaru (max 3)
+    const recentTasks = pendingTasks.slice(0, 3);
     
     let html = `
         <div class="header">
-            <div class="user-info">${userDisplay} ${currentFamilyId ? '🏠' : ''}</div>
+            <div class="user-info">${escapeHtml(userDisplay)} ${currentFamilyId ? '🏠' : ''}</div>
             <div class="header-actions">
                 <button id="reminderBtn" class="icon-btn">🔔${overdueCount > 0 ? `<span class="reminder-badge">${overdueCount}</span>` : ''}</button>
                 <button id="openSettingsBtn" class="icon-btn">⚙️</button>
@@ -2247,9 +2255,11 @@ async function renderHome() {
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <span style="font-size:12px; color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.1); padding:4px 12px; border-radius:20px;">${familyDisplay}</span>
-            <span style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:10px;">Custom ID: ${currentCustomUser?.id || '-'}</span>
+            <span style="font-size:10px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:10px;">${currentCustomUser?.user_code || ''}</span>
         </div>
         ${renderRunningText()}
+        
+        <!-- ====== SALDO ====== -->
         <div class="balance-card">
             <button id="toggleBalanceBtn" class="balance-eye">${isBalanceHidden?'👁️‍🗨️':'👁️'}</button>
             <div class="balance-label">Total Saldo Keluarga</div>
@@ -2259,25 +2269,60 @@ async function renderHome() {
                 <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden?'••••':`-Rp ${formatRupiah(totals.pengeluaran)}`}</div></div>
             </div>
         </div>
+        
+        <!-- ====== TABUNGAN ====== -->
         <div class="card" id="savingsCard">
             <div class="card-title"><span>💰 Tabungan Pribadi</span><span style="color:#10b981">Rp ${formatRupiah(totalSavings)}</span></div>
             <div id="savingsPreview"></div>
         </div>
+        
+        <!-- ====== TOMBOL TUGAS (PENGGANTI PEMASUKAN/PENGELUARAN) ====== -->
         <div class="action-buttons">
-            <button id="quickIncome" class="btn-income">+ Pemasukan</button>
-            <button id="quickExpense" class="btn-expense">- Pengeluaran</button>
+            <button id="quickTasks" class="btn-income" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
+                ✅ Tugas (${pendingCount})
+            </button>
+            <button id="quickAddTask" class="btn-expense" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                ➕ Tambah Tugas
+            </button>
         </div>
+        
+        <!-- ====== STATS HUTANG/PIUTANG ====== -->
         <div class="stats-row">
             <div class="stat-card" id="piutangCard"><div class="stat-card-title">💰 Piutang</div><div class="stat-card-value income">Rp ${formatRupiah(piutang)}</div></div>
             <div class="stat-card" id="hutangCard"><div class="stat-card-title">💸 Hutang</div><div class="stat-card-value expense">Rp ${formatRupiah(hutang)}</div></div>
         </div>
+        
+        <!-- ====== TUGAS TERBARU ====== -->
+        <div class="card" id="tasksCard" style="cursor:pointer;">
+            <div class="card-title">
+                <span>✅ Tugas Terbaru (${pendingCount} belum selesai)</span>
+                <span style="font-size:12px; color:var(--text-secondary);">Lihat semua →</span>
+            </div>
+            ${recentTasks.length > 0 ? recentTasks.map(t => `
+                <div class="task-item" data-id="${t.id}" style="padding:10px 0; border-bottom:1px solid var(--border-color);">
+                    <div style="display:flex; align-items:center; gap:12px; flex:1">
+                        <span style="font-size:20px;">${t.is_completed ? '✅' : '⏳'}</span>
+                        <div>
+                            <div style="font-weight:500;">${escapeHtml(t.title)}</div>
+                            ${t.due_date ? `<div style="font-size:11px; color:var(--text-secondary);">📅 ${formatDate(t.due_date)}</div>` : ''}
+                            ${t.user_id !== currentCustomUser?.id ? `<div style="font-size:10px; color:var(--text-secondary);">👤 User ${t.user_id}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('') : `
+                <div class="empty-state" style="padding:20px;">
+                    🎉 Tidak ada tugas tertunda
+                </div>
+            `}
+        </div>
+        
+        <!-- ====== PENGELUARAN TERATAS ====== -->
         <div class="card">
             <div class="card-title">📊 Pengeluaran Teratas</div>
-            ${topExpenses.map((t,i) => {
-                const userName = t.user_id === currentCustomUser?.id ? 'Saya' : `User ${t.user_id}`;
-                return `<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}${t.user_id !== currentCustomUser?.id ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`;
-            }).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
+            ${topExpenses.map((t,i)=>`<div class="flex-between" style="padding:8px 0"><span>${i+1}. ${escapeHtml(t.description)}${t.user_id !== currentCustomUser?.id ? `<span class="family-member-badge">👤 User ${t.user_id}</span>` : ''}</span><span style="color:#ef4444">-Rp ${formatRupiah(t.amount)}</span><br><small>${formatDate(t.created_at)}</small></div>`).join('')||'<div class="empty-state">Belum ada pengeluaran</div>'}
         </div>
+        
+        <!-- ====== TRANSAKSI TERBARU ====== -->
         <div class="card">
             <div class="card-title">📋 Transaksi Terbaru (${transactions.length})</div>
             ${recent.map(t=>{
@@ -2292,8 +2337,14 @@ async function renderHome() {
             }).join('')||'<div class="empty-state">Belum ada transaksi</div>'}
         </div>
     `;
+    
     document.getElementById("appContainer").innerHTML = html;
     
+    // ============================================
+    // EVENT LISTENERS - VERSION BARU
+    // ============================================
+    
+    // Preview Tabungan
     const previewDiv = document.getElementById("savingsPreview");
     if(previewDiv) {
         if(savings.length===0) previewDiv.innerHTML='<div class="empty-state" style="padding:12px">Belum ada tabungan pribadi</div>';
@@ -2305,16 +2356,86 @@ async function renderHome() {
             </div></div>`).join('');
     }
     
-    document.getElementById("quickIncome")?.addEventListener("click",()=>openTransaksiModal("pemasukan"));
-    document.getElementById("quickExpense")?.addEventListener("click",()=>openTransaksiModal("pengeluaran"));
-    document.getElementById("logoutBtn")?.addEventListener("click",logout);
-    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ pushHistory(currentNav); previousNav = currentNav; currentNav = "settings"; updateNav(); renderSettings(); });
-    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
-    document.getElementById("toggleBalanceBtn")?.addEventListener("click",(e)=>{ e.stopPropagation(); isBalanceHidden=!isBalanceHidden; renderHome(); });
-    document.getElementById("piutangCard")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="hutang"; updateNav(); renderHutang(); });
-    document.getElementById("hutangCard")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="hutang"; updateNav(); renderHutang(); });
-    document.getElementById("savingsCard")?.addEventListener("click",()=>{ pushHistory(currentNav); currentNav="savings"; updateNav(); renderSavings(); });
+    // ⭐ 1. Tombol Tugas (ke halaman Tugas) - BARU
+    document.getElementById("quickTasks")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        currentNav = "tasks";
+        updateNav();
+        renderTasks();
+    });
     
+    // ⭐ 2. Tombol Tambah Tugas - BARU
+    document.getElementById("quickAddTask")?.addEventListener("click", () => {
+        openTaskModal();
+    });
+    
+    // ⭐ 3. Card Tugas (klik ke halaman Tugas) - BARU
+    document.getElementById("tasksCard")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        currentNav = "tasks";
+        updateNav();
+        renderTasks();
+    });
+    
+    // ⭐ 4. Detail Tugas (klik item tugas) - BARU
+    document.querySelectorAll(".task-item").forEach(el => { 
+        el.onclick = (e) => { 
+            e.stopPropagation();
+            const id = el.getAttribute("data-id"); 
+            openTaskModal(id); 
+        }; 
+    });
+    
+    // ❌ HAPUS: document.getElementById("quickIncome")...
+    // ❌ HAPUS: document.getElementById("quickExpense")...
+    
+    // 5. Logout
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    
+    // 6. Settings
+    document.getElementById("openSettingsBtn")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        previousNav = currentNav;
+        currentNav = "settings";
+        updateNav();
+        renderSettings();
+    });
+    
+    // 7. Reminder
+    document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
+    
+    // 8. Toggle Balance
+    document.getElementById("toggleBalanceBtn")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        isBalanceHidden = !isBalanceHidden;
+        renderHome();
+    });
+    
+    // 9. Piutang Card
+    document.getElementById("piutangCard")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        currentNav = "hutang";
+        updateNav();
+        renderHutang();
+    });
+    
+    // 10. Hutang Card
+    document.getElementById("hutangCard")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        currentNav = "hutang";
+        updateNav();
+        renderHutang();
+    });
+    
+    // 11. Tabungan Card
+    document.getElementById("savingsCard")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        currentNav = "savings";
+        updateNav();
+        renderSavings();
+    });
+    
+    // 12. Detail Transaksi
     document.querySelectorAll(".transaction-item").forEach(el => { 
         el.onclick = () => { 
             const id = el.getAttribute("data-id"); 
@@ -2322,6 +2443,8 @@ async function renderHome() {
             if (transaction) showTransactionDetail(transaction); 
         }; 
     });
+    
+    // 13. Detail Tabungan
     document.querySelectorAll(".savings-item").forEach(el => { 
         el.onclick = (e) => { 
             e.stopPropagation(); 
