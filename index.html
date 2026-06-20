@@ -494,39 +494,96 @@ let currentFamilyId = null;
 let familyMembers = [];
 let familyInfo = null;
 
+// ============================================
+// CREATE FAMILY - FIX ID TIDAK MUNCUL
+// ============================================
 async function createFamily(familyName) {
-    if (!currentUser) return;
+    if (!currentUser) {
+        showToast("❌ Silakan login terlebih dahulu");
+        return null;
+    }
+    
     const userId = await userManager.getUserId();
     if (!userId) {
         showToast("❌ User ID tidak ditemukan");
-        return;
+        return null;
+    }
+    
+    if (!familyName || familyName.trim() === '') {
+        showToast("❌ Nama keluarga harus diisi");
+        return null;
     }
     
     try {
+        showToast("⏳ Membuat keluarga...");
+        
+        // 1. Buat keluarga
         const { data: family, error } = await sb
             .from("families")
             .insert({ 
-                name: familyName, 
-                created_by: userId  // ← Custom ID (angka)
+                name: familyName.trim(), 
+                created_by: userId 
             })
             .select()
             .single();
         
-        if (error) throw error;
+        if (error) {
+            console.error("Insert family error:", error);
+            showToast("❌ Gagal membuat keluarga: " + error.message);
+            return null;
+        }
         
-        await sb.from("family_members").insert({
-            family_id: family.id,
-            user_id: userId,  // ← Custom ID (angka)
-            role: 'owner'
-        });
+        if (!family) {
+            showToast("❌ Gagal membuat keluarga: data tidak kembali");
+            return null;
+        }
         
+        console.log("✅ Keluarga created:", family);
+        console.log("🔑 ID Keluarga:", family.id);
+        
+        // 2. Tambahkan user sebagai owner
+        const { error: memberError } = await sb
+            .from("family_members")
+            .insert({
+                family_id: family.id,
+                user_id: userId,
+                role: 'owner'
+            });
+        
+        if (memberError) {
+            console.error("Insert member error:", memberError);
+            // Rollback: hapus keluarga
+            await sb.from("families").delete().eq("id", family.id);
+            showToast("❌ Gagal menambahkan anggota: " + memberError.message);
+            return null;
+        }
+        
+        // 3. Update state
         currentFamilyId = family.id;
         familyInfo = family;
-        showToast("✅ Keluarga berhasil dibuat!");
+        
+        // 4. FORCE LOAD ulang data keluarga dari database
+        await loadFamilyData();
+        
+        // 5. Tampilkan ID keluarga di toast
+        showToast(`✅ Keluarga "${family.name}" berhasil dibuat!`);
+        setTimeout(() => {
+            showToast(`🔑 ID Keluarga: ${family.id}`);
+        }, 500);
+        
+        // 6. Refresh tampilan Settings
+        await renderSettings();
+        
+        // 7. Log untuk debugging
+        console.log("🏠 Current Family ID:", currentFamilyId);
+        console.log("📋 Family Info:", familyInfo);
+        
         return family;
+        
     } catch(e) {
         console.error("Create family error:", e);
-        throw e;
+        showToast("❌ Gagal membuat keluarga: " + e.message);
+        return null;
     }
 }
 
@@ -572,47 +629,94 @@ async function joinFamily(familyId) {
     }
 }
 
+// ============================================
+// LOAD FAMILY DATA - FORCE RELOAD
+// ============================================
 async function loadFamilyData() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.warn("⚠️ No current user");
+        return;
+    }
+    
     const userId = await userManager.getUserId();
-    if (!userId) return;
+    if (!userId) {
+        console.warn("⚠️ User ID not found");
+        currentFamilyId = null;
+        familyInfo = null;
+        familyMembers = [];
+        return;
+    }
     
     try {
+        console.log("🔄 Loading family data for user:", userId);
+        
+        // Cek apakah user sudah punya keluarga
         const { data: familyMember, error: fmError } = await sb
             .from("family_members")
             .select("family_id")
             .eq("user_id", userId)
             .maybeSingle();
         
-        if (fmError) throw fmError;
+        if (fmError) {
+            console.error("Load family member error:", fmError);
+            currentFamilyId = null;
+            familyInfo = null;
+            familyMembers = [];
+            return;
+        }
+        
+        console.log("📦 Family member data:", familyMember);
         
         if (familyMember) {
             currentFamilyId = familyMember.family_id;
+            console.log("✅ Family found, ID:", currentFamilyId);
             
+            // Load family info
             const { data: family, error: fError } = await sb
                 .from("families")
                 .select("*")
                 .eq("id", currentFamilyId)
                 .single();
             
-            if (fError) throw fError;
-            familyInfo = family;
+            if (fError) {
+                console.error("Load family info error:", fError);
+                familyInfo = null;
+            } else {
+                familyInfo = family;
+                console.log("✅ Family name:", familyInfo?.name);
+                console.log("✅ Family ID:", familyInfo?.id);
+            }
             
+            // Load members
             const { data: members, error: mError } = await sb
                 .from("family_members")
                 .select("*, users!user_id(*)")
                 .eq("family_id", currentFamilyId);
             
-            if (mError) throw mError;
-            familyMembers = members || [];
+            if (mError) {
+                console.error("Load members error:", mError);
+                familyMembers = [];
+            } else {
+                familyMembers = members || [];
+                console.log("✅ Members loaded:", familyMembers.length);
+            }
             
-            console.log("Family loaded:", familyInfo?.name, "Members:", familyMembers.length);
+            // Pastikan currentFamilyId tetap terisi
+            if (familyInfo) {
+                currentFamilyId = familyInfo.id;
+            }
+            
         } else {
             currentFamilyId = null;
             familyInfo = null;
             familyMembers = [];
-            console.log("User is not in any family");
+            console.log("ℹ️ User tidak punya keluarga");
         }
+        
+        // Log final state
+        console.log("🏠 Final Family ID:", currentFamilyId);
+        console.log("📋 Final Family Info:", familyInfo);
+        
     } catch(e) { 
         console.error("Load family data error:", e);
         currentFamilyId = null;
@@ -620,7 +724,7 @@ async function loadFamilyData() {
         familyMembers = [];
     } 
 }
-
+    
 function getFamilyMemberIds() {
     return familyMembers.map(m => m.user_id);
 }
@@ -2518,9 +2622,10 @@ async function openEditProfileModal() {
 }
 
 // ============================================
-// RENDER SETTINGS - DIPERBAIKI
+// RENDER SETTINGS - TAMPILAN ID KELUARGA
 // ============================================
 async function renderSettings() {
+    // Load ulang data keluarga terlebih dahulu
     await loadFamilyData();
     
     // Ambil data user
@@ -2530,6 +2635,10 @@ async function renderSettings() {
     const username = userData?.username || 'User';
     const email = userData?.email || currentUser?.email || '-';
     const displayName = userData?.display_name || username;
+    
+    // DEBUG: Cek state
+    console.log("🔍 Render Settings - currentFamilyId:", currentFamilyId);
+    console.log("🔍 Render Settings - familyInfo:", familyInfo);
     
     let html = `
         <div class="header">
@@ -2580,45 +2689,96 @@ async function renderSettings() {
         <!-- ====== KELUARGA ====== -->
         <div class="card">
             <div class="card-title">👨‍👩‍👧‍👦 Keluarga</div>
-            ${currentFamilyId ? `
+            
+            ${currentFamilyId && familyInfo ? `
+                <!-- ====== SUDAH PUNYA KELUARGA ====== -->
                 <div style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div>
-                            <span style="font-weight:600;">🏠 ${escapeHtml(familyInfo?.name || 'Keluarga')}</span>
+                            <span style="font-weight:600; font-size:16px;">🏠 ${escapeHtml(familyInfo?.name || 'Keluarga')}</span>
                             <span style="font-size:12px; color:var(--text-secondary); margin-left:8px;">${familyMembers.length} anggota</span>
-                            <div style="font-size:11px; color:var(--text-secondary);">ID: ${currentFamilyId.slice(0,8)}</div>
                         </div>
                         <button id="leaveFamilyBtn" style="background:#ef4444; border:none; border-radius:30px; padding:4px 12px; color:white; font-size:12px; cursor:pointer;">Keluar</button>
                     </div>
-                    <div style="margin-top:8px; max-height:150px; overflow-y:auto;">
-                        ${familyMembers.map(m => {
-                            const memberName = m.users?.display_name || m.users?.username || `User ${m.user_id}`;
-                            const memberCode = m.users?.user_code || '???';
-                            const isOwner = m.role === 'owner';
-                            return `
-                            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border-color);">
-                                <span>${m.user_id === currentCustomUser?.id ? '👤' : '👥'} ${escapeHtml(memberName)}</span>
-                                <span style="font-size:11px; color:var(--text-secondary);">
-                                    ${memberCode} ${isOwner ? '👑' : ''}
-                                </span>
+                    
+                    <!-- ====== ID KELUARGA - BOX KHUSUS ====== -->
+                    <div style="margin-top:16px; padding:16px; background:linear-gradient(135deg, #1e293b, #0f172a); border-radius:12px; border:2px solid #3b82f6; box-shadow: 0 4px 15px rgba(59,130,246,0.2);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div style="flex:1; min-width:150px;">
+                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                                    <span style="font-size:24px;">🔑</span>
+                                    <span style="font-size:14px; font-weight:700; color: #60a5fa; letter-spacing: 1px;">ID KELUARGA</span>
+                                </div>
+                                <div style="font-family: 'Courier New', monospace; font-size:16px; color: #93c5fd; font-weight:700; word-break:break-all; background:rgba(255,255,255,0.05); padding:10px 14px; border-radius:8px; border:1px solid rgba(59,130,246,0.2);">
+                                    ${currentFamilyId}
+                                </div>
                             </div>
-                        `}).join('')}
+                            <button id="copyFamilyIdBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:30px; padding:10px 24px; color:white; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow: 0 4px 10px rgba(59,130,246,0.3);">
+                                📋 Copy ID
+                            </button>
+                        </div>
+                        <div style="margin-top:12px; padding:10px 14px; background:rgba(251,191,36,0.1); border-radius:8px; border-left:4px solid #fbbf24;">
+                            <span style="font-size:13px; color: #fcd34d;">
+                                💡 <strong>Bagikan ID ini</strong> ke anggota keluarga lain agar bisa bergabung
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- ====== DAFTAR ANGGOTA ====== -->
+                    <div style="margin-top:16px;">
+                        <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px; font-weight:600;">
+                            👥 Anggota Keluarga (${familyMembers.length})
+                        </div>
+                        <div style="max-height:150px; overflow-y:auto; background:rgba(255,255,255,0.03); border-radius:8px; padding:4px 8px;">
+                            ${familyMembers.length > 0 ? familyMembers.map(m => {
+                                const memberName = m.users?.display_name || m.users?.username || `User ${m.user_id}`;
+                                const memberCode = m.users?.user_code || '???';
+                                const isOwner = m.role === 'owner';
+                                const isMe = m.user_id === currentCustomUser?.id;
+                                return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 4px; border-bottom:1px solid var(--border-color);">
+                                    <span>${isMe ? '👤' : '👥'} ${escapeHtml(memberName)} ${isMe ? '⭐ (Saya)' : ''}</span>
+                                    <span style="font-size:11px; color:var(--text-secondary);">
+                                        ${memberCode} ${isOwner ? '👑 Owner' : ''}
+                                    </span>
+                                </div>
+                            `}).join('') : '<div style="padding:8px; color:var(--text-secondary);">Belum ada anggota</div>'}
+                        </div>
                     </div>
                 </div>
-                <div style="display:flex; gap:8px; margin-top:12px;">
-                    <input type="email" id="inviteEmail" placeholder="Email anggota baru" class="modal-input" style="flex:1; margin-bottom:0;">
-                    <button id="inviteMemberBtn" style="background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Undang</button>
+                
+                <!-- ====== FORM UNDANG ====== -->
+                <div style="display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; border-top:1px solid var(--border-color); padding-top:16px;">
+                    <input type="email" id="inviteEmail" placeholder="📧 Email anggota baru" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
+                    <button id="inviteMemberBtn" style="background:linear-gradient(135deg, #10b981, #059669); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
+                        ➕ Undang
+                    </button>
                 </div>
             ` : `
+                <!-- ====== BELUM PUNYA KELUARGA ====== -->
                 <div style="margin-bottom:12px;">
-                    <p style="color:var(--text-secondary); margin-bottom:12px;">Bergabung dengan keluarga untuk berbagi data keuangan</p>
+                    <p style="color:var(--text-secondary); margin-bottom:16px;">Bergabung dengan keluarga untuk berbagi data keuangan</p>
+                    
+                    <!-- Buat Keluarga -->
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
                         <input type="text" id="familyNameInput" placeholder="Nama Keluarga" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
-                        <button id="createFamilyBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Buat</button>
+                        <button id="createFamilyBtn" style="background:linear-gradient(135deg, #3b82f6, #2563eb); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
+                            🏠 Buat
+                        </button>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <input type="text" id="joinFamilyInput" placeholder="ID Keluarga" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
-                        <button id="joinFamilyBtn" style="background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:40px; padding:0 20px; color:white; font-weight:600; cursor:pointer;">Gabung</button>
+                    
+                    <!-- Gabung Keluarga -->
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" id="joinFamilyInput" placeholder="ID Keluarga (UUID)" class="modal-input" style="flex:1; min-width:150px; margin-bottom:0;">
+                        <button id="joinFamilyBtn" style="background:linear-gradient(135deg, #8b5cf6, #6d28d9); border:none; border-radius:40px; padding:8px 20px; color:white; font-weight:600; cursor:pointer; white-space:nowrap;">
+                            🔗 Gabung
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top:12px; padding:12px; background:rgba(251,191,36,0.1); border-radius:8px; border-left:3px solid #fbbf24;">
+                        <span style="font-size:12px; color:var(--text-secondary);">
+                            💡 <strong>Belum punya keluarga?</strong> Buat keluarga baru atau minta ID Keluarga dari teman/keluarga Anda.
+                        </span>
                     </div>
                 </div>
             `}
@@ -2652,16 +2812,35 @@ async function renderSettings() {
     // EVENT LISTENERS
     // ============================================
     
-    // 1. Edit Profile - PERBAIKAN UTAMA
+    // 1. Copy Family ID
+    document.getElementById("copyFamilyIdBtn")?.addEventListener("click", () => {
+        if (currentFamilyId) {
+            navigator.clipboard.writeText(currentFamilyId).then(() => {
+                showToast("✅ ID Keluarga disalin!");
+            }).catch(() => {
+                // Fallback
+                const textArea = document.createElement('textarea');
+                textArea.value = currentFamilyId;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast("✅ ID Keluarga disalin!");
+            });
+        } else {
+            showToast("❌ Tidak ada keluarga");
+        }
+    });
+    
+    // 2. Edit Profile
     document.getElementById("editProfileBtn")?.addEventListener("click", () => {
-        console.log("🖱️ Edit Profile clicked");
         openEditProfileModal();
     });
     
-    // 2. Logout
+    // 3. Logout
     document.getElementById("logoutBtn")?.addEventListener("click", logout);
     
-    // 3. Back
+    // 4. Back
     document.getElementById("backFromSettingsBtn")?.addEventListener("click", () => { 
         if (previousNav && previousNav !== "settings") { 
             currentNav = previousNav; 
@@ -2674,7 +2853,7 @@ async function renderSettings() {
         } 
     });
     
-    // 4. Change Password
+    // 5. Change Password
     document.getElementById("changePassBtn")?.addEventListener("click", async () => {
         const old = document.getElementById("oldPass").value;
         const newp = document.getElementById("newPass").value;
@@ -2705,7 +2884,7 @@ async function renderSettings() {
         }
     });
     
-    // 5. Dark Mode
+    // 6. Dark Mode
     const darkModeSwitch = document.getElementById("darkModeSwitch");
     if (darkModeSwitch) {
         darkModeSwitch.addEventListener("change", async (e) => { 
@@ -2713,39 +2892,29 @@ async function renderSettings() {
         });
     }
     
-    // 6. Create Family
+    // 7. Create Family
     document.getElementById("createFamilyBtn")?.addEventListener("click", async () => {
         const name = document.getElementById("familyNameInput").value.trim();
         if (!name) {
             showToast("❌ Masukkan nama keluarga");
             return;
         }
-        try {
-            await createFamily(name);
-            await loadAllData();
-            renderSettings();
-        } catch(e) {
-            showToast("❌ Gagal membuat keluarga: " + e.message);
-        }
+        await createFamily(name);
+        // RenderSettings sudah dipanggil di dalam createFamily
     });
     
-    // 7. Join Family
+    // 8. Join Family
     document.getElementById("joinFamilyBtn")?.addEventListener("click", async () => {
         const familyId = document.getElementById("joinFamilyInput").value.trim();
         if (!familyId) {
             showToast("❌ Masukkan ID Keluarga");
             return;
         }
-        try {
-            await joinFamily(familyId);
-            await loadAllData();
-            renderSettings();
-        } catch(e) {
-            showToast("❌ Gagal bergabung: " + e.message);
-        }
+        await joinFamily(familyId);
+        // RenderSettings sudah dipanggil di dalam joinFamily
     });
     
-    // 8. Invite Member
+    // 9. Invite Member
     document.getElementById("inviteMemberBtn")?.addEventListener("click", async () => {
         const email = document.getElementById("inviteEmail").value.trim();
         if (!email) {
@@ -2788,7 +2957,7 @@ async function renderSettings() {
         }
     });
     
-    // 9. Leave Family
+    // 10. Leave Family
     document.getElementById("leaveFamilyBtn")?.addEventListener("click", async () => {
         if (!confirm("Yakin ingin keluar dari keluarga?")) return;
         const userId = await userManager.getUserId();
@@ -2803,7 +2972,7 @@ async function renderSettings() {
             currentFamilyId = null;
             familyInfo = null;
             familyMembers = [];
-            showToast("Keluar dari keluarga");
+            showToast("✅ Keluar dari keluarga");
             await loadAllData();
             renderSettings();
         } catch(e) {
@@ -2811,7 +2980,7 @@ async function renderSettings() {
         }
     });
     
-    // 10. Toggle Password
+    // 11. Toggle Password
     document.querySelectorAll(".toggle-password").forEach(btn => {
         btn.onclick = () => {
             const inp = document.getElementById(btn.getAttribute("data-target"));
