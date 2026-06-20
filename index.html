@@ -577,7 +577,7 @@ let familyMembers = [];
 let familyInfo = null;
 
 // ============================================
-// CREATE FAMILY - DENGAN MODAL POPUP
+// CREATE FAMILY - SIMPAN KE USER_SETTINGS
 // ============================================
 async function createFamily(familyName) {
     if (!currentUser) {
@@ -643,13 +643,45 @@ async function createFamily(familyName) {
         currentFamilyId = family.id;
         familyInfo = family;
         
-        // 4. Force load ulang data keluarga
+        // 4. SIMPAN KE USER_SETTINGS
+        try {
+            // Cek apakah sudah ada settings
+            const { data: existingSettings } = await sb
+                .from("user_settings")
+                .select("id")
+                .eq("user_id", userId)
+                .maybeSingle();
+            
+            if (existingSettings) {
+                // Update
+                await sb
+                    .from("user_settings")
+                    .update({ 
+                        family_id: family.id,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("user_id", userId);
+            } else {
+                // Insert
+                await sb
+                    .from("user_settings")
+                    .insert({
+                        user_id: userId,
+                        family_id: family.id
+                    });
+            }
+            console.log("✅ Family ID saved to user_settings");
+        } catch(e) {
+            console.error("Save to user_settings error:", e);
+        }
+        
+        // 5. Load ulang data
         await loadFamilyData();
         
-        // 5. Tampilkan popup ID Keluarga
+        // 6. Tampilkan popup
         showFamilyIdPopup(family.id, family.name);
         
-        // 6. Refresh tampilan Settings
+        // 7. Refresh tampilan Settings
         await renderSettings();
         
         return family;
@@ -731,7 +763,7 @@ function showFamilyIdPopup(familyId, familyName) {
 }
     
 // ============================================
-// JOIN FAMILY - DENGAN POPUP
+// JOIN FAMILY - SIMPAN KE USER_SETTINGS
 // ============================================
 async function joinFamily(familyId) {
     if (!currentUser) {
@@ -796,13 +828,42 @@ async function joinFamily(familyId) {
         currentFamilyId = family.id;
         familyInfo = family;
         
-        // 5. Load ulang data keluarga
+        // 5. SIMPAN KE USER_SETTINGS
+        try {
+            const { data: existingSettings } = await sb
+                .from("user_settings")
+                .select("id")
+                .eq("user_id", userId)
+                .maybeSingle();
+            
+            if (existingSettings) {
+                await sb
+                    .from("user_settings")
+                    .update({ 
+                        family_id: family.id,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("user_id", userId);
+            } else {
+                await sb
+                    .from("user_settings")
+                    .insert({
+                        user_id: userId,
+                        family_id: family.id
+                    });
+            }
+            console.log("✅ Family ID saved to user_settings");
+        } catch(e) {
+            console.error("Save to user_settings error:", e);
+        }
+        
+        // 6. Load ulang data
         await loadFamilyData();
         
-        // 6. Tampilkan popup sukses
+        // 7. Tampilkan popup
         showJoinSuccessPopup(family.name);
         
-        // 7. Refresh tampilan Settings
+        // 8. Refresh tampilan Settings
         await renderSettings();
         
         return true;
@@ -811,6 +872,39 @@ async function joinFamily(familyId) {
         console.error("Join family error:", e);
         showToast("❌ Gagal bergabung: " + e.message);
         return false;
+    }
+}
+
+// ============================================
+// LOAD FAMILY DATA DARI CACHE (user_settings)
+// ============================================
+async function loadFamilyDataFromCache() {
+    if (!currentUser) return null;
+    
+    const userId = await userManager.getUserId();
+    if (!userId) return null;
+    
+    try {
+        const { data: settings, error } = await sb
+            .from("user_settings")
+            .select("family_id")
+            .eq("user_id", userId)
+            .maybeSingle();
+        
+        if (error) {
+            console.error("Load settings error:", error);
+            return null;
+        }
+        
+        if (settings?.family_id) {
+            console.log("✅ Family ID from cache:", settings.family_id);
+            return settings.family_id;
+        }
+        
+        return null;
+    } catch(e) {
+        console.error("Load cache error:", e);
+        return null;
     }
 }
 
@@ -861,13 +955,10 @@ function showJoinSuccessPopup(familyName) {
     };
 }
 // ============================================
-// LOAD FAMILY DATA - FORCE RELOAD
+// LOAD FAMILY DATA - SIMPAN KE USER_SETTINGS
 // ============================================
 async function loadFamilyData() {
-    if (!currentUser) {
-        console.warn("⚠️ No current user");
-        return;
-    }
+    if (!currentUser) return;
     
     const userId = await userManager.getUserId();
     if (!userId) {
@@ -881,7 +972,18 @@ async function loadFamilyData() {
     try {
         console.log("🔄 Loading family data for user:", userId);
         
-        // Cek apakah user sudah punya keluarga
+        // 1. Cek dari user_settings dulu (cache)
+        const { data: settings, error: settingsError } = await sb
+            .from("user_settings")
+            .select("family_id")
+            .eq("user_id", userId)
+            .maybeSingle();
+        
+        if (settingsError) {
+            console.error("Load settings error:", settingsError);
+        }
+        
+        // 2. Cek dari family_members
         const { data: familyMember, error: fmError } = await sb
             .from("family_members")
             .select("family_id")
@@ -896,13 +998,33 @@ async function loadFamilyData() {
             return;
         }
         
-        console.log("📦 Family member data:", familyMember);
-        
+        // 3. Update currentFamilyId
         if (familyMember) {
             currentFamilyId = familyMember.family_id;
             console.log("✅ Family found, ID:", currentFamilyId);
             
-            // Load family info
+            // 4. Simpan ke user_settings (cache)
+            if (settings) {
+                // Update existing
+                await sb
+                    .from("user_settings")
+                    .update({ 
+                        family_id: currentFamilyId,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("user_id", userId);
+            } else {
+                // Insert new
+                await sb
+                    .from("user_settings")
+                    .insert({
+                        user_id: userId,
+                        family_id: currentFamilyId
+                    });
+            }
+            console.log("✅ Family ID saved to user_settings");
+            
+            // 5. Load family info
             const { data: family, error: fError } = await sb
                 .from("families")
                 .select("*")
@@ -915,10 +1037,9 @@ async function loadFamilyData() {
             } else {
                 familyInfo = family;
                 console.log("✅ Family name:", familyInfo?.name);
-                console.log("✅ Family ID:", familyInfo?.id);
             }
             
-            // Load members
+            // 6. Load members
             const { data: members, error: mError } = await sb
                 .from("family_members")
                 .select("*, users!user_id(*)")
@@ -932,11 +1053,6 @@ async function loadFamilyData() {
                 console.log("✅ Members loaded:", familyMembers.length);
             }
             
-            // Pastikan currentFamilyId tetap terisi
-            if (familyInfo) {
-                currentFamilyId = familyInfo.id;
-            }
-            
         } else {
             currentFamilyId = null;
             familyInfo = null;
@@ -944,9 +1060,7 @@ async function loadFamilyData() {
             console.log("ℹ️ User tidak punya keluarga");
         }
         
-        // Log final state
         console.log("🏠 Final Family ID:", currentFamilyId);
-        console.log("📋 Final Family Info:", familyInfo);
         
     } catch(e) { 
         console.error("Load family data error:", e);
@@ -2908,6 +3022,14 @@ async function openEditProfileModal() {
 // RENDER SETTINGS - ID KELUARGA DI PROFIL
 // ============================================
 async function renderSettings() {
+        const cachedFamilyId = await loadFamilyDataFromCache();
+    
+    if (cachedFamilyId && !currentFamilyId) {
+        currentFamilyId = cachedFamilyId;
+        await loadFamilyData(); // Refresh data
+    } else {
+        await loadFamilyData();
+    }
     // Load ulang data keluarga terlebih dahulu
     await loadFamilyData();
     
