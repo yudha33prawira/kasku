@@ -955,7 +955,7 @@ function showJoinSuccessPopup(familyName) {
 }
     
 // ============================================
-// LOAD FAMILY DATA - FIX MULTIPLE ROWS
+// LOAD FAMILY DATA - FIX RELATION
 // ============================================
 async function loadFamilyData() {
     if (!currentUser) return;
@@ -972,8 +972,7 @@ async function loadFamilyData() {
     try {
         console.log("🔄 Loading family data for user:", userId);
         
-        // 1. Cek dari family_members (sumber utama)
-        // Gunakan .select() tanpa .maybeSingle() untuk menghindari error multiple rows
+        // 1. Cek dari family_members
         const { data: familyMemberData, error: fmError } = await sb
             .from("family_members")
             .select("family_id")
@@ -987,16 +986,14 @@ async function loadFamilyData() {
             return;
         }
         
-        // Ambil data pertama (seharusnya hanya 1, tapi amankan)
         const familyMember = familyMemberData && familyMemberData.length > 0 ? familyMemberData[0] : null;
         
         if (familyMember) {
             currentFamilyId = familyMember.family_id;
             console.log("✅ Family found, ID:", currentFamilyId);
             
-            // 2. Simpan ke user_settings sebagai cache
+            // 2. Simpan ke user_settings
             try {
-                // Cek apakah sudah ada settings
                 const { data: existingSettings } = await sb
                     .from("user_settings")
                     .select("id")
@@ -1004,7 +1001,6 @@ async function loadFamilyData() {
                     .maybeSingle();
                 
                 if (existingSettings) {
-                    // Update
                     await sb
                         .from("user_settings")
                         .update({ 
@@ -1013,7 +1009,6 @@ async function loadFamilyData() {
                         })
                         .eq("user_id", userId);
                 } else {
-                    // Insert
                     await sb
                         .from("user_settings")
                         .insert({
@@ -1041,17 +1036,29 @@ async function loadFamilyData() {
                 console.log("✅ Family name:", familyInfo?.name);
             }
             
-            // 4. Load members
+            // 4. Load members - CARA SEDERHANA tanpa join
             const { data: members, error: mError } = await sb
                 .from("family_members")
-                .select("*, users!user_id(*)")
+                .select("*")
                 .eq("family_id", currentFamilyId);
             
             if (mError) {
                 console.error("Load members error:", mError);
                 familyMembers = [];
             } else {
-                familyMembers = members || [];
+                // Ambil data user untuk setiap member
+                const memberWithUsers = await Promise.all((members || []).map(async (m) => {
+                    const { data: userData } = await sb
+                        .from("users")
+                        .select("*")
+                        .eq("id", m.user_id)
+                        .maybeSingle();
+                    return {
+                        ...m,
+                        users: userData || null
+                    };
+                }));
+                familyMembers = memberWithUsers;
                 console.log("✅ Members loaded:", familyMembers.length);
             }
             
