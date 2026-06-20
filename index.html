@@ -3040,108 +3040,114 @@ function openTaskModal(editId=null){
 // ============================================
 async function renderLaporan() {
     await loadTransactions();
-    const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    const filtered=transactions.filter(t=>{const d=new Date(t.created_at); return d.getMonth()===currentMonth && d.getFullYear()===currentYear;});
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const filtered = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
     filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     
-    let pemasukan=0,pengeluaran=0,catTotals={};
+    let pemasukan = 0,
+        pengeluaran = 0,
+        catTotals = {};
     for (const t of filtered) {
-        if(t.type==='pemasukan') pemasukan+=Number(t.amount); 
-        else pengeluaran+=Number(t.amount); 
-        const cid=t.category_id||'uncategorized'; 
-        catTotals[cid]=(catTotals[cid]||0)+Number(t.amount);
+        if (t.type === 'pemasukan') pemasukan += Number(t.amount);
+        else pengeluaran += Number(t.amount);
+        const cid = t.category_id || 'uncategorized';
+        catTotals[cid] = (catTotals[cid] || 0) + Number(t.amount);
     }
     
-    const labels=[],data=[],colors=[];
-    for (const [id,val] of Object.entries(catTotals)) {
-        if(id==='uncategorized'){ 
-            labels.push('📁 Tanpa Kategori'); 
-            colors.push('#94a3b8'); 
-        }
-        else { 
-            const cat=categories.find(c=>c.id===id); 
-            if(cat){ 
-                labels.push(`${cat.icon} ${cat.name}`); 
+    const labels = [],
+        data = [],
+        colors = [];
+    for (const [id, val] of Object.entries(catTotals)) {
+        if (id === 'uncategorized') {
+            labels.push('📁 Tanpa Kategori');
+            colors.push('#94a3b8');
+        } else {
+            const cat = categories.find(c => c.id === id);
+            if (cat) {
+                labels.push(`${cat.icon} ${cat.name}`);
                 colors.push(cat.color);
             } else {
-                labels.push('📁 Unknown'); 
+                labels.push('📁 Unknown');
                 colors.push('#94a3b8');
             }
         }
         data.push(val);
     }
     
-    let html=`
+    let html = `
         <div class="header"><div class="user-info">${currentCustomUser?.username || 'User'} (ID: ${currentCustomUser?.id || '-'}) ${currentFamilyId ? '🏠' : ''}</div><div class="header-actions"><button id="reminderBtn" class="icon-btn">🔔</button><button id="openSettingsBtn" class="icon-btn">⚙️</button><button id="logoutBtn" class="logout-btn">Logout</button></div></div>
         ${renderRunningText()}
         <div class="month-selector"><button id="prevMonth">◀</button><span style="font-weight:600;">${monthNames[currentMonth]} ${currentYear}</span><button id="nextMonth">▶</button></div>
-        <div class="balance-card" style="padding:20px; cursor:default"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 ${pemasukan-pengeluaran >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(pemasukan-pengeluaran))}</div></div></div>
+        <div class="balance-card" style="padding:20px; cursor:default"><div style="display:flex; justify-content:space-between"><div>💚 +Rp ${formatRupiah(pemasukan)}</div><div>❤️ -Rp ${formatRupiah(pengeluaran)}</div><div>💰 ${pemasukan - pengeluaran >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(pemasukan - pengeluaran))}</div></div></div>
         <div class="card"><div class="card-title">📊 Statistik Kategori <button id="exportPdfBtn" style="background:linear-gradient(135deg, #6366f1, #4f46e5); border:none; border-radius:40px; padding:8px 16px; color:white; font-size:12px; font-weight:600;">📑 Export PDF</button></div><canvas id="laporanChart" style="max-height:200px; width:100%"></canvas></div>
         <div class="card"><div class="card-title">📋 Detail Transaksi</div><div id="detailTransaksi"></div></div>
     `;
-    document.getElementById("appContainer").innerHTML=html;
+    document.getElementById("appContainer").innerHTML = html;
     
     const overdueCount = getOverdueCount();
     const reminderBtn = document.getElementById("reminderBtn");
     if (reminderBtn && overdueCount > 0) reminderBtn.innerHTML = `🔔<span class="reminder-badge">${overdueCount}</span>`;
     
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
-    if(ctx && data.length > 0) {
-        if(window.laporanChart && typeof window.laporanChart.destroy === 'function') window.laporanChart.destroy();
-        window.laporanChart = new Chart(ctx, { 
-            type: 'pie', 
-            data: { 
-                labels, 
-                datasets: [{ 
-                    data, 
-                    backgroundColor: colors, 
+    if (ctx && data.length > 0) {
+        if (window.laporanChart && typeof window.laporanChart.destroy === 'function') window.laporanChart.destroy();
+        window.laporanChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    backgroundColor: colors,
                     borderWidth: 2,
                     borderColor: '#fff'
-                }] 
-            }, 
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: true, 
-                plugins: { 
-                    legend: { 
-                        position: 'bottom', 
-                        labels: { 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
                             font: { size: 11 },
                             padding: 10,
                             usePointStyle: true,
                             pointStyle: 'circle'
-                        } 
-                    } 
-                } 
-            } 
+                        }
+                    }
+                }
+            }
         });
     }
     
     const grouped = {};
-    for (const t of filtered) { 
-        const d=formatDate(t.created_at); 
-        if(!grouped[d]) grouped[d]=[]; 
-        grouped[d].push(t); 
+    for (const t of filtered) {
+        const d = formatDate(t.created_at);
+        if (!grouped[d]) grouped[d] = [];
+        grouped[d].push(t);
     }
-    let detail='';
-    for (const [date,items] of Object.entries(grouped)) {
-        let total=items.reduce((s,i)=>s+(i.type==='pemasukan'?Number(i.amount):-Number(i.amount)),0); 
-        detail+=`<div style="margin-top:16px"><strong>📌 ${date}</strong> <span style="color:${total>=0?'#10b981':'#ef4444'}">${total>=0?'+':'-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`; 
-        for (const i of items) { 
-            const cat=getCategoryById(i.category_id); 
+    let detail = '';
+    for (const [date, items] of Object.entries(grouped)) {
+        let total = items.reduce((s, i) => s + (i.type === 'pemasukan' ? Number(i.amount) : -Number(i.amount)), 0);
+        detail += `<div style="margin-top:16px"><strong>📌 ${date}</strong> <span style="color:${total >= 0 ? '#10b981' : '#ef4444'}">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`;
+        for (const i of items) {
+            const cat = getCategoryById(i.category_id);
             const catDisplay = cat ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cat.color}; margin-right:4px;"></span>${cat.icon} ${cat.name}` : '';
             const isShared = i.user_id !== currentCustomUser?.id;
             const userName = isShared ? `User ${i.user_id}` : 'Saya';
-            detail+=`<div style="padding-left:20px; margin:8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" data-id="${i.id}">
+            detail += `<div style="padding-left:20px; margin:8px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" data-id="${i.id}">
                 <div>
-                    <span>${i.type==='pemasukan'?'💚':'❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</span>
+                    <span>${i.type === 'pemasukan' ? '💚' : '❤️'} ${escapeHtml(i.description)} ${i.description?.includes('(Ulang)') ? '<span class="badge-recurring">Ulang</span>' : ''}${isShared ? `<span class="family-member-badge">👤 ${userName}</span>` : ''}</span>
                     ${catDisplay ? `<span style="font-size:11px; color:var(--text-secondary); margin-left:8px;">${catDisplay}</span>` : ''}
                 </div>
-                <span style="font-weight:600; color:${i.type==='pemasukan'?'#10b981':'#ef4444'}">${i.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(i.amount)}</span>
-            </div>`; 
+                <span style="font-weight:600; color:${i.type === 'pemasukan' ? '#10b981' : '#ef4444'}">${i.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(i.amount)}</span>
+            </div>`;
         }
     }
-    document.getElementById("detailTransaksi").innerHTML=detail||'<div class="empty-state">Tidak ada transaksi</div>';
+    document.getElementById("detailTransaksi").innerHTML = detail || '<div class="empty-state">Tidak ada transaksi</div>';
     
     document.querySelectorAll('#detailTransaksi > div > div').forEach(el => {
         el.onclick = () => {
@@ -3154,154 +3160,172 @@ async function renderLaporan() {
         };
     });
     
-    document.getElementById("logoutBtn")?.addEventListener("click",logout);
-    document.getElementById("openSettingsBtn")?.addEventListener("click",()=>{ pushHistory(currentNav); previousNav = currentNav; currentNav = "settings"; updateNav(); renderSettings(); });
+    document.getElementById("logoutBtn")?.addEventListener("click", logout);
+    document.getElementById("openSettingsBtn")?.addEventListener("click", () => {
+        pushHistory(currentNav);
+        previousNav = currentNav;
+        currentNav = "settings";
+        updateNav();
+        renderSettings();
+    });
     document.getElementById("reminderBtn")?.addEventListener("click", showRemindersPopup);
-    document.getElementById("prevMonth")?.addEventListener("click",()=>{if(currentMonth===0){currentMonth=11;currentYear--;}else currentMonth--; renderLaporan();});
-    document.getElementById("nextMonth")?.addEventListener("click",()=>{if(currentMonth===11){currentMonth=0;currentYear++;}else currentMonth++; renderLaporan();});
-// ============================================
-// EXPORT PDF - DIPERBAIKI
-// ============================================
-document.getElementById("exportPdfBtn")?.addEventListener("click", async () => {
-    try {
-        showToast("📑 Menyiapkan PDF...", 3000);
-        
-        // Tampilkan loading
-        const btn = document.getElementById("exportPdfBtn");
+    document.getElementById("prevMonth")?.addEventListener("click", () => {
+        if (currentMonth === 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else currentMonth--;
+        renderLaporan();
+    });
+    document.getElementById("nextMonth")?.addEventListener("click", () => {
+        if (currentMonth === 11) {
+            currentMonth = 0;
+            currentYear++;
+        } else currentMonth++;
+        renderLaporan();
+    });
+    
+    // ============================================
+    // EXPORT PDF - DENGAN FALLBACK
+    // ============================================
+    document.getElementById("exportPdfBtn")?.addEventListener("click", async function() {
+        const btn = this;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '⏳ Memproses...';
-        btn.disabled = true;
         
-        // Tunggu sebentar agar UI update
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // 1. Siapkan elemen untuk PDF
-        const element = document.createElement('div');
-        element.style.cssText = `
-            padding: 20px;
-            background: white;
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-        `;
-        
-        // 2. Ambil data dari laporan
-        const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-        const title = `Laporan Keuangan ${monthNames[currentMonth]} ${currentYear}`;
-        
-        // 3. Buat konten PDF
-        let content = `
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #1e293b; font-size: 24px;">💰 Laporan Keuangan</h1>
-                <h2 style="color: #64748b; font-size: 18px; font-weight: normal;">${title}</h2>
-                <hr style="border: 1px solid #e2e8f0; margin: 20px 0;">
-            </div>
-        `;
-        
-        // 4. Ambil data dari balance card yang sudah ada
-        const balanceCard = document.querySelector('.balance-card');
-        if (balanceCard) {
-            // Clone dan bersihkan
-            const clone = balanceCard.cloneNode(true);
-            // Hapus tombol toggle
-            const toggleBtn = clone.querySelector('#toggleBalanceBtn');
-            if (toggleBtn) toggleBtn.remove();
-            // Hapus style animation
-            clone.style.animation = 'none';
-            clone.style.transform = 'none';
-            content += clone.outerHTML;
-        }
-        
-        // 5. Ambil data dari chart (jika ada)
-        const chartCanvas = document.getElementById('laporanChart');
-        if (chartCanvas && window.laporanChart) {
-            try {
-                const chartImage = window.laporanChart.toBase64Image();
-                content += `
-                    <div style="text-align: center; margin: 20px 0;">
-                        <img src="${chartImage}" style="max-width: 100%; height: auto; border-radius: 12px;" />
-                    </div>
-                `;
-            } catch(e) {
-                console.warn('Chart export error:', e);
+        try {
+            showToast("📑 Menyiapkan PDF...", 3000);
+            btn.innerHTML = '⏳ Memproses...';
+            btn.disabled = true;
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Cek apakah html2pdf tersedia
+            if (typeof html2pdf === 'undefined') {
+                console.warn('html2pdf not loaded, using fallback');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                exportPDFViaPrint();
+                return;
             }
-        }
-        
-        // 6. Ambil data detail transaksi
-        const detailDiv = document.getElementById('detailTransaksi');
-        if (detailDiv) {
-            const detailClone = detailDiv.cloneNode(true);
-            // Hapus cursor pointer
-            detailClone.style.cursor = 'default';
-            // Hapus event listeners (tidak perlu di PDF)
-            content += `
-                <div style="margin-top: 20px;">
-                    <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">📋 Detail Transaksi</h3>
-                    ${detailClone.innerHTML}
+            
+            // Siapkan elemen untuk PDF
+            const element = document.createElement('div');
+            element.style.cssText = `
+                padding: 20px;
+                background: white;
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+            `;
+            
+            const title = `Laporan Keuangan ${monthNames[currentMonth]} ${currentYear}`;
+            
+            let content = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #1e293b; font-size: 24px;">💰 Laporan Keuangan</h1>
+                    <h2 style="color: #64748b; font-size: 18px; font-weight: normal;">${title}</h2>
+                    <hr style="border: 1px solid #e2e8f0; margin: 20px 0;">
                 </div>
             `;
-        }
-        
-        // 7. Tambahkan footer
-        content += `
-            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
-                Dicetak pada: ${new Date().toLocaleString('id-ID')}
-                <br>
-                © ${new Date().getFullYear()} Keuangan Keluarga
-            </div>
-        `;
-        
-        element.innerHTML = content;
-        
-        // 8. Siapkan opsi PDF
-        const opt = {
-            margin: [15, 15, 15, 15],
-            filename: `laporan_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                logging: false,
-                letterRendering: true,
-                width: 800
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait' 
-            },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-        
-        // 9. Generate PDF
-        await html2pdf().set(opt).from(element).save();
-        
-        // 10. Sukses
-        showToast("✅ PDF berhasil diexport!", 3000);
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        
-    } catch(e) {
-        console.error("PDF error:", e);
-        showToast("❌ Gagal export PDF: " + e.message, 4000);
-        
-        // Reset tombol
-        const btn = document.getElementById("exportPdfBtn");
-        if (btn) {
-            btn.innerHTML = '📑 Export PDF';
+            
+            const balanceCard = document.querySelector('.balance-card');
+            if (balanceCard) {
+                const clone = balanceCard.cloneNode(true);
+                const toggleBtn = clone.querySelector('#toggleBalanceBtn');
+                if (toggleBtn) toggleBtn.remove();
+                clone.style.animation = 'none';
+                clone.style.transform = 'none';
+                content += clone.outerHTML;
+            }
+            
+            const chartCanvas = document.getElementById('laporanChart');
+            if (chartCanvas && window.laporanChart) {
+                try {
+                    const chartImage = window.laporanChart.toBase64Image();
+                    content += `
+                        <div style="text-align: center; margin: 20px 0;">
+                            <img src="${chartImage}" style="max-width: 100%; height: auto; border-radius: 12px;" />
+                        </div>
+                    `;
+                } catch (e) {
+                    console.warn('Chart export error:', e);
+                }
+            }
+            
+            const detailDiv = document.getElementById('detailTransaksi');
+            if (detailDiv) {
+                const detailClone = detailDiv.cloneNode(true);
+                detailClone.style.cursor = 'default';
+                content += `
+                    <div style="margin-top: 20px;">
+                        <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">📋 Detail Transaksi</h3>
+                        ${detailClone.innerHTML}
+                    </div>
+                `;
+            }
+            
+            content += `
+                <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
+                    Dicetak pada: ${new Date().toLocaleString('id-ID')}
+                    <br>
+                    © ${new Date().getFullYear()} Keuangan Keluarga
+                </div>
+            `;
+            
+            element.innerHTML = content;
+            
+            const opt = {
+                margin: [15, 15, 15, 15],
+                filename: `laporan_${currentYear}_${String(currentMonth + 1).padStart(2, '0')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    letterRendering: true,
+                    width: 800
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait'
+                },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            
+            await html2pdf().set(opt).from(element).save();
+            
+            showToast("✅ PDF berhasil diexport!", 3000);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            
+        } catch (e) {
+            console.error("PDF error:", e);
+            
+            // Coba fallback
+            try {
+                showToast("🔄 Mencoba metode alternatif...", 2000);
+                btn.innerHTML = '🔄 Mencoba...';
+                exportPDFViaPrint();
+            } catch (fallbackError) {
+                showToast("❌ Gagal export PDF: " + e.message, 4000);
+            }
+            
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
-    }
-});
+    });
+}
 
 // ============================================
-// EXPORT PDF ALTERNATIF - PRINT TO PDF
+// EXPORT PDF VIA PRINT (FALLBACK)
 // ============================================
 function exportPDFViaPrint() {
     try {
         showToast("📑 Menyiapkan print preview...", 2000);
         
-        // Buat elemen temporary
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const title = `Laporan Keuangan ${monthNames[currentMonth]} ${currentYear}`;
+        
         const printDiv = document.createElement('div');
         printDiv.style.cssText = `
             padding: 40px;
@@ -3311,32 +3335,55 @@ function exportPDFViaPrint() {
             margin: 0 auto;
         `;
         
-        // Clone konten yang akan di-print
-        const content = document.querySelector('.balance-card')?.outerHTML || '';
-        const chart = document.getElementById('laporanChart')?.outerHTML || '';
-        const detail = document.getElementById('detailTransaksi')?.outerHTML || '';
+        const balanceCard = document.querySelector('.balance-card');
+        const chartCanvas = document.getElementById('laporanChart');
+        const detailDiv = document.getElementById('detailTransaksi');
         
-        const monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-        const title = `Laporan Keuangan ${monthNames[currentMonth]} ${currentYear}`;
-        
-        printDiv.innerHTML = `
+        let content = `
             <div style="text-align: center; margin-bottom: 30px;">
                 <h1 style="color: #1e293b; font-size: 24px;">💰 Laporan Keuangan</h1>
                 <h2 style="color: #64748b; font-size: 18px; font-weight: normal;">${title}</h2>
                 <hr style="border: 1px solid #e2e8f0; margin: 20px 0;">
             </div>
-            ${content}
-            <div style="margin: 20px 0;">${chart}</div>
-            <div style="margin-top: 20px;">
-                <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">📋 Detail Transaksi</h3>
-                ${detail}
-            </div>
+        `;
+        
+        if (balanceCard) {
+            const clone = balanceCard.cloneNode(true);
+            const toggleBtn = clone.querySelector('#toggleBalanceBtn');
+            if (toggleBtn) toggleBtn.remove();
+            clone.style.animation = 'none';
+            clone.style.transform = 'none';
+            content += clone.outerHTML;
+        }
+        
+        if (chartCanvas && window.laporanChart) {
+            try {
+                const chartImage = window.laporanChart.toBase64Image();
+                content += `
+                    <div style="text-align: center; margin: 20px 0;">
+                        <img src="${chartImage}" style="max-width: 100%; height: auto;" />
+                    </div>
+                `;
+            } catch (e) {}
+        }
+        
+        if (detailDiv) {
+            content += `
+                <div style="margin-top: 20px;">
+                    <h3 style="color: #1e293b; font-size: 18px; margin-bottom: 12px;">📋 Detail Transaksi</h3>
+                    ${detailDiv.innerHTML}
+                </div>
+            `;
+        }
+        
+        content += `
             <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 12px;">
                 Dicetak pada: ${new Date().toLocaleString('id-ID')}
             </div>
         `;
         
-        // Buka jendela print
+        printDiv.innerHTML = content;
+        
         const win = window.open('', '_blank', 'width=800,height=600');
         if (win) {
             win.document.write(`
@@ -3344,14 +3391,23 @@ function exportPDFViaPrint() {
                     <head>
                         <title>${title}</title>
                         <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
+                            body { font-family: Arial, sans-serif; padding: 20px; background: white; }
                             .balance-card { background: #1e293b; color: white; padding: 20px; border-radius: 12px; margin: 10px 0; }
                             .balance-amount { font-size: 28px; font-weight: bold; }
                             .stat-item { display: inline-block; margin-right: 30px; }
                             .stat-value.income { color: #4ade80; }
                             .stat-value.expense { color: #f87171; }
-                            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-                            th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+                            .flex-between { display: flex; justify-content: space-between; }
+                            .family-member-badge { background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
+                            .badge-recurring { background: #8b5cf6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
+                            .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+                            .empty-state { text-align: center; padding: 40px; color: #94a3b8; }
+                            .month-selector { display: flex; justify-content: space-between; align-items: center; padding: 10px; }
+                            .card { background: white; border-radius: 12px; padding: 16px; margin: 10px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+                            .card-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+                            .stat-card { background: #f8fafc; padding: 12px; border-radius: 8px; text-align: center; }
+                            .stat-card-title { font-size: 12px; color: #64748b; }
+                            .stat-card-value { font-size: 18px; font-weight: 700; }
                             @media print { body { padding: 0; } }
                         </style>
                     </head>
@@ -3362,7 +3418,7 @@ function exportPDFViaPrint() {
                                 setTimeout(function() {
                                     window.print();
                                     window.close();
-                                }, 500);
+                                }, 800);
                             };
                         <\/script>
                     </body>
@@ -3372,12 +3428,12 @@ function exportPDFViaPrint() {
         } else {
             showToast("❌ Popup diblokir. Izinkan popup untuk export PDF.", 4000);
         }
-    } catch(e) {
+    } catch (e) {
         console.error("Print error:", e);
         showToast("❌ Gagal print: " + e.message, 4000);
     }
 }
-
+    
 // ============================================
 // EDIT PROFILE MODAL
 // ============================================
