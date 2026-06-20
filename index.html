@@ -10,9 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        /* ============================================
-           CSS VARIABLES & RESET
-           ============================================ */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root {
@@ -35,48 +32,14 @@
             --nav-height: 70px;
         }
         
-        body {
-            background: var(--bg-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding-bottom: calc(var(--nav-height) + 20px);
-            transition: background 0.3s ease;
-        }
+        body { background: var(--bg-primary); font-family: 'Inter', -apple-system, sans-serif; color: var(--text-primary); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); transition: background 0.3s ease; }
+        body.light { --bg-primary: #f1f5f9; --bg-secondary: #ffffff; --bg-card: rgba(0,0,0,0.04); --bg-card-hover: rgba(0,0,0,0.08); --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #94a3b8; --border-color: rgba(0,0,0,0.06); --shadow: 0 8px 32px rgba(0,0,0,0.08); }
         
-        body.light {
-            --bg-primary: #f1f5f9;
-            --bg-secondary: #ffffff;
-            --bg-card: rgba(0,0,0,0.04);
-            --bg-card-hover: rgba(0,0,0,0.08);
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --border-color: rgba(0,0,0,0.06);
-            --shadow: 0 8px 32px rgba(0,0,0,0.08);
-        }
-        
-        /* ============================================
-           SCROLLBAR
-           ============================================ */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
         
-        /* ============================================
-           LOADING
-           ============================================ */
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-primary);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.6s ease;
-        }
+        .loading-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.6s ease; }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loading-logo { font-size: 64px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite; }
         .loading-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -84,212 +47,46 @@
         .loading-bar { width: 200px; height: 4px; background: var(--bg-card); border-radius: 4px; overflow: hidden; }
         .loading-bar-fill { height: 100%; background: var(--gradient-primary); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; background-size: 200% 100%; }
         .loading-percent { color: var(--text-muted); font-size: 12px; margin-top: 12px; }
-        
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         
-        /* ============================================
-           APP CONTAINER
-           ============================================ */
-        .app-container {
-            max-width: 420px;
-            margin: 0 auto;
-            padding: 16px 16px 20px;
-        }
+        .app-container { max-width: 420px; margin: 0 auto; padding: 16px 16px 20px; }
         
-        /* ============================================
-           HEADER
-           ============================================ */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            margin-bottom: 16px;
-        }
-        .header-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .header-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--gradient-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            flex-shrink: 0;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-card); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 16px; }
+        .header-user { display: flex; align-items: center; gap: 10px; }
+        .header-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
         .header-info { line-height: 1.3; }
         .header-name { font-size: 14px; font-weight: 600; }
         .header-code { font-size: 11px; color: var(--text-secondary); }
         .header-actions { display: flex; gap: 8px; align-items: center; }
-        .header-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            font-size: 16px;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
+        .header-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-secondary); font-size: 16px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; position: relative; }
         .header-btn:active { transform: scale(0.92); }
-        .header-btn .badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #ef4444;
-            color: white;
-            font-size: 9px;
-            font-weight: 700;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .header-btn .badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 9px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         
-        /* ============================================
-           RUNNING TEXT
-           ============================================ */
-        .running-text-container {
-            background: rgba(251, 191, 36, 0.10);
-            border: 1px solid rgba(251, 191, 36, 0.15);
-            border-radius: var(--radius-sm);
-            padding: 10px 16px;
-            margin-bottom: 16px;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        .running-text {
-            display: inline-block;
-            animation: scrollText 25s linear infinite;
-            font-size: 12px;
-            color: #fbbf24;
-            font-weight: 500;
-        }
+        .running-text-container { background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.15); border-radius: var(--radius-sm); padding: 10px 16px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; }
+        .running-text { display: inline-block; animation: scrollText 25s linear infinite; font-size: 12px; color: #fbbf24; font-weight: 500; }
         .running-text span { margin-right: 30px; }
         @keyframes scrollText { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         
-        /* ============================================
-           BALANCE CARD
-           ============================================ */
-        .balance-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            border-radius: var(--radius);
-            padding: 24px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
-            position: relative;
-            overflow: hidden;
-        }
-        .balance-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -30%;
-            width: 60%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59,130,246,0.10), transparent 70%);
-            pointer-events: none;
-        }
+        .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; }
+        .balance-card::before { content: ''; position: absolute; top: -50%; right: -30%; width: 60%; height: 200%; background: radial-gradient(circle, rgba(59,130,246,0.10), transparent 70%); pointer-events: none; }
         .balance-label { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.5px; }
         .balance-amount { font-size: 32px; font-weight: 800; margin: 6px 0; letter-spacing: -0.5px; }
-        .balance-stats {
-            display: flex;
-            gap: 24px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            position: relative;
-            z-index: 1;
-        }
+        .balance-stats { display: flex; gap: 24px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1; }
         .stat-item { flex: 1; }
         .stat-label { font-size: 11px; color: var(--text-secondary); }
         .stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
         .stat-value.income { color: #4ade80; }
         .stat-value.expense { color: #f87171; }
-        .balance-eye {
-            position: absolute;
-            right: 16px;
-            top: 16px;
-            background: rgba(255,255,255,0.08);
-            border: none;
-            border-radius: 30px;
-            padding: 4px 12px;
-            color: white;
-            font-size: 12px;
-            cursor: pointer;
-            z-index: 2;
-        }
+        .balance-eye { position: absolute; right: 16px; top: 16px; background: rgba(255,255,255,0.08); border: none; border-radius: 30px; padding: 4px 12px; color: white; font-size: 12px; cursor: pointer; z-index: 2; }
         
-        /* ============================================
-           CARDS
-           ============================================ */
-        .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius);
-            padding: 18px 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border-color);
-            transition: var(--transition);
-            cursor: pointer;
-        }
+        .card { background: var(--bg-card); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 12px; border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; }
         .card:active { transform: scale(0.98); }
-        .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-primary);
-        }
-        .card-title .badge-count {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            background: var(--bg-card);
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
+        .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); }
+        .card-title .badge-count { font-size: 11px; font-weight: 500; color: var(--text-secondary); background: var(--bg-card); padding: 2px 10px; border-radius: 20px; }
         
-        /* ============================================
-           TASK PREVIEW
-           ============================================ */
-        .task-preview {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .task-preview-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: var(--bg-card);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-            transition: var(--transition);
-            cursor: pointer;
-        }
+        .task-preview { display: flex; flex-direction: column; gap: 6px; }
+        .task-preview-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; }
         .task-preview-item:active { transform: scale(0.98); }
         .task-preview-item .icon { font-size: 18px; }
         .task-preview-item .info { flex: 1; }
@@ -300,42 +97,15 @@
         .task-preview-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
         .task-preview-item .status.overdue { background: rgba(239,68,68,0.15); color: #f87171; }
         
-        /* ============================================
-           STATS ROW
-           ============================================ */
-        .stats-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .stat-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-sm);
-            padding: 14px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            transition: var(--transition);
-            cursor: pointer;
-        }
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .stat-card { background: var(--bg-card); border-radius: var(--radius-sm); padding: 14px; text-align: center; border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; }
         .stat-card:active { transform: scale(0.96); }
         .stat-card .label { font-size: 11px; color: var(--text-secondary); }
         .stat-card .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
         .stat-card .value.income { color: #4ade80; }
         .stat-card .value.expense { color: #f87171; }
         
-        /* ============================================
-           TRANSACTION ITEMS
-           ============================================ */
-        .tx-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: var(--transition);
-        }
+        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); }
         .tx-item:last-child { border-bottom: none; }
         .tx-item:active { opacity: 0.7; }
         .tx-item .left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
@@ -351,208 +121,35 @@
         .family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
         .family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
         
-        /* ============================================
-           BOTTOM NAVIGATION
-           ============================================ */
-        .bottom-nav {
-            position: fixed;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            max-width: 420px;
-            width: calc(100% - 32px);
-            background: var(--bg-secondary);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 6px 8px;
-            z-index: 100;
-            height: var(--nav-height);
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px 10px;
-            border-radius: var(--radius-sm);
-            transition: var(--transition);
-            flex: 1;
-            position: relative;
-            min-width: 0;
-        }
+        .bottom-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; z-index: 100; height: var(--nav-height); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: var(--radius-sm); transition: var(--transition); flex: 1; position: relative; min-width: 0; }
         .nav-item .nav-icon { font-size: 20px; transition: var(--transition); }
         .nav-item .nav-label { font-size: 9px; font-weight: 500; transition: var(--transition); }
         .nav-item:active { transform: scale(0.92); }
         .nav-item.active { color: #3b82f6; }
         .nav-item.active .nav-icon { transform: translateY(-2px); }
-        .nav-item .nav-badge {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #ef4444;
-            color: white;
-            font-size: 8px;
-            font-weight: 700;
-            min-width: 16px;
-            height: 16px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 4px;
-        }
+        .nav-item .nav-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 8px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
         
-        .nav-center {
-            flex: 0 0 auto;
-            margin-top: -20px;
-        }
-        .nav-center-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--gradient-primary);
-            border: none;
-            color: white;
-            font-size: 28px;
-            font-weight: 300;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .nav-center { flex: 0 0 auto; margin-top: -20px; }
+        .nav-center-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--gradient-primary); border: none; color: white; font-size: 28px; font-weight: 300; cursor: pointer; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); transition: var(--transition); display: flex; align-items: center; justify-content: center; }
         .nav-center-btn:active { transform: scale(0.92); }
         
-        /* ============================================
-           POPUP MENU LAINNYA
-           ============================================ */
-        #moreMenuPopup {
-            position: fixed;
-            bottom: calc(var(--nav-height) + 20px);
-            left: 50%;
-            transform: translateX(-50%) scale(0.9);
-            max-width: 420px;
-            width: calc(100% - 32px);
-            background: var(--bg-secondary);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-            padding: 12px;
-            z-index: 99;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #moreMenuPopup.open {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateX(-50%) scale(1);
-        }
-        .menu-popup-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            padding: 12px 8px;
-            border: none;
-            border-radius: var(--radius-sm);
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: var(--transition);
-            font-size: 12px;
-            font-weight: 500;
-        }
+        #moreMenuPopup { position: fixed; bottom: calc(var(--nav-height) + 20px); left: 50%; transform: translateX(-50%) scale(0.9); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); padding: 12px; z-index: 99; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        #moreMenuPopup.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+        .menu-popup-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border: none; border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; transition: var(--transition); font-size: 12px; font-weight: 500; }
         .menu-popup-item:active { transform: scale(0.95); }
-        .menu-popup-item:hover {
-            background: var(--bg-card-hover);
-            color: var(--text-primary);
-        }
+        .menu-popup-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
         .menu-popup-item .icon { font-size: 24px; }
         
-        /* ============================================
-           MODAL
-           ============================================ */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(12px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            padding: 20px;
-            animation: modalIn 0.25s ease-out;
-        }
-        @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.95) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .modal-content {
-            background: var(--bg-secondary);
-            border-radius: var(--radius);
-            padding: 24px;
-            width: 100%;
-            max-width: 360px;
-            max-height: 85vh;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
-        }
-        .modal-title {
-            font-size: 18px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 16px;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .modal-input, .modal-select, .modal-textarea {
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            background: var(--bg-card);
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: var(--transition);
-        }
-        .modal-input:focus, .modal-select:focus, .modal-textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-        }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; animation: modalIn 0.25s ease-out; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+        .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 16px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 12px 16px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-primary); font-size: 14px; transition: var(--transition); }
+        .modal-input:focus, .modal-select:focus, .modal-textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
         .modal-textarea { min-height: 80px; resize: vertical; }
-        .modal-button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 12px;
-        }
-        .modal-btn {
-            padding: 12px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-align: center;
-        }
+        .modal-button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .modal-btn { padding: 12px; border: none; border-radius: var(--radius-sm); font-weight: 600; font-size: 13px; cursor: pointer; transition: var(--transition); text-align: center; }
         .modal-btn:active { transform: scale(0.96); }
         .modal-btn-full { grid-column: span 2; }
         .modal-btn-primary { background: var(--gradient-primary); color: white; }
@@ -562,69 +159,17 @@
         
         .password-wrapper { position: relative; }
         .password-wrapper input { padding-right: 50px; }
-        .toggle-password {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            opacity: 0.6;
-            color: var(--text-secondary);
-        }
+        .toggle-password { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; color: var(--text-secondary); }
         
-        /* ============================================
-           TOAST
-           ============================================ */
-        .toast {
-            position: fixed;
-            bottom: calc(var(--nav-height) + 30px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            padding: 12px 24px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 300;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            animation: toastIn 0.3s ease-out;
-            max-width: 90%;
-            text-align: center;
-        }
-        @keyframes toastIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-        }
+        .toast { position: fixed; bottom: calc(var(--nav-height) + 30px); left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 300; box-shadow: var(--shadow); border: 1px solid var(--border-color); animation: toastIn 0.3s ease-out; max-width: 90%; text-align: center; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
         
-        /* ============================================
-           EMPTY STATE
-           ============================================ */
-        .empty-state {
-            text-align: center;
-            padding: 30px 20px;
-            color: var(--text-secondary);
-        }
+        .empty-state { text-align: center; padding: 30px 20px; color: var(--text-secondary); }
         .empty-state .icon { font-size: 48px; margin-bottom: 8px; }
         .empty-state .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
         .empty-state .desc { font-size: 13px; margin-top: 4px; }
         
-        /* ============================================
-           BUDGET ITEMS
-           ============================================ */
-        .budget-item {
-            padding: 14px 12px;
-            background: var(--bg-card);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
+        .budget-item { padding: 14px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: var(--transition); }
         .budget-item:active { transform: scale(0.98); }
         .budget-item .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 0; background: none; border: none; }
         .budget-item .header .name { font-weight: 600; font-size: 14px; }
@@ -633,52 +178,17 @@
         .budget-item .progress .fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
         .budget-item .amounts { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
         
-        /* ============================================
-           FILTER BUTTONS
-           ============================================ */
-        .filter {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-        .filter-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-            transition: var(--transition);
-        }
-        .filter-btn.active {
-            background: var(--gradient-primary);
-            color: white;
-        }
+        .filter { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+        .filter-btn { padding: 8px 16px; border: none; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; transition: var(--transition); }
+        .filter-btn.active { background: var(--gradient-primary); color: white; }
         .filter-btn:active { transform: scale(0.95); }
         
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
-        @media (max-width: 420px) {
-            .app-container { padding: 12px 12px 20px; }
-            .balance-amount { font-size: 26px; }
-            .header-name { font-size: 13px; }
-            .nav-item .nav-label { font-size: 8px; }
-            .nav-center-btn { width: 44px; height: 44px; font-size: 24px; }
-            .bottom-nav { padding: 4px 6px; height: 64px; }
-        }
+        @media (max-width: 420px) { .app-container { padding: 12px 12px 20px; } .balance-amount { font-size: 26px; } .header-name { font-size: 13px; } .nav-item .nav-label { font-size: 8px; } .nav-center-btn { width: 44px; height: 44px; font-size: 24px; } .bottom-nav { padding: 4px 6px; height: 64px; } }
     </style>
 </head>
 <body>
 
-<!-- ============================================
-     LOADING
-     ============================================ -->
+<!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-logo">💰</div>
     <div class="loading-title">Keuangan Keluarga</div>
@@ -687,14 +197,10 @@
     <div class="loading-percent" id="loadingPercent">0%</div>
 </div>
 
-<!-- ============================================
-     APP CONTAINER
-     ============================================ -->
+<!-- APP CONTAINER -->
 <div class="app-container" id="appContainer"></div>
 
-<!-- ============================================
-     LOGIN MODAL
-     ============================================ -->
+<!-- LOGIN MODAL -->
 <div id="loginModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">💰 Keuangan Keluarga</div>
@@ -741,7 +247,6 @@ let appReady = false;
 let currentBudgetMonth = new Date().getMonth();
 let currentBudgetYear = new Date().getFullYear();
 
-// Family
 let currentFamilyId = null;
 let familyMembers = [];
 let familyInfo = null;
@@ -1046,158 +551,6 @@ function showRemindersPopup() {
 }
 
 // ============================================
-// RENDER HOME
-// ============================================
-async function renderHome() {
-    await loadTransactions();
-    await loadTasks();
-    await loadSavings();
-    await loadDebts();
-    
-    const totals = { pemasukan: 0, pengeluaran: 0 };
-    transactions.forEach(t => { if (t.type === 'pemasukan') totals.pemasukan += Number(t.amount)||0; else totals.pengeluaran += Number(t.amount)||0; });
-    totals.saldo = totals.pemasukan - totals.pengeluaran;
-    const totalSavings = savings.reduce((s, v) => s + Number(v.current_amount||0), 0);
-    const overdueCount = getOverdueCount();
-    const pendingTasks = tasks.filter(t => !t.is_completed);
-    const pendingCount = pendingTasks.length;
-    const recentTasks = pendingTasks.slice(0, 3);
-    
-    let piutang = 0, hutang = 0;
-    debts.forEach(d => { if (d.status !== 'lunas') { if (d.type === 'piutang') piutang += Number(d.amount)||0; else hutang += Number(d.amount)||0; } });
-    
-    const recent = transactions.slice(0, 5);
-    const userCode = await userManager.getUserCode();
-    const userName = await userManager.getUsername();
-    const familyDisplay = currentFamilyId ? `🏠 ${familyInfo?.name || 'Keluarga'}` : '👤 Personal';
-    
-    // Pengeluaran teratas bulan ini
-    const now = new Date();
-    const bulanIni = transactions.filter(t => {
-        const d = new Date(t.created_at);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'pengeluaran';
-    });
-    const topExpenses = [...bulanIni].sort((a, b) => (Number(b.amount)||0) - (Number(a.amount)||0)).slice(0, 3);
-    
-    const getTaskStatus = (t) => {
-        if (t.is_completed) return { label: 'Selesai', cls: 'done' };
-        if (t.due_date && new Date(t.due_date) < new Date()) return { label: 'Terlewat', cls: 'overdue' };
-        return { label: 'Pending', cls: 'pending' };
-    };
-    
-    let html = `
-        <div class="header">
-            <div class="header-user">
-                <div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div>
-                <div class="header-info">
-                    <div class="header-name">${escapeHtml(userName)}</div>
-                    <div class="header-code">${escapeHtml(userCode)} ${currentFamilyId ? '· ' + escapeHtml(familyInfo?.name || '') : ''}</div>
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="header-btn" id="reminderBtn">🔔${overdueCount > 0 ? `<span class="badge">${overdueCount}</span>` : ''}</button>
-                <button class="header-btn" id="openSettingsBtn">⚙️</button>
-                <button class="header-btn" id="logoutBtn" style="font-size:14px;">🚪</button>
-            </div>
-        </div>
-        ${overdueCount > 0 ? `<div class="running-text-container"><div class="running-text">${getRunningText().map(m => `<span>🔔 ${m}</span>`).join('')}</div></div>` : ''}
-        
-        <div class="balance-card">
-            <button class="balance-eye" id="toggleBalanceBtn">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
-            <div class="balance-label">Total Saldo</div>
-            <div class="balance-amount">${isBalanceHidden ? '••••••' : 'Rp ' + formatRupiah(totals.saldo)}</div>
-            <div class="balance-stats">
-                <div class="stat-item"><div class="stat-label">Pemasukan</div><div class="stat-value income">${isBalanceHidden ? '••••' : '+Rp ' + formatRupiah(totals.pemasukan)}</div></div>
-                <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden ? '••••' : '-Rp ' + formatRupiah(totals.pengeluaran)}</div></div>
-            </div>
-        </div>
-        
-        <div class="card" id="savingsCard">
-            <div class="card-title"><span>💰 Tabungan Pribadi</span><span style="color:#4ade80;">Rp ${formatRupiah(totalSavings)}</span></div>
-            ${savings.length === 0 ? '<div class="empty-state" style="padding:8px 0;"><div class="desc">Belum ada tabungan</div></div>' : savings.slice(0,2).map(s => `
-                <div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;">
-                    <span>${escapeHtml(s.name)}</span>
-                    <span>${formatRupiah(s.current_amount||0)} / ${formatRupiah(s.target_amount||0)}</span>
-                </div>
-            `).join('')}
-        </div>
-        
-        <div class="stats-row">
-            <div class="stat-card" id="piutangCard"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div>
-            <div class="stat-card" id="hutangCard"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div>
-        </div>
-        
-        <div class="card" id="tasksCard">
-            <div class="card-title"><span>✅ Tugas Terbaru</span><span class="badge-count">${pendingCount} tertunda</span></div>
-            <div class="task-preview">
-                ${recentTasks.length === 0 ? '<div class="empty-state" style="padding:8px 0;"><div class="desc">🎉 Tidak ada tugas tertunda</div></div>' : recentTasks.map(t => {
-                    const status = getTaskStatus(t);
-                    return `
-                        <div class="task-preview-item" data-id="${t.id}">
-                            <span class="icon">${t.is_completed ? '✅' : '📋'}</span>
-                            <div class="info">
-                                <div class="title">${escapeHtml(t.title)}</div>
-                                ${t.due_date ? `<div class="date">📅 ${formatDate(t.due_date)}</div>` : ''}
-                            </div>
-                            <span class="status ${status.cls}">${status.label}</span>
-                        </div>
-                    `;
-                }).join('')}
-                ${pendingTasks.length > 3 ? `<div style="text-align:center; font-size:12px; color:var(--text-secondary); padding:4px 0;">+${pendingTasks.length - 3} tugas lainnya</div>` : ''}
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-title">📊 Pengeluaran Teratas Bulan Ini</div>
-            ${topExpenses.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada pengeluaran bulan ini</div></div>' : topExpenses.map((t, i) => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
-                    <div>
-                        <span style="font-weight:500;">${i+1}. ${escapeHtml(t.description)}</span>
-                        ${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:6px;">📤</span>` : ''}
-                        <div style="font-size:11px;color:var(--text-secondary);">${formatDate(t.created_at)}</div>
-                    </div>
-                    <span style="color:#f87171;font-weight:600;">-Rp ${formatRupiah(t.amount)}</span>
-                </div>
-            `).join('')}
-        </div>
-        
-        <div class="card">
-            <div class="card-title">📋 Transaksi Terbaru</div>
-            ${recent.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada transaksi</div></div>' : recent.map(t => {
-                const cat = getCategoryById(t.category_id);
-                const isShared = t.user_id !== currentCustomUser?.id;
-                return `
-                    <div class="tx-item" data-id="${t.id}">
-                        <div class="left">
-                            <span class="dot" style="background:${cat?.color || '#64748b'}"></span>
-                            <div>
-                                <div class="desc">${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? ' 🔄' : ''}</div>
-                                <div class="meta">${formatDate(t.created_at)}${isShared ? ' · ' + getUserEmail(t.user_id) : ''}</div>
-                            </div>
-                        </div>
-                        <div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-    
-    document.getElementById('appContainer').innerHTML = html;
-    
-    // Event listeners
-    document.getElementById('tasksCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='tasks'; updateNav(); renderTasks(); });
-    document.querySelectorAll('.task-preview-item').forEach(el => { el.onclick = (e) => { e.stopPropagation(); const id = el.dataset.id; openTaskModal(id); }; });
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
-    document.getElementById('openSettingsBtn')?.addEventListener('click', () => { pushHistory(currentNav); previousNav=currentNav; currentNav='settings'; updateNav(); renderSettings(); });
-    document.getElementById('reminderBtn')?.addEventListener('click', showRemindersPopup);
-    document.getElementById('toggleBalanceBtn')?.addEventListener('click', e => { e.stopPropagation(); isBalanceHidden = !isBalanceHidden; renderHome(); });
-    document.getElementById('piutangCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='hutang'; updateNav(); renderHutang(); });
-    document.getElementById('hutangCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='hutang'; updateNav(); renderHutang(); });
-    document.getElementById('savingsCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='savings'; updateNav(); renderSavings(); });
-    document.querySelectorAll('.tx-item').forEach(el => { el.onclick = () => { const id = el.dataset.id; const tx = transactions.find(t => t.id === id); if (tx) showTransactionDetail(tx); }; });
-}
-
-// ============================================
 // TASK MODAL
 // ============================================
 function openTaskModal(editId = null) {
@@ -1245,9 +598,7 @@ async function renderTasks() {
             <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div>
         </div>
         <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openTaskModal()">➕ Tambah Tugas</button>
-        <div class="filter">
-            ${['all','active','completed'].map(f => `<button class="filter-btn ${taskFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='active'?'Belum Selesai':'Selesai'}</button>`).join('')}
-        </div>
+        <div class="filter">${['all','active','completed'].map(f => `<button class="filter-btn ${taskFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='active'?'Belum Selesai':'Selesai'}</button>`).join('')}</div>
         <div class="card"><div id="tasksList"></div></div>
     `;
     document.getElementById('appContainer').innerHTML = html;
@@ -1260,10 +611,7 @@ async function renderTasks() {
         <div class="tx-item" data-id="${t.id}" style="cursor:pointer;">
             <div class="left">
                 <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:#3b82f6;flex-shrink:0;">
-                <div>
-                    <div style="${t.is_completed?'text-decoration:line-through;opacity:0.6;':''}font-weight:500;">${escapeHtml(t.title)}</div>
-                    ${t.due_date ? `<div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(t.due_date)}</div>` : ''}
-                </div>
+                <div><div style="${t.is_completed?'text-decoration:line-through;opacity:0.6;':''}font-weight:500;">${escapeHtml(t.title)}</div>${t.due_date ? `<div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(t.due_date)}</div>` : ''}</div>
             </div>
             <span style="font-size:11px;color:var(--text-secondary);">${t.is_completed ? '✅' : '⏳'}</span>
         </div>
@@ -1294,10 +642,7 @@ async function renderHutang() {
     container.innerHTML = Object.entries(grouped).map(([name, items]) => {
         let total = 0;
         items.forEach(d => { if (d.status !== 'lunas') { if (d.type === 'piutang') total += Number(d.amount)||0; else total -= Number(d.amount)||0; } });
-        return `<div class="budget-item" onclick="showDebtGroupDetail('${name}')">
-            <div class="header"><span class="name">${escapeHtml(name)}</span><span style="color:${total>=0?'#4ade80':'#f87171'};font-weight:600;">${total>=0?'+':''}Rp ${formatRupiah(Math.abs(total))}</span></div>
-            <div style="font-size:12px;color:var(--text-secondary);">${items.length} transaksi</div>
-        </div>`;
+        return `<div class="budget-item" onclick="showDebtGroupDetail('${name}')"><div class="header"><span class="name">${escapeHtml(name)}</span><span style="color:${total>=0?'#4ade80':'#f87171'};font-weight:600;">${total>=0?'+':''}Rp ${formatRupiah(Math.abs(total))}</span></div><div style="font-size:12px;color:var(--text-secondary);">${items.length} transaksi</div></div>`;
     }).join('');
 }
 
@@ -1317,10 +662,7 @@ function openDebtModal(editId=null) {
             <div class="modal-title">${isEdit ? '✏️ Edit' : '💰 Tambah'} Hutang/Piutang</div>
             <input type="text" id="debtName" class="modal-input" placeholder="Nama orang" value="${isEdit ? escapeHtml(d.contact_name) : ''}">
             <input type="text" id="debtAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(d.amount) : ''}">
-            <select id="debtType" class="modal-select">
-                <option value="piutang" ${isEdit && d.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option>
-                <option value="hutang" ${isEdit && d.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option>
-            </select>
+            <select id="debtType" class="modal-select"><option value="piutang" ${isEdit && d.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option><option value="hutang" ${isEdit && d.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option></select>
             <input type="date" id="debtDue" class="modal-input" value="${isEdit ? formatDateInput(d.due_date) : ''}">
             <input type="tel" id="debtWa" class="modal-input" placeholder="WhatsApp (opsional)" value="${isEdit ? escapeHtml(d.wa_number||'') : ''}">
             <div class="modal-button-grid">
@@ -1341,20 +683,11 @@ function openDebtModal(editId=null) {
         const wa = document.getElementById('debtWa').value.trim();
         if (!name || !amount) { showToast('❌ Isi dengan benar'); return; }
         const uid = await userManager.getUserId();
-        if (isEdit) {
-            await sb.from('debts').update({ contact_name: name, amount, type, due_date: due||null, wa_number: wa||null }).eq('id', editId);
-            showToast('✅ Data diupdate');
-        } else {
-            await sb.from('debts').insert({ user_id: uid, contact_name: name, amount, type, description: '', due_date: due||null, wa_number: wa||null, status: 'belum_lunas' });
-            showToast('✅ Ditambahkan');
-        }
+        if (isEdit) { await sb.from('debts').update({ contact_name: name, amount, type, due_date: due||null, wa_number: wa||null }).eq('id', editId); showToast('✅ Data diupdate'); }
+        else { await sb.from('debts').insert({ user_id: uid, contact_name: name, amount, type, description: '', due_date: due||null, wa_number: wa||null, status: 'belum_lunas' }); showToast('✅ Ditambahkan'); }
         modal.remove(); await loadDebts(); renderCurrentView();
     };
-    if (isEdit) {
-        document.getElementById('deleteDebt').onclick = async () => {
-            if (confirm('Hapus data?')) { await sb.from('debts').delete().eq('id', editId); showToast('✅ Data dihapus'); modal.remove(); await loadDebts(); renderCurrentView(); }
-        };
-    }
+    if (isEdit) { document.getElementById('deleteDebt').onclick = async () => { if (confirm('Hapus data?')) { await sb.from('debts').delete().eq('id', editId); showToast('✅ Data dihapus'); modal.remove(); await loadDebts(); renderCurrentView(); } }; }
     document.getElementById('closeDebt').onclick = () => modal.remove();
 }
 
@@ -1411,11 +744,7 @@ function openSavingsModal(editId=null) {
         showToast(isEdit ? '✅ Tabungan diupdate' : '✅ Tabungan ditambahkan');
         modal.remove(); await loadSavings(); renderCurrentView();
     };
-    if (isEdit) {
-        document.getElementById('deleteSavings').onclick = async () => {
-            if (confirm('Hapus tabungan?')) { await sb.from('savings').delete().eq('id', editId); showToast('✅ Tabungan dihapus'); modal.remove(); await loadSavings(); renderCurrentView(); }
-        };
-    }
+    if (isEdit) { document.getElementById('deleteSavings').onclick = async () => { if (confirm('Hapus tabungan?')) { await sb.from('savings').delete().eq('id', editId); showToast('✅ Tabungan dihapus'); modal.remove(); await loadSavings(); renderCurrentView(); } }; }
     document.getElementById('closeSavings').onclick = () => modal.remove();
 }
 
@@ -1434,12 +763,7 @@ async function renderReminders() {
     if (!reminders.length) { container.innerHTML = '<div class="empty-state"><div class="icon">⏰</div><div class="title">Belum ada pengingat</div></div>'; return; }
     container.innerHTML = reminders.map(r => `
         <div class="tx-item" onclick="openReminderModal('${r.id}')" style="cursor:pointer;">
-            <div class="left">
-                <div>
-                    <div style="font-weight:500;">${escapeHtml(r.title)} ${r.is_done ? '✅' : ''}</div>
-                    <div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(r.due_date)}</div>
-                </div>
-            </div>
+            <div class="left"><div><div style="font-weight:500;">${escapeHtml(r.title)} ${r.is_done ? '✅' : ''}</div><div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(r.due_date)}</div></div></div>
         </div>
     `).join('');
 }
@@ -1476,11 +800,7 @@ function openReminderModal(editId=null) {
         showToast(isEdit ? '✅ Pengingat diupdate' : '✅ Pengingat ditambahkan');
         modal.remove(); await loadReminders(); renderCurrentView();
     };
-    if (isEdit) {
-        document.getElementById('deleteReminder').onclick = async () => {
-            if (confirm('Hapus pengingat?')) { await sb.from('reminders').delete().eq('id', editId); showToast('✅ Pengingat dihapus'); modal.remove(); await loadReminders(); renderCurrentView(); }
-        };
-    }
+    if (isEdit) { document.getElementById('deleteReminder').onclick = async () => { if (confirm('Hapus pengingat?')) { await sb.from('reminders').delete().eq('id', editId); showToast('✅ Pengingat dihapus'); modal.remove(); await loadReminders(); renderCurrentView(); } }; }
     document.getElementById('closeReminder').onclick = () => modal.remove();
 }
 
@@ -1529,10 +849,7 @@ function openBudgetModal(editId = null) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '➕ Tambah'} Anggaran</div>
-            <select id="budgetCategory" class="modal-select">
-                <option value="">Pilih Kategori</option>
-                ${expenseCats.map(c => `<option value="${c.id}" ${isEdit && b.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
-            </select>
+            <select id="budgetCategory" class="modal-select"><option value="">Pilih Kategori</option>${expenseCats.map(c => `<option value="${c.id}" ${isEdit && b.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}</select>
             <input type="text" id="budgetAmount" class="modal-input" placeholder="Jumlah Anggaran" value="${isEdit ? formatRupiah(b.amount) : ''}">
             <div class="modal-button-grid">
                 <button id="saveBudget" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
@@ -1549,22 +866,11 @@ function openBudgetModal(editId = null) {
         if (!catId) { showToast('❌ Pilih kategori'); return; }
         if (!amount || amount <= 0) { showToast('❌ Masukkan jumlah'); return; }
         const uid = await userManager.getUserId();
-        if (isEdit) {
-            await sb.from('budgets').update({ amount }).eq('id', editId);
-            showToast('✅ Anggaran diupdate');
-        } else {
-            const existing = budgets.find(b => b.category_id === catId);
-            if (existing) { showToast('⚠️ Kategori sudah punya anggaran'); return; }
-            await sb.from('budgets').insert({ user_id: uid, category_id: catId, amount, month: currentBudgetMonth, year: currentBudgetYear });
-            showToast('✅ Anggaran ditambahkan');
-        }
+        if (isEdit) { await sb.from('budgets').update({ amount }).eq('id', editId); showToast('✅ Anggaran diupdate'); }
+        else { const existing = budgets.find(b => b.category_id === catId); if (existing) { showToast('⚠️ Kategori sudah punya anggaran'); return; } await sb.from('budgets').insert({ user_id: uid, category_id: catId, amount, month: currentBudgetMonth, year: currentBudgetYear }); showToast('✅ Anggaran ditambahkan'); }
         modal.remove(); await loadBudgets(); renderBudgetPage();
     };
-    if (isEdit) {
-        document.getElementById('deleteBudget').onclick = async () => {
-            if (confirm('Hapus anggaran?')) { await sb.from('budgets').delete().eq('id', editId); showToast('✅ Anggaran dihapus'); modal.remove(); await loadBudgets(); renderBudgetPage(); }
-        };
-    }
+    if (isEdit) { document.getElementById('deleteBudget').onclick = async () => { if (confirm('Hapus anggaran?')) { await sb.from('budgets').delete().eq('id', editId); showToast('✅ Anggaran dihapus'); modal.remove(); await loadBudgets(); renderBudgetPage(); } }; }
     document.getElementById('closeBudget').onclick = () => modal.remove();
 }
 
@@ -1575,13 +881,8 @@ async function renderTransaksi() {
     await loadTransactions();
     const html = `
         <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
-        <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button>
-            <button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="pushHistory(currentNav);currentNav='laporan';updateNav();renderLaporan();">📊 Laporan</button>
-        </div>
-        <div class="filter">
-            ${['all','income','expense'].map(f => `<button class="filter-btn ${transaksiFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='income'?'💵 Pemasukan':'💸 Pengeluaran'}</button>`).join('')}
-        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="pushHistory(currentNav);currentNav='laporan';updateNav();renderLaporan();">📊 Laporan</button></div>
+        <div class="filter">${['all','income','expense'].map(f => `<button class="filter-btn ${transaksiFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='income'?'💵 Pemasukan':'💸 Pengeluaran'}</button>`).join('')}</div>
         <div class="card"><div id="transaksiList"></div></div>
     `;
     document.getElementById('appContainer').innerHTML = html;
@@ -1592,10 +893,7 @@ async function renderTransaksi() {
     if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div class="title">Tidak ada transaksi</div></div>'; return; }
     container.innerHTML = data.map(t => {
         const cat = getCategoryById(t.category_id);
-        return `<div class="tx-item" data-id="${t.id}">
-            <div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? ' 🔄' : ''}</div><div class="meta">${formatDate(t.created_at)}</div></div></div>
-            <div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div>
-        </div>`;
+        return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? ' 🔄' : ''}</div><div class="meta">${formatDate(t.created_at)}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
     }).join('');
     document.querySelectorAll('.tx-item').forEach(el => { el.onclick = () => { const id = el.dataset.id; const tx = transactions.find(t => t.id === id); if (tx) showTransactionDetail(tx); }; });
     document.querySelectorAll('.filter-btn').forEach(btn => { btn.onclick = () => { transaksiFilter = btn.dataset.filter; renderTransaksi(); }; });
@@ -1627,17 +925,22 @@ async function showTransactionDetail(tx) {
 
 async function deleteTransaction(id) {
     const tx = transactions.find(t => t.id === id);
-    if (tx?.proof_url) {
-        const urlParts = tx.proof_url.split('/');
-        const path = urlParts.slice(urlParts.indexOf('transaction-proofs') + 1).join('/');
-        await sb.storage.from('transaction-proofs').remove([path]);
-    }
+    if (tx?.proof_url) { const urlParts = tx.proof_url.split('/'); const path = urlParts.slice(urlParts.indexOf('transaction-proofs') + 1).join('/'); await sb.storage.from('transaction-proofs').remove([path]); }
     await sb.from('transactions').delete().eq('id', id);
     await loadTransactions();
     renderCurrentView();
     showToast('✅ Transaksi dihapus');
 }
 
+function setupRupiahInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function() { const val = this.value.replace(/\./g, '').replace(/[^0-9]/g, ''); this.value = val ? formatRupiah(parseInt(val)) : ''; });
+}
+
+// ============================================
+// OPEN TRANSACTION MODAL
+// ============================================
 function openTransaksiModal(predefinedType = null, editId = null) {
     const isEdit = !!editId;
     const tx = isEdit ? transactions.find(t => t.id === editId) : null;
@@ -1654,10 +957,8 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                 <option value="pengeluaran" ${(isEdit && tx.type === 'pengeluaran') || predefinedType === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
             </select>
             <input type="date" id="modalTanggal" class="modal-input" value="${isEdit ? formatDateInput(tx.created_at) : today}">
-            <select id="modalKat" class="modal-select">
-                <option value="">Pilih Kategori</option>
-                ${categories.map(c => `<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
-            </select>
+            <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c => `<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}</select>
+            
             <div style="background:rgba(59,130,246,0.05);padding:12px;border-radius:12px;margin:12px 0;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:18px;">📸</span><span style="font-weight:600;">Bukti Transaksi</span></div>
                 ${isEdit && tx?.proof_url ? `
@@ -1667,8 +968,14 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                     <div id="proofPreview" style="display:none;margin-top:8px;"><img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
                 `}
             </div>
-            <div style="background:rgba(16,185,129,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalFixed" ${isEdit && tx?.is_fixed_expense ? 'checked' : ''}> <span>📌 Pengeluaran Tetap</span></label></div>
-            ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label></div>` : ''}
+            
+            ${!isEdit ? `
+            <div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;">
+                <label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Membuat transaksi otomatis di tanggal yang sama setiap bulan</div>
+            </div>
+            ` : ''}
+            
             <div class="modal-button-grid">
                 <button id="saveTransaksi" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
@@ -1714,20 +1021,16 @@ function openTransaksiModal(predefinedType = null, editId = null) {
         const type = document.getElementById('modalTipe').value;
         const tanggal = document.getElementById('modalTanggal').value;
         const catId = document.getElementById('modalKat').value;
-        const isFixed = document.getElementById('modalFixed').checked;
         const isRecurring = document.getElementById('modalRecurring')?.checked || false;
         if (!desc || !amount) { showToast('❌ Isi dengan benar'); return; }
         const uid = await userManager.getUserId();
         if (!uid) { showToast('❌ User ID tidak ditemukan'); return; }
-        const data = { description: desc, amount, type, is_fixed_expense: isFixed, created_at: new Date(tanggal).toISOString() };
+        const data = { description: desc, amount, type, created_at: new Date(tanggal).toISOString() };
         if (catId) data.category_id = catId;
         try {
             if (isEdit) {
                 await sb.from('transactions').update(data).eq('id', editId);
-                if (selectedFile) {
-                    if (window._removeOldProof && tx?.proof_url) await deleteProof(editId);
-                    await uploadProof(selectedFile, editId);
-                }
+                if (selectedFile) { if (window._removeOldProof && tx?.proof_url) await deleteProof(editId); await uploadProof(selectedFile, editId); }
                 showToast('✅ Transaksi diupdate');
                 modal.remove();
                 await loadTransactions();
@@ -1781,32 +1084,20 @@ async function createRecurringTransaction(original, months = 12) {
     let count = 0;
     const origDate = new Date(original.created_at);
     const existingKeys = new Set();
-    transactions.forEach(t => {
-        const d = new Date(t.created_at); d.setHours(0,0,0,0);
-        existingKeys.add(`${t.description}_${d.getFullYear()}_${d.getMonth()}`);
-    });
+    transactions.forEach(t => { const d = new Date(t.created_at); d.setHours(0,0,0,0); existingKeys.add(`${t.description}_${d.getFullYear()}_${d.getMonth()}`); });
     for (let i = 1; i <= months; i++) {
         const next = new Date(origDate);
         next.setMonth(origDate.getMonth() + i);
         if (next.getDate() !== origDate.getDate()) continue;
         const key = `${original.description}_${next.getFullYear()}_${next.getMonth()}`;
         if (!existingKeys.has(key)) {
-            const d = { user_id: uid, description: original.description + ' (Ulang)', amount: original.amount, type: original.type, is_fixed_expense: original.is_fixed_expense, created_at: next.toISOString() };
+            const d = { user_id: uid, description: original.description + ' (Ulang)', amount: original.amount, type: original.type, created_at: next.toISOString() };
             if (original.category_id) d.category_id = original.category_id;
             const { error } = await sb.from('transactions').insert(d);
             if (!error) { count++; existingKeys.add(key); }
         }
     }
     return count;
-}
-
-function setupRupiahInput(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', function() {
-        const val = this.value.replace(/\./g, '').replace(/[^0-9]/g, '');
-        this.value = val ? formatRupiah(parseInt(val)) : '';
-    });
 }
 
 // ============================================
@@ -1877,16 +1168,146 @@ async function renderLaporan() {
 }
 
 // ============================================
+// RENDER HOME
+// ============================================
+async function renderHome() {
+    await loadTransactions();
+    await loadTasks();
+    await loadSavings();
+    await loadDebts();
+    
+    const totals = { pemasukan: 0, pengeluaran: 0 };
+    transactions.forEach(t => { if (t.type === 'pemasukan') totals.pemasukan += Number(t.amount)||0; else totals.pengeluaran += Number(t.amount)||0; });
+    totals.saldo = totals.pemasukan - totals.pengeluaran;
+    const totalSavings = savings.reduce((s, v) => s + Number(v.current_amount||0), 0);
+    const overdueCount = getOverdueCount();
+    const pendingTasks = tasks.filter(t => !t.is_completed);
+    const pendingCount = pendingTasks.length;
+    const recentTasks = pendingTasks.slice(0, 3);
+    
+    let piutang = 0, hutang = 0;
+    debts.forEach(d => { if (d.status !== 'lunas') { if (d.type === 'piutang') piutang += Number(d.amount)||0; else hutang += Number(d.amount)||0; } });
+    
+    const recent = transactions.slice(0, 5);
+    const userCode = await userManager.getUserCode();
+    const userName = await userManager.getUsername();
+    const familyDisplay = currentFamilyId ? `🏠 ${familyInfo?.name || 'Keluarga'}` : '👤 Personal';
+    
+    // Pengeluaran teratas - FILTER transaksi berulang (Ulang)
+    const now = new Date();
+    const bulanIni = transactions.filter(t => {
+        const d = new Date(t.created_at);
+        return d.getMonth() === now.getMonth() && 
+               d.getFullYear() === now.getFullYear() && 
+               t.type === 'pengeluaran' &&
+               !t.description?.includes('(Ulang)');
+    });
+    const topExpenses = [...bulanIni].sort((a, b) => (Number(b.amount)||0) - (Number(a.amount)||0)).slice(0, 5);
+    
+    const getTaskStatus = (t) => {
+        if (t.is_completed) return { label: 'Selesai', cls: 'done' };
+        if (t.due_date && new Date(t.due_date) < new Date()) return { label: 'Terlewat', cls: 'overdue' };
+        return { label: 'Pending', cls: 'pending' };
+    };
+    
+    let html = `
+        <div class="header">
+            <div class="header-user">
+                <div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div>
+                <div class="header-info">
+                    <div class="header-name">${escapeHtml(userName)}</div>
+                    <div class="header-code">${escapeHtml(userCode)} ${currentFamilyId ? '· ' + escapeHtml(familyInfo?.name || '') : ''}</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="reminderBtn">🔔${overdueCount > 0 ? `<span class="badge">${overdueCount}</span>` : ''}</button>
+                <button class="header-btn" id="openSettingsBtn">⚙️</button>
+                <button class="header-btn" id="logoutBtn" style="font-size:14px;">🚪</button>
+            </div>
+        </div>
+        ${overdueCount > 0 ? `<div class="running-text-container"><div class="running-text">${getRunningText().map(m => `<span>🔔 ${m}</span>`).join('')}</div></div>` : ''}
+        
+        <div class="balance-card">
+            <button class="balance-eye" id="toggleBalanceBtn">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
+            <div class="balance-label">Total Saldo</div>
+            <div class="balance-amount">${isBalanceHidden ? '••••••' : 'Rp ' + formatRupiah(totals.saldo)}</div>
+            <div class="balance-stats">
+                <div class="stat-item"><div class="stat-label">Pemasukan</div><div class="stat-value income">${isBalanceHidden ? '••••' : '+Rp ' + formatRupiah(totals.pemasukan)}</div></div>
+                <div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden ? '••••' : '-Rp ' + formatRupiah(totals.pengeluaran)}</div></div>
+            </div>
+        </div>
+        
+        <div class="card" id="savingsCard">
+            <div class="card-title"><span>💰 Tabungan Pribadi</span><span style="color:#4ade80;">Rp ${formatRupiah(totalSavings)}</span></div>
+            ${savings.length === 0 ? '<div class="empty-state" style="padding:8px 0;"><div class="desc">Belum ada tabungan</div></div>' : savings.slice(0,2).map(s => `
+                <div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;">
+                    <span>${escapeHtml(s.name)}</span>
+                    <span>${formatRupiah(s.current_amount||0)} / ${formatRupiah(s.target_amount||0)}</span>
+                </div>
+            `).join('')}
+        </div>
+        
+        <div class="stats-row">
+            <div class="stat-card" id="piutangCard"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div>
+            <div class="stat-card" id="hutangCard"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div>
+        </div>
+        
+        <div class="card" id="tasksCard">
+            <div class="card-title"><span>✅ Tugas Terbaru</span><span class="badge-count">${pendingCount} tertunda</span></div>
+            <div class="task-preview">
+                ${recentTasks.length === 0 ? '<div class="empty-state" style="padding:8px 0;"><div class="desc">🎉 Tidak ada tugas tertunda</div></div>' : recentTasks.map(t => {
+                    const status = getTaskStatus(t);
+                    return `<div class="task-preview-item" data-id="${t.id}"><span class="icon">${t.is_completed ? '✅' : '📋'}</span><div class="info"><div class="title">${escapeHtml(t.title)}</div>${t.due_date ? `<div class="date">📅 ${formatDate(t.due_date)}</div>` : ''}</div><span class="status ${status.cls}">${status.label}</span></div>`;
+                }).join('')}
+                ${pendingTasks.length > 3 ? `<div style="text-align:center; font-size:12px; color:var(--text-secondary); padding:4px 0;">+${pendingTasks.length - 3} tugas lainnya</div>` : ''}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title"><span>📊 Pengeluaran Teratas Bulan Ini</span><span class="badge-count">non-rutin</span></div>
+            ${topExpenses.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">✅ Tidak ada pengeluaran non-rutin bulan ini</div></div>' : topExpenses.map((t, i) => {
+                const cat = getCategoryById(t.category_id);
+                return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
+                    <div><span style="font-weight:500;">${i+1}. ${escapeHtml(t.description)}</span>${cat ? `<span style="font-size:10px;color:var(--text-secondary);margin-left:6px;">${cat.icon}</span>` : ''}${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:6px;">📤</span>` : ''}<div style="font-size:11px;color:var(--text-secondary);">${formatDate(t.created_at)}</div></div>
+                    <span style="color:#f87171;font-weight:600;">-Rp ${formatRupiah(t.amount)}</span>
+                </div>`;
+            }).join('')}
+            ${topExpenses.length > 0 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--border-color);margin-top:4px;">💡 Pengeluaran rutin (berulang) tidak ditampilkan</div>` : ''}
+        </div>
+        
+        <div class="card">
+            <div class="card-title">📋 Transaksi Terbaru</div>
+            ${recent.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada transaksi</div></div>' : recent.map(t => {
+                const cat = getCategoryById(t.category_id);
+                const isShared = t.user_id !== currentCustomUser?.id;
+                const isRecurring = t.description?.includes('(Ulang)');
+                return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${isRecurring ? ' 🔄' : ''}</div><div class="meta">${formatDate(t.created_at)}${isShared ? ' · ' + getUserEmail(t.user_id) : ''}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
+            }).join('')}
+        </div>
+    `;
+    
+    document.getElementById('appContainer').innerHTML = html;
+    
+    document.getElementById('tasksCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='tasks'; updateNav(); renderTasks(); });
+    document.querySelectorAll('.task-preview-item').forEach(el => { el.onclick = (e) => { e.stopPropagation(); const id = el.dataset.id; openTaskModal(id); }; });
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+    document.getElementById('openSettingsBtn')?.addEventListener('click', () => { pushHistory(currentNav); previousNav=currentNav; currentNav='settings'; updateNav(); renderSettings(); });
+    document.getElementById('reminderBtn')?.addEventListener('click', showRemindersPopup);
+    document.getElementById('toggleBalanceBtn')?.addEventListener('click', e => { e.stopPropagation(); isBalanceHidden = !isBalanceHidden; renderHome(); });
+    document.getElementById('piutangCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='hutang'; updateNav(); renderHutang(); });
+    document.getElementById('hutangCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='hutang'; updateNav(); renderHutang(); });
+    document.getElementById('savingsCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='savings'; updateNav(); renderSavings(); });
+    document.querySelectorAll('.tx-item').forEach(el => { el.onclick = () => { const id = el.dataset.id; const tx = transactions.find(t => t.id === id); if (tx) showTransactionDetail(tx); }; });
+}
+
+// ============================================
 // RENDER SETTINGS
 // ============================================
 async function renderSettings() {
     await loadFamilyData();
     const user = await userManager.getUserData();
     const html = `
-        <div class="header">
-            <div class="header-user"><div class="header-avatar">⚙️</div><div class="header-info"><div class="header-name">Pengaturan</div></div></div>
-            <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);previousNav=currentNav;currentNav='home';updateNav();renderHome();">←</button></div>
-        </div>
+        <div class="header"><div class="header-user"><div class="header-avatar">⚙️</div><div class="header-info"><div class="header-name">Pengaturan</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);previousNav=currentNav;currentNav='home';updateNav();renderHome();">←</button></div></div>
         <div class="card"><div class="card-title">👤 Profil</div>
             <div style="display:grid;gap:8px;">
                 <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Kode</span><span style="font-weight:600;color:#3b82f6;">${user?.user_code || 'USR-???'}</span></div>
@@ -2037,27 +1458,12 @@ async function openEditProfileModal() {
 function addBottomNav() {
     const navHtml = `
         <div class="bottom-nav">
-            <button class="nav-item ${currentNav === 'home' ? 'active' : ''}" data-nav="home">
-                <span class="nav-icon">🏠</span>
-                <span class="nav-label">Beranda</span>
-            </button>
-            <button class="nav-item ${currentNav === 'transaksi' ? 'active' : ''}" data-nav="transaksi">
-                <span class="nav-icon">📋</span>
-                <span class="nav-label">Transaksi</span>
-            </button>
-            <div class="nav-center">
-                <button class="nav-center-btn" id="centerAddBtn">+</button>
-            </div>
-            <button class="nav-item ${currentNav === 'budget' ? 'active' : ''}" data-nav="budget">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Anggaran</span>
-            </button>
-            <button class="nav-item" id="moreMenuBtn">
-                <span class="nav-icon">📂</span>
-                <span class="nav-label">Lainnya</span>
-            </button>
+            <button class="nav-item ${currentNav === 'home' ? 'active' : ''}" data-nav="home"><span class="nav-icon">🏠</span><span class="nav-label">Beranda</span></button>
+            <button class="nav-item ${currentNav === 'transaksi' ? 'active' : ''}" data-nav="transaksi"><span class="nav-icon">📋</span><span class="nav-label">Transaksi</span></button>
+            <div class="nav-center"><button class="nav-center-btn" id="centerAddBtn">+</button></div>
+            <button class="nav-item ${currentNav === 'budget' ? 'active' : ''}" data-nav="budget"><span class="nav-icon">📊</span><span class="nav-label">Anggaran</span></button>
+            <button class="nav-item" id="moreMenuBtn"><span class="nav-icon">📂</span><span class="nav-label">Lainnya</span></button>
         </div>
-        
         <div id="moreMenuPopup">
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
                 <button class="menu-popup-item" data-nav="tasks"><span class="icon">✅</span>Tugas</button>
@@ -2073,7 +1479,6 @@ function addBottomNav() {
     
     document.getElementById('centerAddBtn')?.addEventListener('click', () => openTransaksiModal());
     
-    // More menu popup
     const moreBtn = document.getElementById('moreMenuBtn');
     const popup = document.getElementById('moreMenuPopup');
     let isPopupOpen = false;
