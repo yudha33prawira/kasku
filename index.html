@@ -207,6 +207,88 @@
         .family-member-badge { background: #3b82f6; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
         .family-owner-badge { background: #8b5cf6; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
         .custom-id-badge { background: #10b981; color: white; font-size: 9px; padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
+/* Toast dengan animasi lebih baik */
+.toast {
+    animation: toastIn 0.4s ease-out, toastOut 0.4s ease-in 3.6s forwards;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px) scale(0.9);
+    }
+}
+
+/* Modal popup dengan animasi */
+.modal-overlay {
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    animation: modalScaleIn 0.3s ease-out;
+}
+
+@keyframes modalScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ID Keluarga box di settings */
+.family-id-box {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 12px;
+    padding: 16px;
+    border: 2px solid #3b82f6;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+    transition: all 0.3s ease;
+}
+
+.family-id-box:hover {
+    box-shadow: 0 4px 30px rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+.family-id-text {
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    color: #93c5fd;
+    font-weight: 700;
+    word-break: break-all;
+    background: rgba(255,255,255,0.05);
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
     </style>
 </head>
 <body>
@@ -495,7 +577,7 @@ let familyMembers = [];
 let familyInfo = null;
 
 // ============================================
-// CREATE FAMILY - FIX ID TIDAK MUNCUL
+// CREATE FAMILY - DENGAN MODAL POPUP
 // ============================================
 async function createFamily(familyName) {
     if (!currentUser) {
@@ -515,7 +597,7 @@ async function createFamily(familyName) {
     }
     
     try {
-        showToast("⏳ Membuat keluarga...");
+        showToast("⏳ Membuat keluarga...", 2000);
         
         // 1. Buat keluarga
         const { data: family, error } = await sb
@@ -552,7 +634,6 @@ async function createFamily(familyName) {
         
         if (memberError) {
             console.error("Insert member error:", memberError);
-            // Rollback: hapus keluarga
             await sb.from("families").delete().eq("id", family.id);
             showToast("❌ Gagal menambahkan anggota: " + memberError.message);
             return null;
@@ -562,21 +643,14 @@ async function createFamily(familyName) {
         currentFamilyId = family.id;
         familyInfo = family;
         
-        // 4. FORCE LOAD ulang data keluarga dari database
+        // 4. Force load ulang data keluarga
         await loadFamilyData();
         
-        // 5. Tampilkan ID keluarga di toast
-        showToast(`✅ Keluarga "${family.name}" berhasil dibuat!`);
-        setTimeout(() => {
-            showToast(`🔑 ID Keluarga: ${family.id}`);
-        }, 500);
+        // 5. Tampilkan popup ID Keluarga
+        showFamilyIdPopup(family.id, family.name);
         
         // 6. Refresh tampilan Settings
         await renderSettings();
-        
-        // 7. Log untuk debugging
-        console.log("🏠 Current Family ID:", currentFamilyId);
-        console.log("📋 Family Info:", familyInfo);
         
         return family;
         
@@ -587,48 +661,205 @@ async function createFamily(familyName) {
     }
 }
 
+// ============================================
+// POPUP ID KELUARGA
+// ============================================
+function showFamilyIdPopup(familyId, familyName) {
+    // Buat modal popup
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '999';
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+            <div class="modal-title" style="font-size: 22px;">Keluarga Berhasil Dibuat!</div>
+            
+            <div style="margin: 20px 0; padding: 16px; background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; border: 2px solid #3b82f6;">
+                <div style="font-size: 12px; color: #60a5fa; font-weight: 600; letter-spacing: 2px; margin-bottom: 8px;">
+                    🔑 ID KELUARGA
+                </div>
+                <div style="font-family: 'Courier New', monospace; font-size: 16px; color: #93c5fd; font-weight: 700; word-break: break-all; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                    ${familyId}
+                </div>
+            </div>
+            
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+                📋 Salin ID di atas dan bagikan ke anggota keluarga lainnya
+            </div>
+            
+            <div class="modal-button-grid" style="grid-template-columns: 1fr 1fr;">
+                <button id="copyIdFromPopup" class="modal-btn modal-btn-primary" style="font-size: 16px;">
+                    📋 Copy ID
+                </button>
+                <button id="closePopupBtn" class="modal-btn modal-btn-secondary" style="font-size: 16px;">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Event: Copy ID
+    document.getElementById("copyIdFromPopup").onclick = () => {
+        navigator.clipboard.writeText(familyId).then(() => {
+            showToast("✅ ID Keluarga disalin!", 3000);
+        }).catch(() => {
+            // Fallback
+            const textArea = document.createElement('textarea');
+            textArea.value = familyId;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast("✅ ID Keluarga disalin!", 3000);
+        });
+    };
+    
+    // Event: Tutup
+    document.getElementById("closePopupBtn").onclick = () => {
+        modal.remove();
+    };
+    
+    // Event: Klik di luar modal
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+}
+    
+// ============================================
+// JOIN FAMILY - DENGAN POPUP
+// ============================================
 async function joinFamily(familyId) {
-    if (!currentUser) return;
+    if (!currentUser) {
+        showToast("❌ Silakan login terlebih dahulu");
+        return false;
+    }
+    
     const userId = await userManager.getUserId();
     if (!userId) {
         showToast("❌ User ID tidak ditemukan");
-        return;
+        return false;
+    }
+    
+    if (!familyId || familyId.trim() === '') {
+        showToast("❌ ID Keluarga harus diisi");
+        return false;
     }
     
     try {
+        showToast("⏳ Mencari keluarga...", 2000);
+        
+        // 1. Cek apakah keluarga ada
         const { data: family, error: famError } = await sb
             .from("families")
             .select("*")
-            .eq("id", familyId)
+            .eq("id", familyId.trim())
             .single();
         
-        if (famError || !family) throw new Error("Keluarga tidak ditemukan");
+        if (famError || !family) {
+            showToast("❌ Keluarga tidak ditemukan");
+            return false;
+        }
         
+        // 2. Cek apakah sudah jadi anggota
         const { data: existing, error: existError } = await sb
             .from("family_members")
             .select("*")
-            .eq("family_id", familyId)
+            .eq("family_id", familyId.trim())
             .eq("user_id", userId)
             .maybeSingle();
         
-        if (existing) throw new Error("Anda sudah menjadi anggota keluarga ini");
+        if (existing) {
+            showToast("⚠️ Anda sudah menjadi anggota keluarga ini");
+            return false;
+        }
         
-        await sb.from("family_members").insert({
-            family_id: familyId,
-            user_id: userId,
-            role: 'member'
-        });
+        // 3. Tambahkan sebagai member
+        const { error: insertError } = await sb
+            .from("family_members")
+            .insert({
+                family_id: familyId.trim(),
+                user_id: userId,
+                role: 'member'
+            });
         
-        currentFamilyId = familyId;
+        if (insertError) {
+            showToast("❌ Gagal bergabung: " + insertError.message);
+            return false;
+        }
+        
+        // 4. Update state
+        currentFamilyId = family.id;
         familyInfo = family;
-        showToast("✅ Berhasil bergabung!");
+        
+        // 5. Load ulang data keluarga
+        await loadFamilyData();
+        
+        // 6. Tampilkan popup sukses
+        showJoinSuccessPopup(family.name);
+        
+        // 7. Refresh tampilan Settings
+        await renderSettings();
+        
         return true;
+        
     } catch(e) {
         console.error("Join family error:", e);
-        throw e;
+        showToast("❌ Gagal bergabung: " + e.message);
+        return false;
     }
 }
 
+// ============================================
+// POPUP JOIN SUKSES
+// ============================================
+function showJoinSuccessPopup(familyName) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '999';
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 12px;">🥳</div>
+            <div class="modal-title" style="font-size: 22px;">Bergabung Berhasil!</div>
+            
+            <div style="margin: 20px 0; padding: 16px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 2px solid #10b981;">
+                <div style="font-size: 18px; font-weight: 600; color: #34d399;">
+                    🏠 ${escapeHtml(familyName)}
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                    Anda sekarang menjadi anggota keluarga ini
+                </div>
+            </div>
+            
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+                💡 Sekarang Anda bisa melihat dan mengelola data keuangan keluarga
+            </div>
+            
+            <div class="modal-button-grid" style="grid-template-columns: 1fr;">
+                <button id="closeJoinPopup" class="modal-btn modal-btn-primary" style="font-size: 16px;">
+                    ✅ Siap!
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById("closeJoinPopup").onclick = () => {
+        modal.remove();
+    };
+    
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    };
+}
 // ============================================
 // LOAD FAMILY DATA - FORCE RELOAD
 // ============================================
@@ -1011,10 +1242,62 @@ function goBack() {
     return false;
 }
 
-function showToast(msg) { 
-    let t = document.querySelector('.toast'); if (t) t.remove(); 
-    t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; 
-    document.body.appendChild(t); setTimeout(() => t.remove(), 2500); 
+// ============================================
+// SHOW TOAST - DURASI DIPERBAIKI
+// ============================================
+function showToast(msg, duration = 4000) {  // Default 4 detik
+    // Hapus toast lama
+    let t = document.querySelector('.toast'); 
+    if (t) t.remove(); 
+    
+    // Buat toast baru
+    t = document.createElement('div'); 
+    t.className = 'toast'; 
+    t.innerText = msg;
+    
+    // Style tambahan agar lebih terlihat
+    t.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 60px;
+        font-size: 15px;
+        font-weight: 600;
+        z-index: 300;
+        white-space: nowrap;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
+        animation: fadeInUp 0.3s ease-out;
+        max-width: 90%;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,0.1);
+    `;
+    
+    // Tambahan untuk toast penting (ID Keluarga)
+    if (msg.includes('ID Keluarga')) {
+        t.style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
+        t.style.border = '2px solid #3b82f6';
+        t.style.boxShadow = '0 10px 30px rgba(59,130,246,0.3)';
+        t.style.fontSize = '16px';
+        t.style.padding = '16px 32px';
+        duration = 8000; // 8 detik untuk ID Keluarga
+    }
+    
+    document.body.appendChild(t); 
+    
+    // Auto remove setelah durasi
+    setTimeout(() => {
+        if (t.parentNode) {
+            t.style.opacity = '0';
+            t.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                if (t.parentNode) t.remove();
+            }, 300);
+        }
+    }, duration); 
 }
 
 function formatRupiah(angka) {
