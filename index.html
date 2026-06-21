@@ -1513,13 +1513,13 @@ async function deleteProof(txId) {
 }
 
 // ============================================
-// RENDER LAPORAN - SEMUA DATA DENGAN DETAIL LENGKAP
+// RENDER LAPORAN - SEMUA TRANSAKSI (TERMASUK BERULANG)
 // ============================================
 async function renderLaporan() {
     await loadTransactions();
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     
-    // SEMUA TRANSAKSI
+    // SEMUA TRANSAKSI (tanpa filter apapun)
     const all = [...transactions];
     all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     
@@ -1539,10 +1539,11 @@ async function renderLaporan() {
         data.push(val);
     });
     
-    // Filter bulan
+    // Filter bulan - TANPA filter "(Ulang)"
     const monthFiltered = transactions.filter(t => {
         const d = new Date(t.created_at);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        // ❌ HAPUS: && !t.description?.includes('(Ulang)')
     });
     monthFiltered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
     
@@ -1552,7 +1553,7 @@ async function renderLaporan() {
         else bulanPengeluaran += Number(t.amount)||0;
     });
     
-    const html = `
+    let html = `
         <div class="header">
             <div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
             <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='transaksi';updateNav();renderTransaksi();">←</button></div>
@@ -1606,7 +1607,6 @@ async function renderLaporan() {
         if (!grouped[d]) grouped[d] = [];
         grouped[d].push(t);
     });
-    // Urutkan tanggal descending (terbaru dulu)
     const sortedDates = Object.keys(grouped).sort((a,b) => {
         const da = a.split('/');
         const db = b.split('/');
@@ -1626,7 +1626,6 @@ async function renderLaporan() {
                     <span style="font-size:15px;font-weight:700;color:${total >= 0 ? '#4ade80' : '#f87171'};">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span>
                 </div>
             </div>`;
-            // Urutkan items berdasarkan waktu
             items.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
             items.forEach(i => {
                 const cat = getCategoryById(i.category_id);
@@ -1652,7 +1651,7 @@ async function renderLaporan() {
     }
     document.getElementById('detailTransaksi').innerHTML = detail;
     
-    // Events - klik item transaksi
+    // Events
     document.querySelectorAll('#detailTransaksi .tx-item').forEach(el => {
         el.onclick = () => {
             const id = el.dataset.id;
@@ -1660,8 +1659,6 @@ async function renderLaporan() {
             if (tx) showTransactionDetail(tx);
         };
     });
-    
-    // Navigasi bulan
     document.getElementById('prevMonth').onclick = () => {
         if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
         renderLaporan();
@@ -1670,8 +1667,6 @@ async function renderLaporan() {
         if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++;
         renderLaporan();
     };
-    
-    // Export PDF
     document.getElementById('exportPdfBtn').onclick = async function() {
         try {
             showToast('📑 Menyiapkan PDF...');
@@ -1679,8 +1674,6 @@ async function renderLaporan() {
             this.disabled = true;
             const el = document.createElement('div');
             el.style.cssText = 'padding:20px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;';
-            
-            // Build detail HTML for PDF
             let detailHtml = '';
             sortedDates.forEach(date => {
                 const items = grouped[date];
@@ -1707,7 +1700,6 @@ async function renderLaporan() {
                     `;
                 });
             });
-            
             el.innerHTML = `
                 <h1 style="text-align:center;color:#1e293b;font-size:24px;">💰 Laporan Keuangan</h1>
                 <p style="text-align:center;color:#64748b;font-size:16px;">${months[currentMonth]} ${currentYear}</p>
@@ -1730,14 +1722,7 @@ async function renderLaporan() {
                 </div>
                 <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
             `;
-            
-            await html2pdf().set({ 
-                margin: 10, 
-                filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, 
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4' }
-            }).from(el).save();
-            
+            await html2pdf().set({ margin: 10, filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save();
             showToast('✅ PDF berhasil!');
             this.textContent = '📑 PDF';
             this.disabled = false;
@@ -1772,9 +1757,14 @@ async function renderHome() {
     const userCode = await userManager.getUserCode();
     const userName = await userManager.getUsername();
     const now = new Date();
+    
+    // Pengeluaran teratas - TETAP filter "(Ulang)" karena hanya untuk non-rutin
     const bulanIni = transactions.filter(t => {
         const d = new Date(t.created_at);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'pengeluaran' && !t.description?.includes('(Ulang)');
+        return d.getMonth() === now.getMonth() && 
+               d.getFullYear() === now.getFullYear() && 
+               t.type === 'pengeluaran' && 
+               !t.description?.includes('(Ulang)');
     });
     const topExpenses = [...bulanIni].sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).slice(0,5);
     
