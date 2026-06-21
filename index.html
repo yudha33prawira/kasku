@@ -121,7 +121,6 @@
         .family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
         .family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
         
-        /* Category item */
         .category-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); }
         .category-item:last-child { border-bottom: none; }
         .category-item:active { opacity: 0.7; }
@@ -560,15 +559,172 @@ function showRemindersPopup() {
 }
 
 // ============================================
+// RECURRING TRANSACTION FUNCTIONS
+// ============================================
+
+// Create recurring transaction
+async function createRecurringTransaction(originalTransaction) {
+    const uid = await userManager.getUserId();
+    if (!uid) return null;
+    
+    try {
+        const date = new Date(originalTransaction.created_at);
+        const dayOfMonth = date.getDate();
+        
+        const { data: recurring, error } = await sb
+            .from('recurring_transactions')
+            .insert({
+                user_id: uid,
+                original_transaction_id: originalTransaction.id,
+                description: originalTransaction.description,
+                amount: originalTransaction.amount,
+                type: originalTransaction.type,
+                category_id: originalTransaction.category_id || null,
+                day_of_month: dayOfMonth,
+                start_date: new Date().toISOString().split('T')[0],
+                is_active: true,
+                last_generated: null
+            })
+            .select()
+            .single();
+        
+        if (error) throw error;
+        console.log(`✅ Recurring transaction created: ${recurring.id}`);
+        return recurring;
+    } catch(e) {
+        console.error('Create recurring error:', e);
+        return null;
+    }
+}
+
+// Generate single recurring transaction
+async function generateRecurringTransaction(recurringId) {
+    try {
+        const { data: recurring, error } = await sb
+            .from('recurring_transactions')
+            .select('*')
+            .eq('id', recurringId)
+            .single();
+        
+        if (error) throw error;
+        if (!recurring || !recurring.is_active) return null;
+        
+        // Check end_date
+        if (recurring.end_date) {
+            const endDate = new Date(recurring.end_date);
+            if (new Date() > endDate) {
+                await sb.from('recurring_transactions').update({ is_active: false }).eq('id', recurringId);
+                return null;
+            }
+        }
+        
+        // Check if already generated this month
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        if (recurring.last_generated) {
+            const lastGen = new Date(recurring.last_generated);
+            if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) {
+                return null;
+            }
+        }
+        
+        // Target date
+        const targetDate = new Date(currentYear, currentMonth, recurring.day_of_month);
+        if (targetDate > now) return null;
+        
+        // Check if transaction already exists this month
+        const monthStart = new Date(currentYear, currentMonth, 1);
+        const monthEnd = new Date(currentYear, currentMonth + 1, 1);
+        
+        const { data: existing } = await sb
+            .from('transactions')
+            .select('id')
+            .eq('user_id', recurring.user_id)
+            .eq('description', recurring.description + ' (Ulang)')
+            .gte('created_at', monthStart.toISOString())
+            .lt('created_at', monthEnd.toISOString())
+            .maybeSingle();
+        
+        if (existing) {
+            await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0] }).eq('id', recurringId);
+            return null;
+        }
+        
+        // Create new transaction
+        const { data: newTx, error: txError } = await sb
+            .from('transactions')
+            .insert({
+                user_id: recurring.user_id,
+                description: recurring.description + ' (Ulang)',
+                amount: recurring.amount,
+                type: recurring.type,
+                category_id: recurring.category_id || null,
+                created_at: targetDate.toISOString()
+            })
+            .select()
+            .single();
+        
+        if (txError) throw txError;
+        
+        await sb.from('recurring_transactions').update({ 
+            last_generated: new Date().toISOString().split('T')[0],
+            updated_at: new Date().toISOString()
+        }).eq('id', recurringId);
+        
+        console.log(`✅ Recurring generated: ${newTx.id}`);
+        return newTx;
+    } catch(e) {
+        console.error('Generate recurring error:', e);
+        return null;
+    }
+}
+
+// Process all recurring transactions
+async function processRecurringTransactions() {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    
+    try {
+        const { data: recurringList, error } = await sb
+            .from('recurring_transactions')
+            .select('*')
+            .eq('user_id', uid)
+            .eq('is_active', true);
+        
+        if (error) {
+            if (error.code === '42P01') {
+                console.log('ℹ️ Tabel recurring_transactions belum dibuat');
+                return;
+            }
+            throw error;
+        }
+        
+        if (!recurringList || recurringList.length === 0) return;
+        
+        let generated = 0;
+        for (const recurring of recurringList) {
+            const result = await generateRecurringTransaction(recurring.id);
+            if (result) generated++;
+        }
+        
+        if (generated > 0) {
+            console.log(`✅ ${generated} recurring transactions generated`);
+            await loadTransactions();
+        }
+    } catch(e) {
+        console.error('Process recurring error:', e);
+    }
+}
+
+// ============================================
 // CATEGORY FUNCTIONS
 // ============================================
 async function renderKategori() {
     await loadCategories();
     const html = `
-        <div class="header">
-            <div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div>
-            <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div>
-        </div>
+        <div class="header"><div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
         <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openCategoryFormModal()">➕ Tambah Kategori</button>
         <div class="card"><div id="categoryList"></div></div>
     `;
@@ -578,7 +734,6 @@ async function renderKategori() {
         container.innerHTML = '<div class="empty-state"><div class="icon">🏷️</div><div class="title">Belum ada kategori</div><div class="desc">Tambahkan kategori untuk mengelompokkan transaksi</div></div>';
         return;
     }
-    // Pisahkan pemasukan dan pengeluaran
     const incomeCats = categories.filter(c => c.type === 'pemasukan');
     const expenseCats = categories.filter(c => c.type === 'pengeluaran');
     let htmlList = '';
@@ -586,10 +741,7 @@ async function renderKategori() {
         htmlList += `<div style="font-size:12px;color:var(--text-secondary);margin:8px 0 4px;">💸 Pengeluaran</div>`;
         htmlList += expenseCats.map(c => `
             <div class="category-item" onclick="openCategoryFormModal('${c.id}')">
-                <div class="left">
-                    <span class="color-dot" style="background:${c.color || '#3b82f6'}"></span>
-                    <span class="name">${c.icon || '📁'} ${escapeHtml(c.name)}</span>
-                </div>
+                <div class="left"><span class="color-dot" style="background:${c.color || '#3b82f6'}"></span><span class="name">${c.icon || '📁'} ${escapeHtml(c.name)}</span></div>
                 <span class="type-badge">${c.user_id !== currentCustomUser?.id ? '📤' : ''}</span>
             </div>
         `).join('');
@@ -598,10 +750,7 @@ async function renderKategori() {
         htmlList += `<div style="font-size:12px;color:var(--text-secondary);margin:12px 0 4px;">💵 Pemasukan</div>`;
         htmlList += incomeCats.map(c => `
             <div class="category-item" onclick="openCategoryFormModal('${c.id}')">
-                <div class="left">
-                    <span class="color-dot" style="background:${c.color || '#3b82f6'}"></span>
-                    <span class="name">${c.icon || '📁'} ${escapeHtml(c.name)}</span>
-                </div>
+                <div class="left"><span class="color-dot" style="background:${c.color || '#3b82f6'}"></span><span class="name">${c.icon || '📁'} ${escapeHtml(c.name)}</span></div>
                 <span class="type-badge">${c.user_id !== currentCustomUser?.id ? '📤' : ''}</span>
             </div>
         `).join('');
@@ -639,26 +788,15 @@ function openCategoryFormModal(editId = null) {
         const color = document.getElementById('catColor').value;
         if (!name) { showToast('❌ Nama harus diisi'); return; }
         const uid = await userManager.getUserId();
-        if (isEdit) {
-            await sb.from('categories').update({ name, icon, type, color }).eq('id', editId);
-            showToast('✅ Kategori diupdate');
-        } else {
-            await sb.from('categories').insert({ user_id: uid, name, icon, type, color });
-            showToast('✅ Kategori ditambahkan');
-        }
+        if (isEdit) { await sb.from('categories').update({ name, icon, type, color }).eq('id', editId); showToast('✅ Kategori diupdate'); }
+        else { await sb.from('categories').insert({ user_id: uid, name, icon, type, color }); showToast('✅ Kategori ditambahkan'); }
         modal.remove();
         await loadCategories();
         renderKategori();
     };
     if (isEdit) {
         document.getElementById('deleteCategory').onclick = async () => {
-            if (confirm('Hapus kategori?')) {
-                await sb.from('categories').delete().eq('id', editId);
-                showToast('✅ Kategori dihapus');
-                modal.remove();
-                await loadCategories();
-                renderKategori();
-            }
+            if (confirm('Hapus kategori?')) { await sb.from('categories').delete().eq('id', editId); showToast('✅ Kategori dihapus'); modal.remove(); await loadCategories(); renderKategori(); }
         };
     }
     document.getElementById('closeCategory').onclick = () => modal.remove();
@@ -707,10 +845,7 @@ async function renderTasks() {
     await loadTasks();
     const pending = tasks.filter(t => !t.is_completed);
     const html = `
-        <div class="header">
-            <div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Tugas</div><div class="header-code">${pending.length} tertunda</div></div></div>
-            <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div>
-        </div>
+        <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Tugas</div><div class="header-code">${pending.length} tertunda</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
         <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openTaskModal()">➕ Tambah Tugas</button>
         <div class="filter">${['all','active','completed'].map(f => `<button class="filter-btn ${taskFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='active'?'Belum Selesai':'Selesai'}</button>`).join('')}</div>
         <div class="card"><div id="tasksList"></div></div>
@@ -723,10 +858,7 @@ async function renderTasks() {
     if (!filtered.length) { container.innerHTML = '<div class="empty-state"><div class="icon">✅</div><div class="title">Tidak ada tugas</div></div>'; return; }
     container.innerHTML = filtered.map(t => `
         <div class="tx-item" data-id="${t.id}" style="cursor:pointer;">
-            <div class="left">
-                <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:#3b82f6;flex-shrink:0;">
-                <div><div style="${t.is_completed?'text-decoration:line-through;opacity:0.6;':''}font-weight:500;">${escapeHtml(t.title)}</div>${t.due_date ? `<div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(t.due_date)}</div>` : ''}</div>
-            </div>
+            <div class="left"><input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:#3b82f6;flex-shrink:0;"><div><div style="${t.is_completed?'text-decoration:line-through;opacity:0.6;':''}font-weight:500;">${escapeHtml(t.title)}</div>${t.due_date ? `<div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(t.due_date)}</div>` : ''}</div></div>
             <span style="font-size:11px;color:var(--text-secondary);">${t.is_completed ? '✅' : '⏳'}</span>
         </div>
     `).join('');
@@ -1156,7 +1288,13 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                 if (newTx?.length) {
                     const txId = newTx[0].id;
                     if (selectedFile) await uploadProof(selectedFile, txId);
-                    if (isRecurring) { showToast('🔄 Membuat transaksi berulang...'); await createRecurringTransaction(newTx[0], 12); await loadTransactions(); showToast('✅ Selesai!'); }
+                    if (isRecurring) {
+                        showToast('🔄 Menyimpan transaksi berulang...');
+                        await createRecurringTransaction(newTx[0]);
+                        await processRecurringTransactions();
+                        await loadTransactions();
+                        showToast('✅ Transaksi berulang siap!');
+                    }
                 }
                 showToast('✅ Transaksi ditambahkan');
                 modal.remove();
@@ -1190,28 +1328,6 @@ async function deleteProof(txId) {
         await sb.storage.from('transaction-proofs').remove([path]);
         await sb.from('transactions').update({ proof_url: null }).eq('id', txId);
     } catch(e) { console.error(e); }
-}
-
-async function createRecurringTransaction(original, months = 12) {
-    const uid = await userManager.getUserId();
-    if (!uid) return 0;
-    let count = 0;
-    const origDate = new Date(original.created_at);
-    const existingKeys = new Set();
-    transactions.forEach(t => { const d = new Date(t.created_at); d.setHours(0,0,0,0); existingKeys.add(`${t.description}_${d.getFullYear()}_${d.getMonth()}`); });
-    for (let i = 1; i <= months; i++) {
-        const next = new Date(origDate);
-        next.setMonth(origDate.getMonth() + i);
-        if (next.getDate() !== origDate.getDate()) continue;
-        const key = `${original.description}_${next.getFullYear()}_${next.getMonth()}`;
-        if (!existingKeys.has(key)) {
-            const d = { user_id: uid, description: original.description + ' (Ulang)', amount: original.amount, type: original.type, created_at: next.toISOString() };
-            if (original.category_id) d.category_id = original.category_id;
-            const { error } = await sb.from('transactions').insert(d);
-            if (!error) { count++; existingKeys.add(key); }
-        }
-    }
-    return count;
 }
 
 // ============================================
@@ -1305,7 +1421,6 @@ async function renderHome() {
     const recent = transactions.slice(0, 5);
     const userCode = await userManager.getUserCode();
     const userName = await userManager.getUsername();
-    const familyDisplay = currentFamilyId ? `🏠 ${familyInfo?.name || 'Keluarga'}` : '👤 Personal';
     
     // Pengeluaran teratas - FILTER transaksi berulang (Ulang)
     const now = new Date();
@@ -1678,6 +1793,14 @@ async function onAuthSuccess(user) {
     if (!customUser) { customUser = { id: 0, user_code: 'USR-???', email: user.email, username: user.email.split('@')[0] }; userManager.customUser = customUser; userManager.authUser = user; }
     currentCustomUser = customUser;
     await loadAllData();
+    
+    // Process recurring transactions
+    try {
+        await processRecurringTransactions();
+    } catch(e) {
+        console.log('⚠️ Recurring processing skipped:', e.message);
+    }
+    
     await initTheme();
     appReady = true;
     addBottomNav();
