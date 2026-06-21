@@ -467,6 +467,147 @@ function renderRunningText() {
 }
 
 // ============================================
+// RECURRING TRANSACTION - FIX: MUNCUL BULAN DEPAN
+// ============================================
+async function createRecurringTransaction(original) {
+    const uid = await userManager.getUserId();
+    if (!uid) return null;
+    try {
+        const date = new Date(original.created_at);
+        const day = date.getDate();
+        
+        // Simpan ke recurring_transactions
+        const { data: recurring, error } = await sb.from('recurring_transactions').insert({
+            user_id: uid,
+            original_transaction_id: original.id,
+            description: original.description,
+            amount: original.amount,
+            type: original.type,
+            category_id: original.category_id || null,
+            day_of_month: day,
+            start_date: new Date().toISOString().split('T')[0],
+            is_active: true,
+            last_generated: new Date().toISOString().split('T')[0] // Set last_generated = hari ini
+        }).select().single();
+        if (error) throw error;
+        console.log('✅ Recurring created:', recurring);
+        return recurring;
+    } catch(e) { console.error('Create recurring error:', e); return null; }
+}
+
+async function generateRecurringTransaction(id) {
+    try {
+        const { data: r, error } = await sb.from('recurring_transactions').select('*').eq('id', id).single();
+        if (error) throw error;
+        if (!r || !r.is_active) return null;
+        if (r.end_date && new Date() > new Date(r.end_date)) {
+            await sb.from('recurring_transactions').update({ is_active: false }).eq('id', id);
+            return null;
+        }
+        
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        // Cek last_generated - HANYA GENERATE BULAN DEPAN
+        if (r.last_generated) {
+            const lastGen = new Date(r.last_generated);
+            // Jika last_generated bulan ini, skip (tunggu bulan depan)
+            if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) {
+                console.log('⏳ Already generated this month, waiting for next month');
+                return null;
+            }
+        }
+        
+        // Target date: BULAN DEPAN
+        const nextMonth = currentMonth + 1;
+        const nextYear = currentYear + (nextMonth > 11 ? 1 : 0);
+        const targetMonth = nextMonth > 11 ? 0 : nextMonth;
+        const targetYear = nextYear;
+        
+        const targetDate = new Date(targetYear, targetMonth, r.day_of_month);
+        
+        // Jika target date masih di masa depan (seharusnya tidak), skip
+        if (targetDate > now) {
+            // Jika masih di masa depan, belum waktunya generate
+            console.log('📅 Target date is in future, waiting...');
+            return null;
+        }
+        
+        // Cek apakah sudah ada transaksi di bulan target
+        const monthStart = new Date(targetYear, targetMonth, 1);
+        const monthEnd = new Date(targetYear, targetMonth + 1, 1);
+        
+        const { data: existing } = await sb
+            .from('transactions')
+            .select('id')
+            .eq('user_id', r.user_id)
+            .eq('description', r.description + ' (Ulang)')
+            .gte('created_at', monthStart.toISOString())
+            .lt('created_at', monthEnd.toISOString())
+            .maybeSingle();
+        
+        if (existing) {
+            // Jika sudah ada, update last_generated
+            await sb.from('recurring_transactions').update({ 
+                last_generated: new Date().toISOString().split('T')[0] 
+            }).eq('id', id);
+            console.log('✅ Transaction already exists this month');
+            return null;
+        }
+        
+        // Buat transaksi baru
+        const { data: tx, error: txErr } = await sb.from('transactions').insert({
+            user_id: r.user_id,
+            description: r.description + ' (Ulang)',
+            amount: r.amount,
+            type: r.type,
+            category_id: r.category_id || null,
+            created_at: targetDate.toISOString()
+        }).select().single();
+        if (txErr) throw txErr;
+        
+        await sb.from('recurring_transactions').update({ 
+            last_generated: new Date().toISOString().split('T')[0],
+            updated_at: new Date().toISOString()
+        }).eq('id', id);
+        
+        console.log(`✅ Recurring generated for ${targetDate.toLocaleDateString()}: ${tx.id}`);
+        return tx;
+    } catch(e) { console.error('Generate recurring error:', e); return null; }
+}
+
+async function processRecurringTransactions() {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    try {
+        const { data: list, error } = await sb.from('recurring_transactions').select('*').eq('user_id', uid).eq('is_active', true);
+        if (error) { if (error.code === '42P01') return; throw error; }
+        if (!list || !list.length) return;
+        
+        let generated = 0;
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        for (const r of list) {
+            // Hanya proses jika sudah bulan depan dari last_generated
+            if (r.last_generated) {
+                const lastGen = new Date(r.last_generated);
+                // Jika last_generated < bulan ini, berarti sudah lewat 1 bulan
+                if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) {
+                    continue; // Skip, masih bulan ini
+                }
+            }
+            const result = await generateRecurringTransaction(r.id);
+            if (result) generated++;
+        }
+        if (generated) { await loadTransactions(); }
+        console.log(`✅ ${generated} recurring transactions generated`);
+    } catch(e) { console.error('Process recurring error:', e); }
+}
+
+// ============================================
 // LOAD FUNCTIONS
 // ============================================
 async function loadFamilyData() {
@@ -669,84 +810,6 @@ function showRemindersPopup() {
     content += `<div class="modal-button-grid"><button class="modal-btn modal-btn-primary modal-btn-full" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div>`;
     modal.innerHTML = content;
     document.body.appendChild(modal);
-}
-
-// ============================================
-// RECURRING TRANSACTION FUNCTIONS
-// ============================================
-async function createRecurringTransaction(original) {
-    const uid = await userManager.getUserId();
-    if (!uid) return null;
-    try {
-        const date = new Date(original.created_at);
-        const day = date.getDate();
-        const { data: recurring, error } = await sb.from('recurring_transactions').insert({
-            user_id: uid,
-            original_transaction_id: original.id,
-            description: original.description,
-            amount: original.amount,
-            type: original.type,
-            category_id: original.category_id || null,
-            day_of_month: day,
-            start_date: new Date().toISOString().split('T')[0],
-            is_active: true,
-            last_generated: null
-        }).select().single();
-        if (error) throw error;
-        return recurring;
-    } catch(e) { console.error('Create recurring error:', e); return null; }
-}
-
-async function generateRecurringTransaction(id) {
-    try {
-        const { data: r, error } = await sb.from('recurring_transactions').select('*').eq('id', id).single();
-        if (error) throw error;
-        if (!r || !r.is_active) return null;
-        if (r.end_date && new Date() > new Date(r.end_date)) {
-            await sb.from('recurring_transactions').update({ is_active: false }).eq('id', id);
-            return null;
-        }
-        const now = new Date();
-        const month = now.getMonth();
-        const year = now.getFullYear();
-        if (r.last_generated) {
-            const last = new Date(r.last_generated);
-            if (last.getMonth() === month && last.getFullYear() === year) return null;
-        }
-        const target = new Date(year, month, r.day_of_month);
-        if (target > now) return null;
-        const start = new Date(year, month, 1);
-        const end = new Date(year, month + 1, 1);
-        const { data: existing } = await sb.from('transactions').select('id').eq('user_id', r.user_id).eq('description', r.description + ' (Ulang)').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()).maybeSingle();
-        if (existing) {
-            await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0] }).eq('id', id);
-            return null;
-        }
-        const { data: tx, error: txErr } = await sb.from('transactions').insert({
-            user_id: r.user_id,
-            description: r.description + ' (Ulang)',
-            amount: r.amount,
-            type: r.type,
-            category_id: r.category_id || null,
-            created_at: target.toISOString()
-        }).select().single();
-        if (txErr) throw txErr;
-        await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0], updated_at: new Date().toISOString() }).eq('id', id);
-        return tx;
-    } catch(e) { console.error('Generate recurring error:', e); return null; }
-}
-
-async function processRecurringTransactions() {
-    const uid = await userManager.getUserId();
-    if (!uid) return;
-    try {
-        const { data: list, error } = await sb.from('recurring_transactions').select('*').eq('user_id', uid).eq('is_active', true);
-        if (error) { if (error.code === '42P01') return; throw error; }
-        if (!list || !list.length) return;
-        let generated = 0;
-        for (const r of list) { if (await generateRecurringTransaction(r.id)) generated++; }
-        if (generated) { await loadTransactions(); }
-    } catch(e) { console.error('Process recurring error:', e); }
 }
 
 // ============================================
@@ -1400,7 +1463,7 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                     <div id="proofPreview" style="display:none;margin-top:8px;"><img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
                 `}
             </div>
-            ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label></div>` : ''}
+            ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Transaksi akan muncul otomatis bulan depan</div></div>` : ''}
             <div class="modal-button-grid">
                 <button id="saveTransaksi" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
@@ -1475,7 +1538,7 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                         await createRecurringTransaction(newTx[0]);
                         await processRecurringTransactions();
                         await loadTransactions();
-                        showToast('✅ Transaksi berulang siap!');
+                        showToast('✅ Transaksi berulang siap! (Mulai bulan depan)');
                     }
                 }
                 showToast('✅ Transaksi ditambahkan');
@@ -1513,13 +1576,13 @@ async function deleteProof(txId) {
 }
 
 // ============================================
-// RENDER LAPORAN - SEMUA TRANSAKSI (TERMASUK BERULANG)
+// RENDER LAPORAN
 // ============================================
 async function renderLaporan() {
     await loadTransactions();
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     
-    // SEMUA TRANSAKSI (tanpa filter apapun)
+    // SEMUA TRANSAKSI
     const all = [...transactions];
     all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     
@@ -1539,11 +1602,10 @@ async function renderLaporan() {
         data.push(val);
     });
     
-    // Filter bulan - TANPA filter "(Ulang)"
+    // Filter bulan - SEMUA transaksi (termasuk berulang)
     const monthFiltered = transactions.filter(t => {
         const d = new Date(t.created_at);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        // ❌ HAPUS: && !t.description?.includes('(Ulang)')
     });
     monthFiltered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
     
@@ -1600,7 +1662,7 @@ async function renderLaporan() {
         });
     }
     
-    // Detail - Urutkan berdasarkan tanggal
+    // Detail
     const grouped = {};
     monthFiltered.forEach(t => {
         const d = formatDate(t.created_at);
@@ -1757,14 +1819,9 @@ async function renderHome() {
     const userCode = await userManager.getUserCode();
     const userName = await userManager.getUsername();
     const now = new Date();
-    
-    // Pengeluaran teratas - TETAP filter "(Ulang)" karena hanya untuk non-rutin
     const bulanIni = transactions.filter(t => {
         const d = new Date(t.created_at);
-        return d.getMonth() === now.getMonth() && 
-               d.getFullYear() === now.getFullYear() && 
-               t.type === 'pengeluaran' && 
-               !t.description?.includes('(Ulang)');
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'pengeluaran' && !t.description?.includes('(Ulang)');
     });
     const topExpenses = [...bulanIni].sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).slice(0,5);
     
