@@ -129,6 +129,17 @@
         .category-item .left .name { font-weight: 500; font-size: 14px; }
         .category-item .left .type-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); }
         
+        /* Debt Group */
+        .debt-group { padding: 14px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: var(--transition); }
+        .debt-group:active { transform: scale(0.98); }
+        .debt-group .header { display: flex; justify-content: space-between; align-items: center; padding: 0; background: none; border: none; }
+        .debt-group .header .name { font-weight: 600; font-size: 15px; }
+        .debt-group .header .total { font-weight: 700; font-size: 15px; }
+        .debt-group .header .total.income { color: #4ade80; }
+        .debt-group .header .total.expense { color: #f87171; }
+        .debt-group .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .debt-group .sub .wa-badge { color: #25D366; }
+        
         .bottom-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; z-index: 100; height: var(--nav-height); }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: var(--radius-sm); transition: var(--transition); flex: 1; position: relative; min-width: 0; }
         .nav-item .nav-icon { font-size: 20px; transition: var(--transition); }
@@ -151,7 +162,7 @@
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; animation: modalIn 0.25s ease-out; }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
         .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 16px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 12px 16px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-primary); font-size: 14px; transition: var(--transition); }
         .modal-input:focus, .modal-select:focus, .modal-textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
@@ -164,6 +175,7 @@
         .modal-btn-secondary { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); }
         .modal-btn-danger { background: var(--gradient-danger); color: white; }
         .modal-btn-success { background: var(--gradient-success); color: white; }
+        .modal-btn-wa { background: #25D366; color: white; }
         
         .password-wrapper { position: relative; }
         .password-wrapper input { padding-right: 50px; }
@@ -324,6 +336,15 @@ function formatDate(d) { if (!d) return '-'; const dt = new Date(d); return `${d
 function formatDateInput(d) { if (!d) return ''; const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
 function capitalizeName(s) { if (!s) return ''; return s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
 
+// Format WhatsApp number: +62xxx, max 14 digits
+function formatWhatsAppNumber(input) {
+    let number = input.replace(/[^0-9]/g, '');
+    if (number.startsWith('0')) number = '62' + number.substring(1);
+    if (!number.startsWith('62')) number = '62' + number;
+    if (number.length > 14) number = number.substring(0, 14);
+    return number;
+}
+
 function showLoading() {
     const ov = document.getElementById('loadingOverlay');
     if (ov) ov.classList.remove('hidden');
@@ -425,6 +446,12 @@ async function loadDebts() {
         } else { q = q.eq('user_id', uid); }
         const { data } = await q;
         debts = data || [];
+        // Sort by due_date asc
+        debts.sort((a, b) => {
+            if (!a.due_date) return 1;
+            if (!b.due_date) return -1;
+            return new Date(a.due_date) - new Date(b.due_date);
+        });
     } catch(e) { debts = []; }
 }
 
@@ -561,16 +588,12 @@ function showRemindersPopup() {
 // ============================================
 // RECURRING TRANSACTION FUNCTIONS
 // ============================================
-
-// Create recurring transaction
 async function createRecurringTransaction(originalTransaction) {
     const uid = await userManager.getUserId();
     if (!uid) return null;
-    
     try {
         const date = new Date(originalTransaction.created_at);
         const dayOfMonth = date.getDate();
-        
         const { data: recurring, error } = await sb
             .from('recurring_transactions')
             .insert({
@@ -587,17 +610,11 @@ async function createRecurringTransaction(originalTransaction) {
             })
             .select()
             .single();
-        
         if (error) throw error;
-        console.log(`✅ Recurring transaction created: ${recurring.id}`);
         return recurring;
-    } catch(e) {
-        console.error('Create recurring error:', e);
-        return null;
-    }
+    } catch(e) { console.error('Create recurring error:', e); return null; }
 }
 
-// Generate single recurring transaction
 async function generateRecurringTransaction(recurringId) {
     try {
         const { data: recurring, error } = await sb
@@ -605,11 +622,8 @@ async function generateRecurringTransaction(recurringId) {
             .select('*')
             .eq('id', recurringId)
             .single();
-        
         if (error) throw error;
         if (!recurring || !recurring.is_active) return null;
-        
-        // Check end_date
         if (recurring.end_date) {
             const endDate = new Date(recurring.end_date);
             if (new Date() > endDate) {
@@ -617,27 +631,17 @@ async function generateRecurringTransaction(recurringId) {
                 return null;
             }
         }
-        
-        // Check if already generated this month
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
-        
         if (recurring.last_generated) {
             const lastGen = new Date(recurring.last_generated);
-            if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) {
-                return null;
-            }
+            if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) return null;
         }
-        
-        // Target date
         const targetDate = new Date(currentYear, currentMonth, recurring.day_of_month);
         if (targetDate > now) return null;
-        
-        // Check if transaction already exists this month
         const monthStart = new Date(currentYear, currentMonth, 1);
         const monthEnd = new Date(currentYear, currentMonth + 1, 1);
-        
         const { data: existing } = await sb
             .from('transactions')
             .select('id')
@@ -646,13 +650,10 @@ async function generateRecurringTransaction(recurringId) {
             .gte('created_at', monthStart.toISOString())
             .lt('created_at', monthEnd.toISOString())
             .maybeSingle();
-        
         if (existing) {
             await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0] }).eq('id', recurringId);
             return null;
         }
-        
-        // Create new transaction
         const { data: newTx, error: txError } = await sb
             .from('transactions')
             .insert({
@@ -665,57 +666,39 @@ async function generateRecurringTransaction(recurringId) {
             })
             .select()
             .single();
-        
         if (txError) throw txError;
-        
         await sb.from('recurring_transactions').update({ 
             last_generated: new Date().toISOString().split('T')[0],
             updated_at: new Date().toISOString()
         }).eq('id', recurringId);
-        
-        console.log(`✅ Recurring generated: ${newTx.id}`);
         return newTx;
-    } catch(e) {
-        console.error('Generate recurring error:', e);
-        return null;
-    }
+    } catch(e) { console.error('Generate recurring error:', e); return null; }
 }
 
-// Process all recurring transactions
 async function processRecurringTransactions() {
     const uid = await userManager.getUserId();
     if (!uid) return;
-    
     try {
         const { data: recurringList, error } = await sb
             .from('recurring_transactions')
             .select('*')
             .eq('user_id', uid)
             .eq('is_active', true);
-        
         if (error) {
-            if (error.code === '42P01') {
-                console.log('ℹ️ Tabel recurring_transactions belum dibuat');
-                return;
-            }
+            if (error.code === '42P01') { console.log('ℹ️ Tabel recurring_transactions belum dibuat'); return; }
             throw error;
         }
-        
         if (!recurringList || recurringList.length === 0) return;
-        
         let generated = 0;
         for (const recurring of recurringList) {
             const result = await generateRecurringTransaction(recurring.id);
             if (result) generated++;
         }
-        
         if (generated > 0) {
             console.log(`✅ ${generated} recurring transactions generated`);
             await loadTransactions();
         }
-    } catch(e) {
-        console.error('Process recurring error:', e);
-    }
+    } catch(e) { console.error('Process recurring error:', e); }
 }
 
 // ============================================
@@ -803,7 +786,7 @@ function openCategoryFormModal(editId = null) {
 }
 
 // ============================================
-// TASK MODAL
+// TASK FUNCTIONS
 // ============================================
 function openTaskModal(editId = null) {
     const isEdit = !!editId;
@@ -838,9 +821,6 @@ function openTaskModal(editId = null) {
     document.getElementById('closeTask').onclick = () => modal.remove();
 }
 
-// ============================================
-// RENDER TASKS
-// ============================================
 async function renderTasks() {
     await loadTasks();
     const pending = tasks.filter(t => !t.is_completed);
@@ -868,49 +848,33 @@ async function renderTasks() {
 }
 
 // ============================================
-// RENDER HUTANG
+// DEBT FUNCTIONS
 // ============================================
-async function renderHutang() {
-    await loadDebts();
-    let piutang=0, hutang=0;
-    debts.forEach(d => { if (d.status !== 'lunas') { if (d.type === 'piutang') piutang += Number(d.amount)||0; else hutang += Number(d.amount)||0; } });
-    const grouped = {};
-    debts.forEach(d => { if (!grouped[d.contact_name]) grouped[d.contact_name] = []; grouped[d.contact_name].push(d); });
-    const html = `
-        <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
-        <div class="stats-row"><div class="stat-card"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div><div class="stat-card"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div></div>
-        <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openDebtModal()">+ Tambah Hutang/Piutang</button>
-        <div class="card"><div id="debtList"></div></div>
-    `;
-    document.getElementById('appContainer').innerHTML = html;
-    const container = document.getElementById('debtList');
-    if (!Object.keys(grouped).length) { container.innerHTML = '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada data</div></div>'; return; }
-    container.innerHTML = Object.entries(grouped).map(([name, items]) => {
-        let total = 0;
-        items.forEach(d => { if (d.status !== 'lunas') { if (d.type === 'piutang') total += Number(d.amount)||0; else total -= Number(d.amount)||0; } });
-        return `<div class="budget-item" onclick="showDebtGroupDetail('${name}')"><div class="header"><span class="name">${escapeHtml(name)}</span><span style="color:${total>=0?'#4ade80':'#f87171'};font-weight:600;">${total>=0?'+':''}Rp ${formatRupiah(Math.abs(total))}</span></div><div style="font-size:12px;color:var(--text-secondary);">${items.length} transaksi</div></div>`;
-    }).join('');
-}
 
-function showDebtGroupDetail(name) {
-    const items = debts.filter(d => d.contact_name === name);
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
-    modal.innerHTML = `<div class="modal-content"><div class="modal-title">📋 ${escapeHtml(name)}</div>${items.map(d => `<div style="padding:8px 0;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;"><div>${d.type==='piutang'?'💰':'💸'} ${d.type} ${d.status==='lunas'?'✅':''}</div><div style="font-weight:600;color:${d.type==='piutang'?'#4ade80':'#f87171'}">Rp ${formatRupiah(d.amount)}</div></div>`).join('')}<div class="modal-button-grid"><button class="modal-btn modal-btn-secondary modal-btn-full" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div>`;
-    document.body.appendChild(modal);
-}
-
-function openDebtModal(editId=null) {
+// Open debt modal
+function openDebtModal(editId = null) {
     const isEdit = !!editId;
-    const d = isEdit ? debts.find(d => d.id === editId) : null;
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const debt = isEdit ? debts.find(d => d.id === editId) : null;
+    const today = new Date().toISOString().split('T')[0];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '💰 Tambah'} Hutang/Piutang</div>
-            <input type="text" id="debtName" class="modal-input" placeholder="Nama orang" value="${isEdit ? escapeHtml(d.contact_name) : ''}">
-            <input type="text" id="debtAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(d.amount) : ''}">
-            <select id="debtType" class="modal-select"><option value="piutang" ${isEdit && d.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option><option value="hutang" ${isEdit && d.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option></select>
-            <input type="date" id="debtDue" class="modal-input" value="${isEdit ? formatDateInput(d.due_date) : ''}">
-            <input type="tel" id="debtWa" class="modal-input" placeholder="WhatsApp (opsional)" value="${isEdit ? escapeHtml(d.wa_number||'') : ''}">
+            <input type="text" id="debtName" class="modal-input" placeholder="Nama orang" value="${isEdit ? escapeHtml(debt.contact_name) : ''}">
+            <input type="text" id="debtAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(debt.amount) : ''}">
+            <select id="debtType" class="modal-select">
+                <option value="piutang" ${isEdit && debt.type === 'piutang' ? 'selected' : ''}>💰 Piutang (orang berhutang ke saya)</option>
+                <option value="hutang" ${isEdit && debt.type === 'hutang' ? 'selected' : ''}>💸 Hutang (saya berhutang ke orang)</option>
+            </select>
+            <input type="date" id="debtDate" class="modal-input" placeholder="Tanggal berhutang" value="${isEdit ? formatDateInput(debt.created_at) : today}">
+            <input type="date" id="debtDue" class="modal-input" placeholder="Tanggal jatuh tempo" value="${isEdit ? formatDateInput(debt.due_date) : ''}">
+            <div style="position:relative;">
+                <input type="tel" id="debtWa" class="modal-input" placeholder="Nomor WhatsApp (contoh: 08123456789)" value="${isEdit ? escapeHtml(debt.wa_number || '') : ''}" maxlength="14">
+                <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);">+62</span>
+            </div>
+            <textarea id="debtDesc" class="modal-textarea" placeholder="Catatan (opsional)">${isEdit ? escapeHtml(debt.description || '') : ''}</textarea>
             <div class="modal-button-grid">
                 <button id="saveDebt" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button>
@@ -919,22 +883,329 @@ function openDebtModal(editId=null) {
         </div>
     `;
     document.body.appendChild(modal);
+    
     setupRupiahInput('debtAmount');
-    document.getElementById('debtName').addEventListener('blur', function() { this.value = capitalizeName(this.value); });
+    
+    // Format WhatsApp number on input
+    const waInput = document.getElementById('debtWa');
+    if (waInput) {
+        waInput.addEventListener('input', function() {
+            let val = this.value.replace(/[^0-9]/g, '');
+            if (val.length > 0 && !val.startsWith('62')) {
+                // If starts with 0, replace with 62
+                if (val.startsWith('0')) {
+                    val = '62' + val.substring(1);
+                } else if (!val.startsWith('62')) {
+                    // If not starting with 62, add 62
+                    val = '62' + val;
+                }
+            }
+            // Limit to 14 digits
+            if (val.length > 14) val = val.substring(0, 14);
+            this.value = val;
+        });
+        
+        // On blur, ensure format
+        waInput.addEventListener('blur', function() {
+            let val = this.value.replace(/[^0-9]/g, '');
+            if (val && !val.startsWith('62')) {
+                if (val.startsWith('0')) val = '62' + val.substring(1);
+                else val = '62' + val;
+            }
+            if (val.length > 14) val = val.substring(0, 14);
+            this.value = val;
+        });
+    }
+    
+    // Capitalize name on blur
+    document.getElementById('debtName').addEventListener('blur', function() {
+        this.value = capitalizeName(this.value);
+    });
+    
     document.getElementById('saveDebt').onclick = async () => {
         const name = capitalizeName(document.getElementById('debtName').value.trim());
         const amount = parseRupiah(document.getElementById('debtAmount').value);
         const type = document.getElementById('debtType').value;
+        const date = document.getElementById('debtDate').value;
         const due = document.getElementById('debtDue').value;
         const wa = document.getElementById('debtWa').value.trim();
-        if (!name || !amount) { showToast('❌ Isi dengan benar'); return; }
+        const desc = document.getElementById('debtDesc').value.trim();
+        
+        if (!name || !amount) { showToast('❌ Nama dan jumlah harus diisi'); return; }
+        if (wa && wa.length < 10) { showToast('❌ Nomor WhatsApp tidak valid'); return; }
+        
         const uid = await userManager.getUserId();
-        if (isEdit) { await sb.from('debts').update({ contact_name: name, amount, type, due_date: due||null, wa_number: wa||null }).eq('id', editId); showToast('✅ Data diupdate'); }
-        else { await sb.from('debts').insert({ user_id: uid, contact_name: name, amount, type, description: '', due_date: due||null, wa_number: wa||null, status: 'belum_lunas' }); showToast('✅ Ditambahkan'); }
-        modal.remove(); await loadDebts(); renderCurrentView();
+        if (!uid) { showToast('❌ User ID tidak ditemukan'); return; }
+        
+        const data = {
+            contact_name: name,
+            amount: amount,
+            type: type,
+            description: desc,
+            due_date: due || null,
+            wa_number: wa || null,
+            created_at: new Date(date).toISOString()
+        };
+        
+        if (isEdit) {
+            const { error } = await sb.from('debts').update(data).eq('id', editId);
+            if (error) { showToast('❌ ' + error.message); return; }
+            showToast('✅ Data diupdate');
+        } else {
+            data.user_id = uid;
+            data.status = 'belum_lunas';
+            const { error } = await sb.from('debts').insert(data);
+            if (error) { showToast('❌ ' + error.message); return; }
+            showToast('✅ Ditambahkan');
+        }
+        modal.remove();
+        await loadDebts();
+        renderCurrentView();
     };
-    if (isEdit) { document.getElementById('deleteDebt').onclick = async () => { if (confirm('Hapus data?')) { await sb.from('debts').delete().eq('id', editId); showToast('✅ Data dihapus'); modal.remove(); await loadDebts(); renderCurrentView(); } }; }
+    
+    if (isEdit) {
+        document.getElementById('deleteDebt').onclick = async () => {
+            if (confirm('Hapus data ini?')) {
+                await sb.from('debts').delete().eq('id', editId);
+                showToast('✅ Data dihapus');
+                modal.remove();
+                await loadDebts();
+                renderCurrentView();
+            }
+        };
+    }
+    
     document.getElementById('closeDebt').onclick = () => modal.remove();
+}
+
+// Show debt detail modal
+function showDebtDetail(debt) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    const isOverdue = debt.due_date && new Date(debt.due_date) < new Date() && debt.status !== 'lunas';
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
+            
+            <div style="display:grid;gap:8px;padding:8px 0;">
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Nama</span>
+                    <span style="font-weight:600;">${escapeHtml(debt.contact_name)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Jumlah</span>
+                    <span style="font-weight:700;color:${debt.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(debt.amount)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Tipe</span>
+                    <span>${debt.type === 'piutang' ? '💰 Piutang' : '💸 Hutang'}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Tanggal</span>
+                    <span>${formatDate(debt.created_at)}</span>
+                </div>
+                ${debt.due_date ? `
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Jatuh Tempo</span>
+                    <span style="color:${isOverdue ? '#f87171' : '#fbbf24'};font-weight:600;">
+                        ${formatDate(debt.due_date)} ${isOverdue ? '⚠️' : ''}
+                    </span>
+                </div>` : ''}
+                ${debt.wa_number ? `
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">WhatsApp</span>
+                    <span>${escapeHtml(debt.wa_number)}</span>
+                </div>` : ''}
+                ${debt.description ? `
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Catatan</span>
+                    <span style="font-size:13px;">${escapeHtml(debt.description)}</span>
+                </div>` : ''}
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Status</span>
+                    <span style="color:${debt.status === 'lunas' ? '#4ade80' : '#f87171'};font-weight:600;">
+                        ${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}
+                    </span>
+                </div>
+                ${debt.user_id !== currentCustomUser?.id ? `
+                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                    <span style="color:var(--text-secondary);">Dibuat Oleh</span>
+                    <span>${getUserEmail(debt.user_id)}</span>
+                </div>` : ''}
+            </div>
+            
+            <div class="modal-button-grid">
+                <button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                <button id="toggleDebtStatus" class="modal-btn ${debt.status === 'lunas' ? 'modal-btn-warning' : 'modal-btn-success'}">
+                    ${debt.status === 'lunas' ? '↩️ Batal Lunas' : '✅ Tandai Lunas'}
+                </button>
+                ${debt.wa_number ? `<button id="waDebtBtn" class="modal-btn modal-btn-wa">💬 WA</button>` : ''}
+                <button id="closeDebtDetail" class="modal-btn modal-btn-secondary">Tutup</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    document.getElementById('editDebtBtn').onclick = () => {
+        modal.remove();
+        openDebtModal(debt.id);
+    };
+    
+    document.getElementById('toggleDebtStatus').onclick = async () => {
+        const newStatus = debt.status === 'lunas' ? 'belum_lunas' : 'lunas';
+        await sb.from('debts').update({ status: newStatus }).eq('id', debt.id);
+        showToast(newStatus === 'lunas' ? '✅ Ditandai lunas' : '↩️ Dibatalkan lunas');
+        modal.remove();
+        await loadDebts();
+        renderCurrentView();
+    };
+    
+    if (debt.wa_number) {
+        document.getElementById('waDebtBtn').onclick = () => {
+            const message = `Halo ${debt.contact_name}, saya ingin menanyakan tentang ${debt.type === 'piutang' ? 'piutang' : 'hutang'} sebesar Rp ${formatRupiah(debt.amount)}. ${debt.description ? `Catatan: ${debt.description}` : ''}`;
+            const url = `https://wa.me/${debt.wa_number}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        };
+    }
+    
+    document.getElementById('closeDebtDetail').onclick = () => modal.remove();
+}
+
+// Show debt group detail
+function showDebtGroupDetail(contactName) {
+    const items = debts.filter(d => d.contact_name === contactName);
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    
+    let totalPiutang = 0, totalHutang = 0;
+    items.forEach(d => {
+        if (d.status !== 'lunas') {
+            if (d.type === 'piutang') totalPiutang += Number(d.amount) || 0;
+            else totalHutang += Number(d.amount) || 0;
+        }
+    });
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">📋 ${escapeHtml(contactName)}</div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">Total Piutang</span>
+                <span style="color:#4ade80;font-weight:700;">Rp ${formatRupiah(totalPiutang)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">Total Hutang</span>
+                <span style="color:#f87171;font-weight:700;">Rp ${formatRupiah(totalHutang)}</span>
+            </div>
+            <div style="margin-top:12px;max-height:300px;overflow-y:auto;">
+                ${items.map(d => `
+                    <div class="debt-group-item" style="padding:10px 0;border-bottom:1px solid var(--border-color);cursor:pointer;" data-id="${d.id}">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <span style="font-weight:500;">${d.type === 'piutang' ? '💰' : '💸'} ${d.type === 'piutang' ? 'Piutang' : 'Hutang'}</span>
+                                <span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">${formatDate(d.created_at)}</span>
+                                ${d.due_date ? `<span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">📅 ${formatDate(d.due_date)}</span>` : ''}
+                            </div>
+                            <div style="font-weight:600;color:${d.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(d.amount)}</div>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">
+                            ${d.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}
+                            ${d.wa_number ? ` · 📱 WA` : ''}
+                            ${d.user_id !== currentCustomUser?.id ? ` · 👤 ${getUserEmail(d.user_id)}` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="modal-button-grid">
+                <button class="modal-btn modal-btn-secondary modal-btn-full" onclick="this.closest('.modal-overlay').remove()">Tutup</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    document.querySelectorAll('.debt-group-item').forEach(el => {
+        el.onclick = () => {
+            const id = el.getAttribute('data-id');
+            const debt = debts.find(d => d.id === id);
+            if (debt) {
+                modal.remove();
+                showDebtDetail(debt);
+            }
+        };
+    });
+}
+
+// Render Hutang/Piutang page
+async function renderHutang() {
+    await loadDebts();
+    
+    let piutang = 0, hutang = 0;
+    debts.forEach(d => {
+        if (d.status !== 'lunas') {
+            if (d.type === 'piutang') piutang += Number(d.amount) || 0;
+            else hutang += Number(d.amount) || 0;
+        }
+    });
+    
+    // Group by contact name
+    const grouped = {};
+    debts.forEach(d => {
+        if (!grouped[d.contact_name]) grouped[d.contact_name] = [];
+        grouped[d.contact_name].push(d);
+    });
+    
+    // Sort groups by total (largest first)
+    const sortedGroups = Object.entries(grouped).sort((a, b) => {
+        const totalA = a[1].reduce((sum, d) => sum + (d.status !== 'lunas' ? Number(d.amount) : 0), 0);
+        const totalB = b[1].reduce((sum, d) => sum + (d.status !== 'lunas' ? Number(d.amount) : 0), 0);
+        return totalB - totalA;
+    });
+    
+    const html = `
+        <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div><div class="header-code">${debts.length} transaksi</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+        <div class="stats-row">
+            <div class="stat-card"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div>
+            <div class="stat-card"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div>
+        </div>
+        <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openDebtModal()">+ Tambah Hutang/Piutang</button>
+        <div class="card"><div id="debtList"></div></div>
+    `;
+    document.getElementById('appContainer').innerHTML = html;
+    
+    const container = document.getElementById('debtList');
+    if (!sortedGroups.length) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada data</div><div class="desc">Tambahkan hutang atau piutang</div></div>';
+        return;
+    }
+    
+    container.innerHTML = sortedGroups.map(([name, items]) => {
+        let total = 0;
+        items.forEach(d => {
+            if (d.status !== 'lunas') {
+                if (d.type === 'piutang') total += Number(d.amount) || 0;
+                else total -= Number(d.amount) || 0;
+            }
+        });
+        const totalAbs = Math.abs(total);
+        const isPiutang = total >= 0;
+        const hasWa = items.some(d => d.wa_number);
+        const overdueCount = items.filter(d => d.status !== 'lunas' && d.due_date && new Date(d.due_date) < new Date()).length;
+        
+        return `
+            <div class="debt-group" onclick="showDebtGroupDetail('${escapeHtml(name)}')">
+                <div class="header">
+                    <span class="name">${escapeHtml(name)} ${overdueCount > 0 ? `⚠️${overdueCount}` : ''}</span>
+                    <span class="total ${isPiutang ? 'income' : 'expense'}">
+                        ${isPiutang ? '+' : '-'}Rp ${formatRupiah(totalAbs)}
+                    </span>
+                </div>
+                <div class="sub">
+                    ${items.length} transaksi ${hasWa ? '· 📱 WA' : ''}
+                    ${items.some(d => d.status === 'lunas') ? '· ✅ Lunas' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // ============================================
@@ -1794,12 +2065,9 @@ async function onAuthSuccess(user) {
     currentCustomUser = customUser;
     await loadAllData();
     
-    // Process recurring transactions
     try {
         await processRecurringTransactions();
-    } catch(e) {
-        console.log('⚠️ Recurring processing skipped:', e.message);
-    }
+    } catch(e) { console.log('⚠️ Recurring processing skipped:', e.message); }
     
     await initTheme();
     appReady = true;
