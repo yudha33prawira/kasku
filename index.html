@@ -24,6 +24,7 @@
             --shadow: 0 8px 32px rgba(0,0,0,0.4);
             --radius: 20px;
             --radius-sm: 12px;
+            --radius-xs: 8px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
             --gradient-success: linear-gradient(135deg, #10b981, #059669);
@@ -50,29 +51,13 @@
         }
         
         body.light .balance-card,
-        body.light .balance-card * {
-            color: #ffffff !important;
-        }
+        body.light .balance-card * { color: #ffffff !important; }
         body.light .balance-card .balance-label,
-        body.light .balance-card .stat-label {
-            color: rgba(255, 255, 255, 0.7) !important;
-        }
-        body.light .balance-card .balance-amount {
-            color: #ffffff !important;
-        }
-        body.light .balance-card .stat-value.income {
-            color: #4ade80 !important;
-        }
-        body.light .balance-card .stat-value.expense {
-            color: #f87171 !important;
-        }
-        body.light .balance-card .balance-eye {
-            color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.1) !important;
-        }
-        body.light .balance-card .balance-eye:hover {
-            background: rgba(255, 255, 255, 0.2) !important;
-        }
+        body.light .balance-card .stat-label { color: rgba(255,255,255,0.7) !important; }
+        body.light .balance-card .balance-amount { color: #ffffff !important; }
+        body.light .balance-card .stat-value.income { color: #4ade80 !important; }
+        body.light .balance-card .stat-value.expense { color: #f87171 !important; }
+        body.light .balance-card .balance-eye { color: #ffffff !important; background: rgba(255,255,255,0.1) !important; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -205,29 +190,185 @@
         .menu-popup-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
         .menu-popup-item .icon { font-size: 24px; }
         
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; animation: modalIn 0.25s ease-out; }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .modal-content { background: var(--bg-secondary); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border-color); box-shadow: var(--shadow); color: var(--text-primary); }
-        .modal-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 16px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 12px 16px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-primary); font-size: 14px; transition: var(--transition); }
-        .modal-input:focus, .modal-select:focus, .modal-textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        /* ============================================
+           PREMIUM MODAL
+           ============================================ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 380px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            color: var(--text-primary);
+            animation: modalSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-content::-webkit-scrollbar { width: 3px; }
+        .modal-content::-webkit-scrollbar-track { background: transparent; }
+        .modal-content::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
+        }
+        
+        .modal-subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: -12px;
+            margin-bottom: 16px;
+        }
+        
+        .modal-input, .modal-select, .modal-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .modal-input:focus, .modal-select:focus, .modal-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+        .modal-input::placeholder, .modal-select::placeholder, .modal-textarea::placeholder {
+            color: var(--text-muted);
+        }
         .modal-textarea { min-height: 80px; resize: vertical; }
-        .modal-button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-        .modal-btn { padding: 12px; border: none; border-radius: var(--radius-sm); font-weight: 600; font-size: 13px; cursor: pointer; transition: var(--transition); text-align: center; color: white; }
+        .modal-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+        
+        .modal-button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .modal-btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            font-family: inherit;
+        }
         .modal-btn:active { transform: scale(0.96); }
         .modal-btn-full { grid-column: span 2; }
-        .modal-btn-primary { background: var(--gradient-primary); color: white; }
+        .modal-btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .modal-btn-primary:hover { box-shadow: 0 4px 20px rgba(59,130,246,0.4); transform: translateY(-1px); }
         .modal-btn-secondary { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); }
-        .modal-btn-danger { background: var(--gradient-danger); color: white; }
-        .modal-btn-success { background: var(--gradient-success); color: white; }
-        .modal-btn-wa { background: #25D366; color: white; }
+        .modal-btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+        .modal-btn-danger { background: var(--gradient-danger); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+        .modal-btn-danger:hover { box-shadow: 0 4px 20px rgba(239,68,68,0.4); transform: translateY(-1px); }
+        .modal-btn-success { background: var(--gradient-success); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .modal-btn-success:hover { box-shadow: 0 4px 20px rgba(16,185,129,0.4); transform: translateY(-1px); }
+        .modal-btn-warning { background: var(--gradient-warning); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        .modal-btn-warning:hover { box-shadow: 0 4px 20px rgba(245,158,11,0.4); transform: translateY(-1px); }
+        .modal-btn-wa { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37,211,102,0.3); }
+        .modal-btn-wa:hover { box-shadow: 0 4px 20px rgba(37,211,102,0.4); transform: translateY(-1px); }
         
-        .password-wrapper { position: relative; }
-        .password-wrapper input { padding-right: 50px; }
-        .toggle-password { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; color: var(--text-secondary); }
+        .modal-divider {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 16px 0;
+        }
         
-        .toast { position: fixed; bottom: calc(var(--nav-height) + 30px); left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary); padding: 12px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 300; box-shadow: var(--shadow); border: 1px solid var(--border-color); animation: toastIn 0.3s ease-out; max-width: 90%; text-align: center; }
+        .modal-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .modal-badge.success { background: rgba(16,185,129,0.15); color: #4ade80; }
+        .modal-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+        .modal-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .modal-badge.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        
+        .modal-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-detail-row:last-child { border-bottom: none; }
+        .modal-detail-label { color: var(--text-secondary); font-size: 13px; }
+        .modal-detail-value { color: var(--text-primary); font-weight: 500; font-size: 13px; }
+        
+        .modal-proof-img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .modal-proof-img:hover { opacity: 0.9; }
+        
+        .modal-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--bg-card);
+        }
+        .modal-upload-area:hover { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
+        .modal-upload-area .icon { font-size: 36px; display: block; margin-bottom: 4px; }
+        .modal-upload-area .text { font-size: 13px; color: var(--text-secondary); }
+        .modal-upload-area .hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        
+        .toast { position: fixed; bottom: calc(var(--nav-height) + 30px); left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 300; box-shadow: var(--shadow); border: 1px solid var(--border-color); animation: toastIn 0.4s ease-out; max-width: 90%; text-align: center; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+        .toast.success { border-color: #4ade80; }
+        .toast.error { border-color: #f87171; }
+        .toast.warning { border-color: #fbbf24; }
         
         .empty-state { text-align: center; padding: 30px 20px; color: var(--text-secondary); }
         .empty-state .icon { font-size: 48px; margin-bottom: 8px; }
@@ -248,13 +389,23 @@
         .filter-btn.active { background: var(--gradient-primary); color: white; }
         .filter-btn:active { transform: scale(0.95); }
         
-        @media (max-width: 420px) { .app-container { padding: 12px 12px 20px; } .balance-amount { font-size: 26px; } .header-name { font-size: 13px; } .nav-item .nav-label { font-size: 8px; } .nav-center-btn { width: 44px; height: 44px; font-size: 24px; } .bottom-nav { padding: 4px 6px; height: 64px; } }
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 50px; }
+        .toggle-password { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; color: var(--text-secondary); }
         
-        .recurring-active { background: rgba(16,185,129,0.1); border-left: 3px solid #10b981; }
-        .recurring-inactive { background: rgba(239,68,68,0.05); border-left: 3px solid #f87171; }
         .recurring-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
         .recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
         .recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
+        
+        @media (max-width: 420px) {
+            .app-container { padding: 12px 12px 20px; }
+            .balance-amount { font-size: 26px; }
+            .header-name { font-size: 13px; }
+            .nav-item .nav-label { font-size: 8px; }
+            .nav-center-btn { width: 44px; height: 44px; font-size: 24px; }
+            .bottom-nav { padding: 4px 6px; height: 64px; }
+            .modal-content { padding: 20px 16px; }
+        }
     </style>
 </head>
 <body>
@@ -275,13 +426,14 @@
 <div id="loginModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">💰 Keuangan Keluarga</div>
+        <div class="modal-subtitle">Kelola keuangan keluarga dengan mudah</div>
         <input type="email" id="emailInput" class="modal-input" placeholder="Email">
         <div class="password-wrapper">
             <input type="password" id="passwordInput" class="modal-input" placeholder="Password (min. 6)">
             <button type="button" class="toggle-password" id="toggleLoginPassword">👁️</button>
         </div>
         <button id="submitLoginBtn" class="modal-btn modal-btn-primary modal-btn-full">Masuk</button>
-        <div id="switchText" style="text-align:center; margin:12px 0; color:#3b82f6; cursor:pointer; font-weight:500; font-size:14px;">Belum punya akun? Daftar</div>
+        <div id="switchText" style="text-align:center; margin:14px 0; color:#3b82f6; cursor:pointer; font-weight:500; font-size:14px;">Belum punya akun? Daftar</div>
         <button id="guestBtn" class="modal-btn modal-btn-secondary modal-btn-full">Lanjut sebagai Tamu</button>
         <div id="loginError" style="color:#ef4444; text-align:center; margin-top:12px; font-size:13px;"></div>
     </div>
@@ -369,11 +521,11 @@ function initSupabase() {
     return false;
 }
 
-function showToast(msg, duration = 3000) {
+function showToast(msg, duration = 3000, type = '') {
     let t = document.querySelector('.toast');
     if (t) t.remove();
     t = document.createElement('div');
-    t.className = 'toast';
+    t.className = 'toast ' + type;
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(-10px)'; setTimeout(() => t.remove(), 300); }, duration);
@@ -777,22 +929,29 @@ async function toggleTheme() {
 }
 
 // ============================================
-// SHOW REMINDERS POPUP
+// SHOW REMINDERS POPUP (PREMIUM)
 // ============================================
 function showRemindersPopup() {
     const msgs = getRunningText();
-    if (!msgs.length) { showToast('✅ Tidak ada peringatan'); return; }
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    if (!msgs.length) { showToast('✅ Tidak ada peringatan', 2000, 'success'); return; }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     let content = `<div class="modal-content"><div class="modal-title">⚠️ Peringatan</div>`;
     const danger = msgs.filter(m => m.type === 'danger');
     const warning = msgs.filter(m => m.type === 'warning');
+    
     if (danger.length) {
-        content += `<div style="margin:8px 0 4px;color:#f87171;font-weight:600;">🔴 Segera!</div>`;
-        danger.forEach(m => content += `<div style="padding:10px 0;border-bottom:1px solid var(--border-color);font-size:14px;color:#f87171;">${m.text}</div>`);
+        content += `<div style="margin:8px 0 12px;font-size:13px;font-weight:600;color:#f87171;">🔴 Segera</div>`;
+        danger.forEach(m => {
+            content += `<div style="padding:12px 14px;margin-bottom:8px;background:rgba(239,68,68,0.08);border-radius:var(--radius-xs);border-left:3px solid #f87171;">${m.text}</div>`;
+        });
     }
     if (warning.length) {
-        content += `<div style="margin:12px 0 4px;color:#fbbf24;font-weight:600;">🟡 Mendekati</div>`;
-        warning.forEach(m => content += `<div style="padding:10px 0;border-bottom:1px solid var(--border-color);font-size:14px;color:#fbbf24;">${m.text}</div>`);
+        content += `<div style="margin:12px 0 12px;font-size:13px;font-weight:600;color:#fbbf24;">🟡 Mendekati</div>`;
+        warning.forEach(m => {
+            content += `<div style="padding:12px 14px;margin-bottom:8px;background:rgba(251,191,36,0.06);border-radius:var(--radius-xs);border-left:3px solid #fbbf24;">${m.text}</div>`;
+        });
     }
     content += `<div class="modal-button-grid"><button class="modal-btn modal-btn-primary modal-btn-full" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div>`;
     modal.innerHTML = content;
@@ -800,7 +959,7 @@ function showRemindersPopup() {
 }
 
 // ============================================
-// CATEGORY FUNCTIONS
+// CATEGORY FUNCTIONS (PREMIUM MODAL)
 // ============================================
 async function renderKategori() {
     await loadCategories();
@@ -847,13 +1006,14 @@ function openCategoryFormModal(editId = null) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '➕ Tambah'} Kategori</div>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui informasi kategori' : 'Buat kategori baru untuk transaksi'}</div>
             <input type="text" id="catName" class="modal-input" placeholder="Nama Kategori" value="${isEdit ? escapeHtml(cat.name) : ''}">
             <input type="text" id="catIcon" class="modal-input" placeholder="Icon (contoh: 🍔, 🚗)" value="${isEdit ? cat.icon || '📁' : '📁'}">
             <select id="catType" class="modal-select">
                 <option value="pengeluaran" ${isEdit && cat.type === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
                 <option value="pemasukan" ${isEdit && cat.type === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
             </select>
-            <input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color || '#3b82f6' : '#3b82f6'}">
+            <input type="color" id="catColor" class="modal-input" value="${isEdit ? cat.color || '#3b82f6' : '#3b82f6'}" style="padding:6px;height:44px;cursor:pointer;">
             <div class="modal-button-grid">
                 <button id="saveCategory" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                 <button id="closeCategory" class="modal-btn modal-btn-secondary">Batal</button>
@@ -867,17 +1027,17 @@ function openCategoryFormModal(editId = null) {
         const icon = document.getElementById('catIcon').value.trim() || '📁';
         const type = document.getElementById('catType').value;
         const color = document.getElementById('catColor').value;
-        if (!name) { showToast('❌ Nama harus diisi'); return; }
+        if (!name) { showToast('❌ Nama harus diisi', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
-        if (isEdit) { await sb.from('categories').update({ name, icon, type, color }).eq('id', editId); showToast('✅ Kategori diupdate'); }
-        else { await sb.from('categories').insert({ user_id: uid, name, icon, type, color }); showToast('✅ Kategori ditambahkan'); }
+        if (isEdit) { await sb.from('categories').update({ name, icon, type, color }).eq('id', editId); showToast('✅ Kategori diupdate', 2000, 'success'); }
+        else { await sb.from('categories').insert({ user_id: uid, name, icon, type, color }); showToast('✅ Kategori ditambahkan', 2000, 'success'); }
         modal.remove();
         await loadCategories();
         renderKategori();
     };
     if (isEdit) {
         document.getElementById('deleteCategory').onclick = async () => {
-            if (confirm('Hapus kategori?')) { await sb.from('categories').delete().eq('id', editId); showToast('✅ Kategori dihapus'); modal.remove(); await loadCategories(); renderKategori(); }
+            if (confirm('Hapus kategori?')) { await sb.from('categories').delete().eq('id', editId); showToast('✅ Kategori dihapus', 2000, 'success'); modal.remove(); await loadCategories(); renderKategori(); }
         };
     }
     document.getElementById('closeCategory').onclick = () => modal.remove();
@@ -900,10 +1060,12 @@ function getTaskStatus(t) {
 function openTaskModal(editId = null) {
     const isEdit = !!editId;
     const task = isEdit ? tasks.find(t => t.id === editId) : null;
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '✅ Tambah'} Tugas</div>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui tugas Anda' : 'Buat tugas baru untuk dikerjakan'}</div>
             <input type="text" id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit ? escapeHtml(task.title) : ''}">
             <textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit ? escapeHtml(task.description||'') : ''}</textarea>
             <input type="date" id="taskDue" class="modal-input" value="${isEdit ? formatDateInput(task.due_date) : ''}">
@@ -919,14 +1081,14 @@ function openTaskModal(editId = null) {
         const title = document.getElementById('taskTitle').value.trim();
         const desc = document.getElementById('taskDesc').value;
         const due = document.getElementById('taskDue').value;
-        if (!title) { showToast('❌ Judul harus diisi'); return; }
+        if (!title) { showToast('❌ Judul harus diisi', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
         if (isEdit) { await sb.from('tasks').update({ title, description: desc, due_date: due || null }).eq('id', editId); }
         else { await sb.from('tasks').insert({ user_id: uid, title, description: desc, due_date: due || null }); }
-        showToast(isEdit ? '✅ Tugas diupdate' : '✅ Tugas ditambahkan');
+        showToast(isEdit ? '✅ Tugas diupdate' : '✅ Tugas ditambahkan', 2000, 'success');
         modal.remove(); await loadTasks(); renderCurrentView();
     };
-    if (isEdit) { document.getElementById('deleteTask').onclick = async () => { if (confirm('Hapus tugas?')) { await sb.from('tasks').delete().eq('id', editId); showToast('✅ Tugas dihapus'); modal.remove(); await loadTasks(); renderCurrentView(); } }; }
+    if (isEdit) { document.getElementById('deleteTask').onclick = async () => { if (confirm('Hapus tugas?')) { await sb.from('tasks').delete().eq('id', editId); showToast('✅ Tugas dihapus', 2000, 'success'); modal.remove(); await loadTasks(); renderCurrentView(); } }; }
     document.getElementById('closeTask').onclick = () => modal.remove();
 }
 
@@ -966,7 +1128,7 @@ async function renderTasks() {
 }
 
 // ============================================
-// DEBT FUNCTIONS
+// DEBT FUNCTIONS (PREMIUM MODAL)
 // ============================================
 function openDebtModal(editId = null) {
     const isEdit = !!editId;
@@ -977,6 +1139,7 @@ function openDebtModal(editId = null) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '💰 Tambah'} Hutang/Piutang</div>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui data hutang/piutang' : 'Catat hutang atau piutang baru'}</div>
             <input type="text" id="debtName" class="modal-input" placeholder="Nama orang" value="${isEdit ? escapeHtml(debt.contact_name) : ''}">
             <input type="text" id="debtAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(debt.amount) : ''}">
             <select id="debtType" class="modal-select">
@@ -985,7 +1148,10 @@ function openDebtModal(editId = null) {
             </select>
             <input type="date" id="debtDate" class="modal-input" placeholder="Tanggal" value="${isEdit ? formatDateInput(debt.created_at) : today}">
             <input type="date" id="debtDue" class="modal-input" placeholder="Jatuh tempo" value="${isEdit ? formatDateInput(debt.due_date) : ''}">
-            <div style="position:relative;"><input type="tel" id="debtWa" class="modal-input" placeholder="WhatsApp (contoh: 08123456789)" value="${isEdit ? escapeHtml(debt.wa_number || '') : ''}" maxlength="14"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);">+62</span></div>
+            <div style="position:relative;">
+                <input type="tel" id="debtWa" class="modal-input" placeholder="WhatsApp (contoh: 08123456789)" value="${isEdit ? escapeHtml(debt.wa_number || '') : ''}" maxlength="14">
+                <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);">+62</span>
+            </div>
             <textarea id="debtDesc" class="modal-textarea" placeholder="Catatan">${isEdit ? escapeHtml(debt.description || '') : ''}</textarea>
             <div class="modal-button-grid">
                 <button id="saveDebt" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
@@ -1026,21 +1192,21 @@ function openDebtModal(editId = null) {
         const due = document.getElementById('debtDue').value;
         const wa = document.getElementById('debtWa').value.trim();
         const desc = document.getElementById('debtDesc').value.trim();
-        if (!name || !amount) { showToast('❌ Nama dan jumlah harus diisi'); return; }
-        if (wa && wa.length < 10) { showToast('❌ Nomor WhatsApp tidak valid'); return; }
+        if (!name || !amount) { showToast('❌ Nama dan jumlah harus diisi', 2000, 'error'); return; }
+        if (wa && wa.length < 10) { showToast('❌ Nomor WhatsApp tidak valid', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
-        if (!uid) { showToast('❌ User ID tidak ditemukan'); return; }
+        if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
         const data = { contact_name: name, amount, type, description: desc, due_date: due || null, wa_number: wa || null, created_at: new Date(date).toISOString() };
         if (isEdit) {
             const { error } = await sb.from('debts').update(data).eq('id', editId);
-            if (error) { showToast('❌ ' + error.message); return; }
-            showToast('✅ Data diupdate');
+            if (error) { showToast('❌ ' + error.message, 3000, 'error'); return; }
+            showToast('✅ Data diupdate', 2000, 'success');
         } else {
             data.user_id = uid;
             data.status = 'belum_lunas';
             const { error } = await sb.from('debts').insert(data);
-            if (error) { showToast('❌ ' + error.message); return; }
-            showToast('✅ Ditambahkan');
+            if (error) { showToast('❌ ' + error.message, 3000, 'error'); return; }
+            showToast('✅ Ditambahkan', 2000, 'success');
         }
         modal.remove();
         await loadDebts();
@@ -1048,7 +1214,7 @@ function openDebtModal(editId = null) {
     };
     if (isEdit) {
         document.getElementById('deleteDebt').onclick = async () => {
-            if (confirm('Hapus data ini?')) { await sb.from('debts').delete().eq('id', editId); showToast('✅ Data dihapus'); modal.remove(); await loadDebts(); renderCurrentView(); }
+            if (confirm('Hapus data ini?')) { await sb.from('debts').delete().eq('id', editId); showToast('✅ Data dihapus', 2000, 'success'); modal.remove(); await loadDebts(); renderCurrentView(); }
         };
     }
     document.getElementById('closeDebt').onclick = () => modal.remove();
@@ -1061,17 +1227,18 @@ function showDebtDetail(debt) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
-            <div style="display:grid;gap:8px;padding:8px 0;">
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Nama</span><span style="font-weight:600;">${escapeHtml(debt.contact_name)}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Jumlah</span><span style="font-weight:700;color:${debt.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(debt.amount)}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Tipe</span><span>${debt.type === 'piutang' ? '💰 Piutang' : '💸 Hutang'}</span></div>
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Tanggal</span><span>${formatDate(debt.created_at)}</span></div>
-                ${debt.due_date ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Jatuh Tempo</span><span style="color:${isOverdue ? '#f87171' : '#fbbf24'};font-weight:600;">${formatDate(debt.due_date)} ${isOverdue ? '⚠️' : ''}</span></div>` : ''}
-                ${debt.wa_number ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">WhatsApp</span><span>${escapeHtml(debt.wa_number)}</span></div>` : ''}
-                ${debt.description ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Catatan</span><span style="font-size:13px;">${escapeHtml(debt.description)}</span></div>` : ''}
-                <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Status</span><span style="color:${debt.status === 'lunas' ? '#4ade80' : '#f87171'};font-weight:600;">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></div>
-                ${debt.user_id !== currentCustomUser?.id ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Dibuat Oleh</span><span>${getUserEmail(debt.user_id)}</span></div>` : ''}
+            <div style="display:grid;gap:4px;padding:4px 0;">
+                <div class="modal-detail-row"><span class="modal-detail-label">Nama</span><span class="modal-detail-value">${escapeHtml(debt.contact_name)}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">Jumlah</span><span class="modal-detail-value" style="color:${debt.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(debt.amount)}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">Tipe</span><span class="modal-detail-value">${debt.type === 'piutang' ? '💰 Piutang' : '💸 Hutang'}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">Tanggal</span><span class="modal-detail-value">${formatDate(debt.created_at)}</span></div>
+                ${debt.due_date ? `<div class="modal-detail-row"><span class="modal-detail-label">Jatuh Tempo</span><span class="modal-detail-value" style="color:${isOverdue ? '#f87171' : '#fbbf24'};font-weight:600;">${formatDate(debt.due_date)} ${isOverdue ? '⚠️' : ''}</span></div>` : ''}
+                ${debt.wa_number ? `<div class="modal-detail-row"><span class="modal-detail-label">WhatsApp</span><span class="modal-detail-value">${escapeHtml(debt.wa_number)}</span></div>` : ''}
+                ${debt.description ? `<div class="modal-detail-row"><span class="modal-detail-label">Catatan</span><span class="modal-detail-value" style="font-size:13px;">${escapeHtml(debt.description)}</span></div>` : ''}
+                <div class="modal-detail-row"><span class="modal-detail-label">Status</span><span class="modal-detail-value"><span class="modal-badge ${debt.status === 'lunas' ? 'success' : 'danger'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></span></div>
+                ${debt.user_id !== currentCustomUser?.id ? `<div class="modal-detail-row"><span class="modal-detail-label">Dibuat Oleh</span><span class="modal-detail-value">${getUserEmail(debt.user_id)}</span></div>` : ''}
             </div>
+            <hr class="modal-divider">
             <div class="modal-button-grid">
                 <button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
                 <button id="toggleDebtStatus" class="modal-btn ${debt.status === 'lunas' ? 'modal-btn-warning' : 'modal-btn-success'}">${debt.status === 'lunas' ? '↩️ Batal Lunas' : '✅ Tandai Lunas'}</button>
@@ -1085,7 +1252,7 @@ function showDebtDetail(debt) {
     document.getElementById('toggleDebtStatus').onclick = async () => {
         const ns = debt.status === 'lunas' ? 'belum_lunas' : 'lunas';
         await sb.from('debts').update({ status: ns }).eq('id', debt.id);
-        showToast(ns === 'lunas' ? '✅ Ditandai lunas' : '↩️ Dibatalkan lunas');
+        showToast(ns === 'lunas' ? '✅ Ditandai lunas' : '↩️ Dibatalkan lunas', 2000, 'success');
         modal.remove(); await loadDebts(); renderCurrentView();
     };
     if (debt.wa_number) {
@@ -1106,16 +1273,27 @@ function showDebtGroupDetail(name) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 ${escapeHtml(name)}</div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Total Piutang</span><span style="color:#4ade80;font-weight:700;">Rp ${formatRupiah(totalPiutang)}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Total Hutang</span><span style="color:#f87171;font-weight:700;">Rp ${formatRupiah(totalHutang)}</span></div>
-            <div style="margin-top:12px;max-height:300px;overflow-y:auto;">
+            <div style="display:grid;gap:4px;padding:4px 0;">
+                <div class="modal-detail-row"><span class="modal-detail-label">Total Piutang</span><span class="modal-detail-value" style="color:#4ade80;">Rp ${formatRupiah(totalPiutang)}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">Total Hutang</span><span class="modal-detail-value" style="color:#f87171;">Rp ${formatRupiah(totalHutang)}</span></div>
+            </div>
+            <hr class="modal-divider">
+            <div style="max-height:300px;overflow-y:auto;">
                 ${items.map(d => `
-                    <div class="debt-group-item" style="cursor:pointer;" data-id="${d.id}">
+                    <div class="debt-group-item" style="cursor:pointer;padding:10px 0;border-bottom:1px solid var(--border-color);" data-id="${d.id}">
                         <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <div><span style="font-weight:500;">${d.type === 'piutang' ? '💰' : '💸'} ${d.type === 'piutang' ? 'Piutang' : 'Hutang'}</span><span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">${formatDate(d.created_at)}</span>${d.due_date ? `<span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">📅 ${formatDate(d.due_date)}</span>` : ''}</div>
+                            <div>
+                                <span style="font-weight:500;">${d.type === 'piutang' ? '💰' : '💸'} ${d.type === 'piutang' ? 'Piutang' : 'Hutang'}</span>
+                                <span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">${formatDate(d.created_at)}</span>
+                                ${d.due_date ? `<span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">📅 ${formatDate(d.due_date)}</span>` : ''}
+                            </div>
                             <div style="font-weight:600;color:${d.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(d.amount)}</div>
                         </div>
-                        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${d.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}${d.wa_number ? ' · 📱 WA' : ''}${d.user_id !== currentCustomUser?.id ? ` · 👤 ${getUserEmail(d.user_id)}` : ''}</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">
+                            <span class="modal-badge ${d.status === 'lunas' ? 'success' : 'danger'}">${d.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span>
+                            ${d.wa_number ? ' · 📱 WA' : ''}
+                            ${d.user_id !== currentCustomUser?.id ? ` · 👤 ${getUserEmail(d.user_id)}` : ''}
+                        </div>
                     </div>
                 `).join('')}
             </div>
@@ -1167,7 +1345,7 @@ async function renderHutang() {
 }
 
 // ============================================
-// RENDER SAVINGS
+// RENDER SAVINGS (PREMIUM MODAL)
 // ============================================
 async function renderSavings() {
     await loadSavings();
@@ -1192,10 +1370,12 @@ async function renderSavings() {
 function openSavingsModal(editId=null) {
     const isEdit = !!editId;
     const s = isEdit ? savings.find(s => s.id === editId) : null;
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '➕ Tambah'} Tabungan</div>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui tabungan Anda' : 'Buat tabungan baru'}</div>
             <input type="text" id="savingsName" class="modal-input" placeholder="Nama" value="${isEdit ? escapeHtml(s.name) : ''}">
             <input type="text" id="savingsTarget" class="modal-input" placeholder="Target" value="${isEdit ? formatRupiah(s.target_amount) : ''}">
             <input type="text" id="savingsCurrent" class="modal-input" placeholder="Saat Ini" value="${isEdit ? formatRupiah(s.current_amount) : '0'}">
@@ -1212,19 +1392,19 @@ function openSavingsModal(editId=null) {
         const name = document.getElementById('savingsName').value.trim();
         const target = parseRupiah(document.getElementById('savingsTarget').value);
         const current = parseRupiah(document.getElementById('savingsCurrent').value);
-        if (!name) { showToast('❌ Nama harus diisi'); return; }
+        if (!name) { showToast('❌ Nama harus diisi', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
         if (isEdit) await sb.from('savings').update({ name, target_amount: target, current_amount: current }).eq('id', editId);
         else await sb.from('savings').insert({ user_id: uid, name, target_amount: target, current_amount: current });
-        showToast(isEdit ? '✅ Tabungan diupdate' : '✅ Tabungan ditambahkan');
+        showToast(isEdit ? '✅ Tabungan diupdate' : '✅ Tabungan ditambahkan', 2000, 'success');
         modal.remove(); await loadSavings(); renderCurrentView();
     };
-    if (isEdit) { document.getElementById('deleteSavings').onclick = async () => { if (confirm('Hapus tabungan?')) { await sb.from('savings').delete().eq('id', editId); showToast('✅ Tabungan dihapus'); modal.remove(); await loadSavings(); renderCurrentView(); } }; }
+    if (isEdit) { document.getElementById('deleteSavings').onclick = async () => { if (confirm('Hapus tabungan?')) { await sb.from('savings').delete().eq('id', editId); showToast('✅ Tabungan dihapus', 2000, 'success'); modal.remove(); await loadSavings(); renderCurrentView(); } }; }
     document.getElementById('closeSavings').onclick = () => modal.remove();
 }
 
 // ============================================
-// RENDER REMINDERS
+// RENDER REMINDERS (PREMIUM MODAL)
 // ============================================
 async function renderReminders() {
     await loadReminders();
@@ -1247,10 +1427,12 @@ async function renderReminders() {
 function openReminderModal(editId=null) {
     const isEdit = !!editId;
     const r = isEdit ? reminders.find(r => r.id === editId) : null;
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '⏰ Tambah'} Pengingat</div>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui pengingat Anda' : 'Buat pengingat baru'}</div>
             <input type="text" id="reminderTitle" class="modal-input" placeholder="Judul" value="${isEdit ? escapeHtml(r.title) : ''}">
             <textarea id="reminderDesc" class="modal-textarea" placeholder="Deskripsi">${isEdit ? escapeHtml(r.description||'') : ''}</textarea>
             <input type="date" id="reminderDue" class="modal-input" value="${isEdit ? formatDateInput(r.due_date) : ''}">
@@ -1269,19 +1451,19 @@ function openReminderModal(editId=null) {
         const desc = document.getElementById('reminderDesc').value;
         const due = document.getElementById('reminderDue').value;
         const amount = parseRupiah(document.getElementById('reminderAmount').value);
-        if (!title || !due) { showToast('❌ Judul dan tanggal harus diisi'); return; }
+        if (!title || !due) { showToast('❌ Judul dan tanggal harus diisi', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
         if (isEdit) await sb.from('reminders').update({ title, description: desc, due_date: due, amount }).eq('id', editId);
         else await sb.from('reminders').insert({ user_id: uid, title, description: desc, due_date: due, amount });
-        showToast(isEdit ? '✅ Pengingat diupdate' : '✅ Pengingat ditambahkan');
+        showToast(isEdit ? '✅ Pengingat diupdate' : '✅ Pengingat ditambahkan', 2000, 'success');
         modal.remove(); await loadReminders(); renderCurrentView();
     };
-    if (isEdit) { document.getElementById('deleteReminder').onclick = async () => { if (confirm('Hapus pengingat?')) { await sb.from('reminders').delete().eq('id', editId); showToast('✅ Pengingat dihapus'); modal.remove(); await loadReminders(); renderCurrentView(); } }; }
+    if (isEdit) { document.getElementById('deleteReminder').onclick = async () => { if (confirm('Hapus pengingat?')) { await sb.from('reminders').delete().eq('id', editId); showToast('✅ Pengingat dihapus', 2000, 'success'); modal.remove(); await loadReminders(); renderCurrentView(); } }; }
     document.getElementById('closeReminder').onclick = () => modal.remove();
 }
 
 // ============================================
-// RENDER BUDGET
+// RENDER BUDGET (PREMIUM MODAL)
 // ============================================
 async function renderBudgetPage() {
     await loadTransactions();
@@ -1333,11 +1515,16 @@ function openBudgetModal(editId = null) {
     const isEdit = !!editId;
     const b = isEdit ? budgets.find(b => b.id === editId) : null;
     const expenseCats = categories.filter(c => c.type === 'pengeluaran');
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '➕ Tambah'} Anggaran</div>
-            <select id="budgetCategory" class="modal-select"><option value="">Pilih Kategori</option>${expenseCats.map(c => `<option value="${c.id}" ${isEdit && b.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}</select>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui anggaran kategori' : 'Tetapkan anggaran untuk kategori'}</div>
+            <select id="budgetCategory" class="modal-select">
+                <option value="">Pilih Kategori</option>
+                ${expenseCats.map(c => `<option value="${c.id}" ${isEdit && b.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+            </select>
             <input type="text" id="budgetAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(b.amount) : ''}">
             <div class="modal-button-grid">
                 <button id="saveBudget" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
@@ -1351,14 +1538,14 @@ function openBudgetModal(editId = null) {
     document.getElementById('saveBudget').onclick = async () => {
         const catId = document.getElementById('budgetCategory').value;
         const amount = parseRupiah(document.getElementById('budgetAmount').value);
-        if (!catId) { showToast('❌ Pilih kategori'); return; }
-        if (!amount || amount <= 0) { showToast('❌ Masukkan jumlah'); return; }
+        if (!catId) { showToast('❌ Pilih kategori', 2000, 'error'); return; }
+        if (!amount || amount <= 0) { showToast('❌ Masukkan jumlah', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
-        if (isEdit) { await sb.from('budgets').update({ amount }).eq('id', editId); showToast('✅ Anggaran diupdate'); }
-        else { const existing = budgets.find(b => b.category_id === catId); if (existing) { showToast('⚠️ Kategori sudah punya anggaran'); return; } await sb.from('budgets').insert({ user_id: uid, category_id: catId, amount, month: currentBudgetMonth, year: currentBudgetYear }); showToast('✅ Anggaran ditambahkan'); }
+        if (isEdit) { await sb.from('budgets').update({ amount }).eq('id', editId); showToast('✅ Anggaran diupdate', 2000, 'success'); }
+        else { const existing = budgets.find(b => b.category_id === catId); if (existing) { showToast('⚠️ Kategori sudah punya anggaran', 2000, 'warning'); return; } await sb.from('budgets').insert({ user_id: uid, category_id: catId, amount, month: currentBudgetMonth, year: currentBudgetYear }); showToast('✅ Anggaran ditambahkan', 2000, 'success'); }
         modal.remove(); await loadBudgets(); renderBudgetPage();
     };
-    if (isEdit) { document.getElementById('deleteBudget').onclick = async () => { if (confirm('Hapus anggaran?')) { await sb.from('budgets').delete().eq('id', editId); showToast('✅ Anggaran dihapus'); modal.remove(); await loadBudgets(); renderBudgetPage(); } }; }
+    if (isEdit) { document.getElementById('deleteBudget').onclick = async () => { if (confirm('Hapus anggaran?')) { await sb.from('budgets').delete().eq('id', editId); showToast('✅ Anggaran dihapus', 2000, 'success'); modal.remove(); await loadBudgets(); renderBudgetPage(); } }; }
     document.getElementById('closeBudget').onclick = () => modal.remove();
 }
 
@@ -1401,7 +1588,6 @@ async function renderTransaksi() {
         const cat = getCategoryById(t.category_id);
         const isRecurring = t.description?.includes('(Ulang)');
         const isOriginalRecurring = !isRecurring && recurringIds.has(t.id);
-        const isActiveRecurring = isOriginalRecurring;
         
         return `<div class="tx-item" data-id="${t.id}" style="${isOriginalRecurring ? 'border-left:3px solid #10b981;' : ''}">
             <div class="left">
@@ -1411,7 +1597,7 @@ async function renderTransaksi() {
                         ${escapeHtml(t.description)}
                         ${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}
                         ${isOriginalRecurring ? ' <span style="font-size:10px;color:#10b981;font-weight:600;">🔁</span>' : ''}
-                        ${isOriginalRecurring ? ' <span style="font-size:9px;background:#10b981;color:white;padding:1px 6px;border-radius:10px;font-weight:600;">R</span>' : ''}
+                        ${isOriginalRecurring ? ' <span class="recurring-badge active">R</span>' : ''}
                     </div>
                     <div class="meta">${formatDate(t.created_at)}${t.user_id !== currentCustomUser?.id ? ' · ' + getUserEmail(t.user_id) : ''}</div>
                 </div>
@@ -1436,7 +1622,7 @@ async function renderTransaksi() {
 }
 
 // ============================================
-// TRANSACTION DETAIL & MODAL
+// TRANSACTION DETAIL & MODAL (PREMIUM)
 // ============================================
 async function showTransactionDetail(tx) {
     const cat = getCategoryById(tx.category_id);
@@ -1464,43 +1650,28 @@ async function showTransactionDetail(tx) {
     
     let recurringInfo = '';
     if (isRecurring) {
-        recurringInfo = `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-            <span style="color:var(--text-secondary);">🔄 Status</span>
-            <span style="color:#8b5cf6;font-weight:600;">Transaksi Berulang</span>
-        </div>`;
+        recurringInfo = `<div class="modal-detail-row"><span class="modal-detail-label">🔄 Status</span><span class="modal-detail-value"><span class="modal-badge info">Transaksi Berulang</span></span></div>`;
     } else if (isOriginalRecurring && recurringData) {
         const statusText = recurringData.is_active ? '✅ Aktif' : '❌ Nonaktif';
         const statusColor = recurringData.is_active ? '#4ade80' : '#f87171';
         recurringInfo = `
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                <span style="color:var(--text-secondary);">🔄 Recurring</span>
-                <span style="color:${statusColor};font-weight:600;">${statusText}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                <span style="color:var(--text-secondary);">📅 Hari</span>
-                <span style="font-weight:500;">Setiap tanggal ${recurringData.day_of_month}</span>
-            </div>
+            <div class="modal-detail-row"><span class="modal-detail-label">🔄 Recurring</span><span class="modal-detail-value"><span class="modal-badge ${recurringData.is_active ? 'success' : 'danger'}">${statusText}</span></span></div>
+            <div class="modal-detail-row"><span class="modal-detail-label">📅 Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
         `;
     }
     
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail Transaksi</div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                <span style="color:var(--text-secondary);">Deskripsi</span>
-                <span>${escapeHtml(tx.description)}${isRecurring ? ' <span style="color:#8b5cf6;">🔄</span>' : ''}${isOriginalRecurring ? ' <span style="color:#10b981;">🔁</span>' : ''}</span>
+            <div style="display:grid;gap:4px;padding:4px 0;">
+                <div class="modal-detail-row"><span class="modal-detail-label">Deskripsi</span><span class="modal-detail-value">${escapeHtml(tx.description)}${isRecurring ? ' <span style="color:#8b5cf6;">🔄</span>' : ''}${isOriginalRecurring ? ' <span style="color:#10b981;">🔁</span>' : ''}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">Jumlah</span><span class="modal-detail-value" style="color:${tx.type==='pemasukan'?'#4ade80':'#f87171'}">${tx.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(tx.amount)}</span></div>
+                <div class="modal-detail-row"><span class="modal-detail-label">Tanggal</span><span class="modal-detail-value">${formatDate(tx.created_at)}</span></div>
+                ${cat ? `<div class="modal-detail-row"><span class="modal-detail-label">Kategori</span><span class="modal-detail-value">${cat.icon} ${cat.name}</span></div>` : ''}
+                ${recurringInfo}
             </div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                <span style="color:var(--text-secondary);">Jumlah</span>
-                <span style="color:${tx.type==='pemasukan'?'#4ade80':'#f87171'}">${tx.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(tx.amount)}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                <span style="color:var(--text-secondary);">Tanggal</span>
-                <span>${formatDate(tx.created_at)}</span>
-            </div>
-            ${cat ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Kategori</span><span>${cat.icon} ${cat.name}</span></div>` : ''}
-            ${recurringInfo}
-            ${tx.proof_url ? `<div style="margin:12px 0;padding:12px;background:var(--bg-card);border-radius:12px;"><div style="font-weight:600;margin-bottom:8px;">📸 Bukti</div><img src="${tx.proof_url}" style="max-width:100%;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${tx.proof_url}','_blank')"></div>` : ''}
+            ${tx.proof_url ? `<hr class="modal-divider"><div style="margin:8px 0;"><div style="font-weight:600;margin-bottom:8px;font-size:13px;">📸 Bukti</div><img src="${tx.proof_url}" class="modal-proof-img" onclick="window.open('${tx.proof_url}','_blank')"></div>` : ''}
+            <hr class="modal-divider">
             <div class="modal-button-grid">
                 <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
                 ${isOriginalRecurring && recurringData ? `
@@ -1526,7 +1697,7 @@ async function showTransactionDetail(tx) {
             await sb.from('recurring_transactions')
                 .update({ is_active: newStatus, updated_at: new Date().toISOString() })
                 .eq('id', recurringData.id);
-            showToast(newStatus ? '✅ Transaksi berulang diaktifkan' : '⏸️ Transaksi berulang dinonaktifkan');
+            showToast(newStatus ? '✅ Transaksi berulang diaktifkan' : '⏸️ Transaksi berulang dinonaktifkan', 2000, 'success');
             modal.remove();
             await loadTransactions();
             renderCurrentView();
@@ -1544,7 +1715,7 @@ async function showTransactionDetail(tx) {
                 await sb.storage.from('transaction-proofs').remove([path]);
             }
             await sb.from('transactions').delete().eq('id', tx.id);
-            showToast('✅ Transaksi dihapus');
+            showToast('✅ Transaksi dihapus', 2000, 'success');
             modal.remove();
             await loadTransactions();
             renderCurrentView();
@@ -1564,7 +1735,7 @@ async function deleteTransaction(id) {
     await sb.from('transactions').delete().eq('id', id);
     await loadTransactions();
     renderCurrentView();
-    showToast('✅ Transaksi dihapus');
+    showToast('✅ Transaksi dihapus', 2000, 'success');
 }
 
 function setupRupiahInput(id) {
@@ -1577,7 +1748,7 @@ function setupRupiahInput(id) {
 }
 
 // ============================================
-// OPEN TRANSACTION MODAL
+// OPEN TRANSACTION MODAL (PREMIUM)
 // ============================================
 function openTransaksiModal(predefinedType = null, editId = null) {
     const isEdit = !!editId;
@@ -1588,6 +1759,7 @@ function openTransaksiModal(predefinedType = null, editId = null) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '✨ Tambah'} Transaksi</div>
+            <div class="modal-subtitle">${isEdit ? 'Perbarui transaksi Anda' : 'Catat transaksi baru'}</div>
             <input type="text" id="modalDesk" class="modal-input" placeholder="Deskripsi" value="${isEdit ? escapeHtml(tx.description) : ''}">
             <input type="text" id="modalJum" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(tx.amount) : ''}">
             <select id="modalTipe" class="modal-select">
@@ -1595,14 +1767,28 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                 <option value="pengeluaran" ${(isEdit && tx.type === 'pengeluaran') || predefinedType === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
             </select>
             <input type="date" id="modalTanggal" class="modal-input" value="${isEdit ? formatDateInput(tx.created_at) : today}">
-            <select id="modalKat" class="modal-select"><option value="">Pilih Kategori</option>${categories.map(c => `<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}</select>
+            <select id="modalKat" class="modal-select">
+                <option value="">Pilih Kategori</option>
+                ${categories.map(c => `<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+            </select>
             <div style="background:rgba(59,130,246,0.05);padding:12px;border-radius:12px;margin:12px 0;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:18px;">📸</span><span style="font-weight:600;">Bukti</span></div>
                 ${isEdit && tx?.proof_url ? `
                     <div id="proofPreview"><img src="${tx.proof_url}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
                 ` : `
-                    <div id="proofUploadArea" style="border:2px dashed var(--border-color);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all 0.3s;"><div style="font-size:32px;">📁</div><div style="font-size:13px;color:var(--text-secondary);">Klik upload</div><div style="font-size:11px;color:var(--text-secondary);">JPG, PNG, WEBP max 5MB</div><input type="file" id="proofInput" accept="image/*" style="display:none;"></div>
-                    <div id="proofPreview" style="display:none;margin-top:8px;"><img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
+                    <div id="proofUploadArea" class="modal-upload-area">
+                        <span class="icon">📁</span>
+                        <span class="text">Klik untuk upload bukti</span>
+                        <span class="hint">JPG, PNG, WEBP (max 5MB)</span>
+                        <input type="file" id="proofInput" accept="image/*" style="display:none;">
+                    </div>
+                    <div id="proofPreview" style="display:none;margin-top:8px;">
+                        <img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);">
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button>
+                            <button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button>
+                        </div>
+                    </div>
                 `}
             </div>
             ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Transaksi akan muncul otomatis bulan depan</div></div>` : ''}
@@ -1652,9 +1838,9 @@ function openTransaksiModal(predefinedType = null, editId = null) {
         const tanggal = document.getElementById('modalTanggal').value;
         const catId = document.getElementById('modalKat').value;
         const isRecurring = document.getElementById('modalRecurring')?.checked || false;
-        if (!desc || !amount) { showToast('❌ Isi dengan benar'); return; }
+        if (!desc || !amount) { showToast('❌ Isi dengan benar', 2000, 'error'); return; }
         const uid = await userManager.getUserId();
-        if (!uid) { showToast('❌ User ID tidak ditemukan'); return; }
+        if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
         const data = { description: desc, amount, type, created_at: new Date(tanggal).toISOString() };
         if (catId) data.category_id = catId;
         try {
@@ -1664,7 +1850,7 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                     if (window._removeOldProof && tx?.proof_url) await deleteProof(editId);
                     await uploadProof(selectedFile, editId);
                 }
-                showToast('✅ Transaksi diupdate');
+                showToast('✅ Transaksi diupdate', 2000, 'success');
                 modal.remove();
                 await loadTransactions();
                 renderCurrentView();
@@ -1676,19 +1862,19 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                     const txId = newTx[0].id;
                     if (selectedFile) await uploadProof(selectedFile, txId);
                     if (isRecurring) {
-                        showToast('🔄 Menyimpan transaksi berulang...');
+                        showToast('🔄 Menyimpan transaksi berulang...', 2000);
                         await createRecurringTransaction(newTx[0]);
                         await processRecurringTransactions();
                         await loadTransactions();
-                        showToast('✅ Transaksi berulang siap! (Mulai bulan depan)');
+                        showToast('✅ Transaksi berulang siap! (Mulai bulan depan)', 2500, 'success');
                     }
                 }
-                showToast('✅ Transaksi ditambahkan');
+                showToast('✅ Transaksi ditambahkan', 2000, 'success');
                 modal.remove();
                 await loadTransactions();
                 renderCurrentView();
             }
-        } catch(e) { showToast('❌ Error: ' + e.message); }
+        } catch(e) { showToast('❌ Error: ' + e.message, 3000, 'error'); }
     };
     document.getElementById('closeModal').onclick = () => modal.remove();
 }
@@ -1701,9 +1887,9 @@ async function uploadProof(file, txId) {
         await sb.storage.from('transaction-proofs').upload(path, file, { cacheControl: '3600', upsert: true });
         const { data } = sb.storage.from('transaction-proofs').getPublicUrl(path);
         await sb.from('transactions').update({ proof_url: data.publicUrl }).eq('id', txId);
-        showToast('📸 Bukti berhasil diupload!');
+        showToast('📸 Bukti berhasil diupload!', 2000, 'success');
         return data.publicUrl;
-    } catch(e) { showToast('❌ Gagal upload: ' + e.message); return null; }
+    } catch(e) { showToast('❌ Gagal upload: ' + e.message, 3000, 'error'); return null; }
 }
 
 async function deleteProof(txId) {
@@ -1868,7 +2054,7 @@ async function renderLaporan() {
     };
     document.getElementById('exportPdfBtn').onclick = async function() {
         try {
-            showToast('📑 Menyiapkan PDF...');
+            showToast('📑 Menyiapkan PDF...', 2000);
             this.textContent = '⏳...';
             this.disabled = true;
             const el = document.createElement('div');
@@ -1922,11 +2108,11 @@ async function renderLaporan() {
                 <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
             `;
             await html2pdf().set({ margin: 10, filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save();
-            showToast('✅ PDF berhasil!');
+            showToast('✅ PDF berhasil!', 2000, 'success');
             this.textContent = '📑 PDF';
             this.disabled = false;
         } catch(e) {
-            showToast('❌ Gagal: ' + e.message);
+            showToast('❌ Gagal: ' + e.message, 3000, 'error');
             this.textContent = '📑 PDF';
             this.disabled = false;
         }
@@ -2069,25 +2255,25 @@ async function renderSettings() {
         const old = document.getElementById('oldPass').value;
         const np = document.getElementById('newPass').value;
         const conf = document.getElementById('confirmPass').value;
-        if (!old || !np) { showToast('❌ Isi semua field'); return; }
-        if (np.length < 6) { showToast('❌ Password min 6 karakter'); return; }
-        if (np !== conf) { showToast('❌ Konfirmasi tidak cocok'); return; }
+        if (!old || !np) { showToast('❌ Isi semua field', 2000, 'error'); return; }
+        if (np.length < 6) { showToast('❌ Password min 6 karakter', 2000, 'error'); return; }
+        if (np !== conf) { showToast('❌ Konfirmasi tidak cocok', 2000, 'error'); return; }
         const { error } = await sb.auth.updateUser({ password: np });
-        if (error) showToast('❌ ' + error.message);
-        else { showToast('✅ Password diubah'); document.getElementById('oldPass').value = ''; document.getElementById('newPass').value = ''; document.getElementById('confirmPass').value = ''; }
+        if (error) showToast('❌ ' + error.message, 3000, 'error');
+        else { showToast('✅ Password diubah', 2000, 'success'); document.getElementById('oldPass').value = ''; document.getElementById('newPass').value = ''; document.getElementById('confirmPass').value = ''; }
     });
     document.querySelectorAll('.toggle-password').forEach(btn => { btn.onclick = () => { const inp = document.getElementById(btn.dataset.target); if (inp) { inp.type = inp.type === 'password' ? 'text' : 'password'; btn.textContent = inp.type === 'password' ? '👁️' : '🙈'; } }; });
-    document.getElementById('createFamilyBtn')?.addEventListener('click', async () => { const name = document.getElementById('familyNameInput').value.trim(); if (!name) { showToast('❌ Masukkan nama'); return; } await createFamily(name); });
-    document.getElementById('joinFamilyBtn')?.addEventListener('click', async () => { const id = document.getElementById('joinFamilyInput').value.trim(); if (!id) { showToast('❌ Masukkan ID'); return; } await joinFamily(id); });
+    document.getElementById('createFamilyBtn')?.addEventListener('click', async () => { const name = document.getElementById('familyNameInput').value.trim(); if (!name) { showToast('❌ Masukkan nama', 2000, 'error'); return; } await createFamily(name); });
+    document.getElementById('joinFamilyBtn')?.addEventListener('click', async () => { const id = document.getElementById('joinFamilyInput').value.trim(); if (!id) { showToast('❌ Masukkan ID', 2000, 'error'); return; } await joinFamily(id); });
     document.getElementById('inviteMemberBtn')?.addEventListener('click', async () => {
         const email = document.getElementById('inviteEmail').value.trim();
-        if (!email) { showToast('❌ Masukkan email'); return; }
+        if (!email) { showToast('❌ Masukkan email', 2000, 'error'); return; }
         const { data: user } = await sb.from('users').select('id').eq('email', email).maybeSingle();
-        if (!user) { showToast('❌ User tidak ditemukan'); return; }
+        if (!user) { showToast('❌ User tidak ditemukan', 2000, 'error'); return; }
         const { data: existing } = await sb.from('family_members').select('id').eq('family_id', currentFamilyId).eq('user_id', user.id).maybeSingle();
-        if (existing) { showToast('⚠️ Sudah menjadi anggota'); return; }
+        if (existing) { showToast('⚠️ Sudah menjadi anggota', 2000, 'warning'); return; }
         await sb.from('family_members').insert({ family_id: currentFamilyId, user_id: user.id, role: 'member' });
-        showToast('✅ Anggota ditambahkan');
+        showToast('✅ Anggota ditambahkan', 2000, 'success');
         await loadFamilyData();
         renderSettings();
     });
@@ -2097,7 +2283,7 @@ async function renderSettings() {
         await sb.from('family_members').delete().eq('family_id', currentFamilyId).eq('user_id', uid);
         await sb.from('user_settings').update({ family_id: null }).eq('user_id', uid);
         currentFamilyId = null; familyMembers = []; familyInfo = null;
-        showToast('✅ Keluar dari keluarga');
+        showToast('✅ Keluar dari keluarga', 2000, 'success');
         await loadAllData();
         renderSettings();
     });
@@ -2108,49 +2294,54 @@ async function renderSettings() {
 // ============================================
 async function createFamily(name) {
     const uid = await userManager.getUserId();
-    if (!uid) { showToast('❌ User ID tidak ditemukan'); return; }
+    if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
     try {
         const { data: family } = await sb.from('families').insert({ name, created_by: uid }).select().single();
         await sb.from('family_members').insert({ family_id: family.id, user_id: uid, role: 'owner' });
         await sb.from('user_settings').upsert({ user_id: uid, family_id: family.id });
         currentFamilyId = family.id; familyInfo = family;
-        showToast('✅ Keluarga dibuat!');
+        showToast('✅ Keluarga dibuat!', 2000, 'success');
         await loadAllData();
         renderSettings();
-    } catch(e) { showToast('❌ Gagal: ' + e.message); }
+    } catch(e) { showToast('❌ Gagal: ' + e.message, 3000, 'error'); }
 }
 
 async function joinFamily(familyId) {
     const uid = await userManager.getUserId();
-    if (!uid) { showToast('❌ User ID tidak ditemukan'); return; }
+    if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
     try {
         const { data: family } = await sb.from('families').select('*').eq('id', familyId).single();
-        if (!family) { showToast('❌ Keluarga tidak ditemukan'); return; }
+        if (!family) { showToast('❌ Keluarga tidak ditemukan', 2000, 'error'); return; }
         await sb.from('family_members').insert({ family_id: familyId, user_id: uid, role: 'member' });
         await sb.from('user_settings').upsert({ user_id: uid, family_id: familyId });
         currentFamilyId = familyId; familyInfo = family;
-        showToast('✅ Bergabung ke ' + family.name);
+        showToast('✅ Bergabung ke ' + family.name, 2000, 'success');
         await loadAllData();
         renderSettings();
-    } catch(e) { showToast('❌ Gagal: ' + e.message); }
+    } catch(e) { showToast('❌ Gagal: ' + e.message, 3000, 'error'); }
 }
 
 function copyFamilyId() {
-    if (!currentFamilyId) { showToast('❌ Tidak ada keluarga'); return; }
-    navigator.clipboard.writeText(currentFamilyId).then(() => showToast('✅ ID disalin!')).catch(() => { const ta = document.createElement('textarea'); ta.value = currentFamilyId; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('✅ ID disalin!'); });
+    if (!currentFamilyId) { showToast('❌ Tidak ada keluarga', 2000, 'error'); return; }
+    navigator.clipboard.writeText(currentFamilyId).then(() => showToast('✅ ID disalin!', 2000, 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = currentFamilyId; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('✅ ID disalin!', 2000, 'success'); });
 }
 
 // ============================================
-// EDIT PROFILE MODAL
+// EDIT PROFILE MODAL (PREMIUM)
 // ============================================
 async function openEditProfileModal() {
     const user = await userManager.getUserData();
-    if (!user) { showToast('❌ Data user tidak ditemukan'); return; }
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    if (!user) { showToast('❌ Data user tidak ditemukan', 2000, 'error'); return; }
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">✏️ Edit Profil</div>
-            <div style="text-align:center;padding:12px;background:rgba(59,130,246,0.1);border-radius:12px;margin-bottom:12px;"><span style="color:var(--text-secondary);font-size:12px;">🆔 Kode</span><div style="font-size:24px;font-weight:700;color:#3b82f6;">${user.user_code}</div></div>
+            <div class="modal-subtitle">Perbarui informasi profil Anda</div>
+            <div style="text-align:center;padding:12px;background:rgba(59,130,246,0.08);border-radius:12px;margin-bottom:16px;">
+                <span style="font-size:12px;color:var(--text-secondary);">🆔 Kode User</span>
+                <div style="font-size:24px;font-weight:700;color:#3b82f6;">${user.user_code}</div>
+            </div>
             <input type="text" id="editUsername" class="modal-input" placeholder="Username" value="${escapeHtml(user.username || '')}">
             <input type="text" id="editDisplayName" class="modal-input" placeholder="Nama Tampilan" value="${escapeHtml(user.display_name || '')}">
             <div class="modal-button-grid">
@@ -2163,10 +2354,10 @@ async function openEditProfileModal() {
     document.getElementById('saveProfileBtn').onclick = async () => {
         const username = document.getElementById('editUsername').value.trim();
         const displayName = document.getElementById('editDisplayName').value.trim();
-        if (!username) { showToast('❌ Username harus diisi'); return; }
+        if (!username) { showToast('❌ Username harus diisi', 2000, 'error'); return; }
         await userManager.updateProfile({ username, display_name: displayName || username });
         currentCustomUser = await userManager.getUserData();
-        showToast('✅ Profil diupdate');
+        showToast('✅ Profil diupdate', 2000, 'success');
         modal.remove();
         renderSettings();
     };
@@ -2323,7 +2514,7 @@ async function handleLogin() {
         if (password.length < 6) { errorDiv.textContent = 'Password minimal 6 karakter'; clearInterval(loading); hideLoading(); return; }
         const { data, error } = await sb.auth.signUp({ email, password });
         if (error) { errorDiv.textContent = error.message; clearInterval(loading); hideLoading(); return; }
-        if (data.user) { showToast('✅ Pendaftaran berhasil! Silakan login.'); toggleMode(); document.getElementById('emailInput').value = ''; document.getElementById('passwordInput').value = ''; clearInterval(loading); hideLoading(); }
+        if (data.user) { showToast('✅ Pendaftaran berhasil! Silakan login.', 2500, 'success'); toggleMode(); document.getElementById('emailInput').value = ''; document.getElementById('passwordInput').value = ''; clearInterval(loading); hideLoading(); }
     }
 }
 
