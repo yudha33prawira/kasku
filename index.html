@@ -49,9 +49,6 @@
             --shadow: 0 8px 32px rgba(0,0,0,0.08);
         }
         
-        /* ============================================
-           FIX LIGHT MODE - TEKS DI BACKGROUND GELAP
-           ============================================ */
         body.light .balance-card,
         body.light .balance-card * {
             color: #ffffff !important;
@@ -75,16 +72,6 @@
         }
         body.light .balance-card .balance-eye:hover {
             background: rgba(255, 255, 255, 0.2) !important;
-        }
-        body.light .card-bg-dark,
-        body.light .card-bg-dark * {
-            color: #ffffff !important;
-        }
-        body.light .card-bg-dark .card-title {
-            color: #ffffff !important;
-        }
-        body.light .card-bg-dark .badge-count {
-            color: rgba(255, 255, 255, 0.7) !important;
         }
         
         ::-webkit-scrollbar { width: 4px; }
@@ -262,6 +249,12 @@
         .filter-btn:active { transform: scale(0.95); }
         
         @media (max-width: 420px) { .app-container { padding: 12px 12px 20px; } .balance-amount { font-size: 26px; } .header-name { font-size: 13px; } .nav-item .nav-label { font-size: 8px; } .nav-center-btn { width: 44px; height: 44px; font-size: 24px; } .bottom-nav { padding: 4px 6px; height: 64px; } }
+        
+        .recurring-active { background: rgba(16,185,129,0.1); border-left: 3px solid #10b981; }
+        .recurring-inactive { background: rgba(239,68,68,0.05); border-left: 3px solid #f87171; }
+        .recurring-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+        .recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
+        .recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
     </style>
 </head>
 <body>
@@ -517,7 +510,7 @@ function renderRunningText() {
 }
 
 // ============================================
-// RECURRING TRANSACTION - MUNCUL BULAN DEPAN
+// RECURRING TRANSACTION FUNCTIONS
 // ============================================
 async function createRecurringTransaction(original) {
     const uid = await userManager.getUserId();
@@ -1374,6 +1367,21 @@ function openBudgetModal(editId = null) {
 // ============================================
 async function renderTransaksi() {
     await loadTransactions();
+    const uid = await userManager.getUserId();
+    let recurringIds = new Set();
+    if (uid) {
+        try {
+            const { data: recurringList } = await sb
+                .from('recurring_transactions')
+                .select('original_transaction_id')
+                .eq('user_id', uid)
+                .eq('is_active', true);
+            if (recurringList) {
+                recurringIds = new Set(recurringList.map(r => r.original_transaction_id));
+            }
+        } catch(e) {}
+    }
+    
     const html = `
         <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
         <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="pushHistory(currentNav);currentNav='laporan';updateNav();renderLaporan();">📊 Laporan</button></div>
@@ -1381,17 +1389,50 @@ async function renderTransaksi() {
         <div class="card"><div id="transaksiList"></div></div>
     `;
     document.getElementById('appContainer').innerHTML = html;
+    
     let data = [...transactions];
     if (transaksiFilter === 'income') data = data.filter(t => t.type === 'pemasukan');
     else if (transaksiFilter === 'expense') data = data.filter(t => t.type === 'pengeluaran');
+    
     const container = document.getElementById('transaksiList');
     if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div class="title">Tidak ada transaksi</div></div>'; return; }
+    
     container.innerHTML = data.map(t => {
         const cat = getCategoryById(t.category_id);
-        return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${t.description?.includes('(Ulang)') ? ' 🔄' : ''}</div><div class="meta">${formatDate(t.created_at)}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
+        const isRecurring = t.description?.includes('(Ulang)');
+        const isOriginalRecurring = !isRecurring && recurringIds.has(t.id);
+        const isActiveRecurring = isOriginalRecurring;
+        
+        return `<div class="tx-item" data-id="${t.id}" style="${isOriginalRecurring ? 'border-left:3px solid #10b981;' : ''}">
+            <div class="left">
+                <span class="dot" style="background:${cat?.color || '#64748b'}"></span>
+                <div>
+                    <div class="desc">
+                        ${escapeHtml(t.description)}
+                        ${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}
+                        ${isOriginalRecurring ? ' <span style="font-size:10px;color:#10b981;font-weight:600;">🔁</span>' : ''}
+                        ${isOriginalRecurring ? ' <span style="font-size:9px;background:#10b981;color:white;padding:1px 6px;border-radius:10px;font-weight:600;">R</span>' : ''}
+                    </div>
+                    <div class="meta">${formatDate(t.created_at)}${t.user_id !== currentCustomUser?.id ? ' · ' + getUserEmail(t.user_id) : ''}</div>
+                </div>
+            </div>
+            <div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div>
+        </div>`;
     }).join('');
-    document.querySelectorAll('.tx-item').forEach(el => { el.onclick = () => { const id = el.dataset.id; const tx = transactions.find(t => t.id === id); if (tx) showTransactionDetail(tx); }; });
-    document.querySelectorAll('.filter-btn').forEach(btn => { btn.onclick = () => { transaksiFilter = btn.dataset.filter; renderTransaksi(); }; });
+    
+    document.querySelectorAll('.tx-item').forEach(el => {
+        el.onclick = () => {
+            const id = el.dataset.id;
+            const tx = transactions.find(t => t.id === id);
+            if (tx) showTransactionDetail(tx);
+        };
+    });
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+            transaksiFilter = btn.dataset.filter;
+            renderTransaksi();
+        };
+    });
 }
 
 // ============================================
@@ -1399,23 +1440,118 @@ async function renderTransaksi() {
 // ============================================
 async function showTransactionDetail(tx) {
     const cat = getCategoryById(tx.category_id);
-    const modal = document.createElement('div'); modal.className = 'modal-overlay';
+    const isRecurring = tx.description?.includes('(Ulang)');
+    const uid = await userManager.getUserId();
+    
+    let recurringData = null;
+    let isOriginalRecurring = false;
+    if (uid) {
+        try {
+            const { data: recurring } = await sb
+                .from('recurring_transactions')
+                .select('*')
+                .eq('original_transaction_id', tx.id)
+                .maybeSingle();
+            if (recurring) {
+                recurringData = recurring;
+                isOriginalRecurring = true;
+            }
+        } catch(e) {}
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    
+    let recurringInfo = '';
+    if (isRecurring) {
+        recurringInfo = `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+            <span style="color:var(--text-secondary);">🔄 Status</span>
+            <span style="color:#8b5cf6;font-weight:600;">Transaksi Berulang</span>
+        </div>`;
+    } else if (isOriginalRecurring && recurringData) {
+        const statusText = recurringData.is_active ? '✅ Aktif' : '❌ Nonaktif';
+        const statusColor = recurringData.is_active ? '#4ade80' : '#f87171';
+        recurringInfo = `
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">🔄 Recurring</span>
+                <span style="color:${statusColor};font-weight:600;">${statusText}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">📅 Hari</span>
+                <span style="font-weight:500;">Setiap tanggal ${recurringData.day_of_month}</span>
+            </div>
+        `;
+    }
+    
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail Transaksi</div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Deskripsi</span><span>${escapeHtml(tx.description)}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Jumlah</span><span style="color:${tx.type==='pemasukan'?'#4ade80':'#f87171'}">${tx.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(tx.amount)}</span></div>
-            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Tanggal</span><span>${formatDate(tx.created_at)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">Deskripsi</span>
+                <span>${escapeHtml(tx.description)}${isRecurring ? ' <span style="color:#8b5cf6;">🔄</span>' : ''}${isOriginalRecurring ? ' <span style="color:#10b981;">🔁</span>' : ''}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">Jumlah</span>
+                <span style="color:${tx.type==='pemasukan'?'#4ade80':'#f87171'}">${tx.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(tx.amount)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <span style="color:var(--text-secondary);">Tanggal</span>
+                <span>${formatDate(tx.created_at)}</span>
+            </div>
             ${cat ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Kategori</span><span>${cat.icon} ${cat.name}</span></div>` : ''}
+            ${recurringInfo}
             ${tx.proof_url ? `<div style="margin:12px 0;padding:12px;background:var(--bg-card);border-radius:12px;"><div style="font-weight:600;margin-bottom:8px;">📸 Bukti</div><img src="${tx.proof_url}" style="max-width:100%;max-height:200px;border-radius:8px;cursor:pointer;" onclick="window.open('${tx.proof_url}','_blank')"></div>` : ''}
             <div class="modal-button-grid">
-                <button class="modal-btn modal-btn-primary" onclick="this.closest('.modal-overlay').remove();openTransaksiModal(null,'${tx.id}')">✏️ Edit</button>
-                <button class="modal-btn modal-btn-danger" onclick="if(confirm('Hapus?')){deleteTransaction('${tx.id}');this.closest('.modal-overlay').remove();}">🗑️ Hapus</button>
-                <button class="modal-btn modal-btn-secondary modal-btn-full" onclick="this.closest('.modal-overlay').remove()">Tutup</button>
+                <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
+                ${isOriginalRecurring && recurringData ? `
+                    <button id="toggleRecurringBtn" class="modal-btn ${recurringData.is_active ? 'modal-btn-warning' : 'modal-btn-success'}">
+                        ${recurringData.is_active ? '⏸️ Nonaktifkan' : '▶️ Aktifkan'}
+                    </button>
+                ` : ''}
+                <button id="deleteTxBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
+                <button id="closeDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
+    
+    document.getElementById('editTxBtn').onclick = () => {
+        modal.remove();
+        openTransaksiModal(null, tx.id);
+    };
+    
+    if (isOriginalRecurring && recurringData) {
+        document.getElementById('toggleRecurringBtn').onclick = async () => {
+            const newStatus = !recurringData.is_active;
+            await sb.from('recurring_transactions')
+                .update({ is_active: newStatus, updated_at: new Date().toISOString() })
+                .eq('id', recurringData.id);
+            showToast(newStatus ? '✅ Transaksi berulang diaktifkan' : '⏸️ Transaksi berulang dinonaktifkan');
+            modal.remove();
+            await loadTransactions();
+            renderCurrentView();
+        };
+    }
+    
+    document.getElementById('deleteTxBtn').onclick = async () => {
+        if (confirm('Hapus transaksi ini?')) {
+            if (isOriginalRecurring && recurringData) {
+                await sb.from('recurring_transactions').delete().eq('id', recurringData.id);
+            }
+            if (tx.proof_url) {
+                const parts = tx.proof_url.split('/');
+                const path = parts.slice(parts.indexOf('transaction-proofs') + 1).join('/');
+                await sb.storage.from('transaction-proofs').remove([path]);
+            }
+            await sb.from('transactions').delete().eq('id', tx.id);
+            showToast('✅ Transaksi dihapus');
+            modal.remove();
+            await loadTransactions();
+            renderCurrentView();
+        }
+    };
+    
+    document.getElementById('closeDetailBtn').onclick = () => modal.remove();
 }
 
 async function deleteTransaction(id) {
@@ -2118,7 +2254,18 @@ function updateNav() {
 
 function renderCurrentView() {
     if (!appReady) return;
-    const views = { home: renderHome, transaksi: renderTransaksi, budget: renderBudgetPage, tasks: renderTasks, settings: renderSettings, hutang: renderHutang, savings: renderSavings, reminders: renderReminders, kategori: renderKategori, laporan: renderLaporan };
+    const views = { 
+        home: renderHome, 
+        transaksi: renderTransaksi, 
+        budget: renderBudgetPage, 
+        tasks: renderTasks, 
+        settings: renderSettings, 
+        hutang: renderHutang, 
+        savings: renderSavings, 
+        reminders: renderReminders, 
+        kategori: renderKategori, 
+        laporan: renderLaporan 
+    };
     if (views[currentNav]) views[currentNav]();
 }
 
