@@ -1513,7 +1513,7 @@ async function deleteProof(txId) {
 }
 
 // ============================================
-// RENDER LAPORAN - SEMUA DATA
+// RENDER LAPORAN - SEMUA DATA DENGAN DETAIL LENGKAP
 // ============================================
 async function renderLaporan() {
     await loadTransactions();
@@ -1582,7 +1582,7 @@ async function renderLaporan() {
             ${data.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada data</div></div>' : ''}
         </div>
         <div class="card">
-            <div class="card-title"><span>📋 Detail (${months[currentMonth]} ${currentYear})</span><span style="font-size:11px;color:var(--text-secondary);">${monthFiltered.length} transaksi</span></div>
+            <div class="card-title"><span>📋 Detail Transaksi (${months[currentMonth]} ${currentYear})</span><span style="font-size:11px;color:var(--text-secondary);">${monthFiltered.length} transaksi</span></div>
             <div id="detailTransaksi"></div>
         </div>
     `;
@@ -1606,7 +1606,7 @@ async function renderLaporan() {
         if (!grouped[d]) grouped[d] = [];
         grouped[d].push(t);
     });
-    // Urutkan tanggal descending
+    // Urutkan tanggal descending (terbaru dulu)
     const sortedDates = Object.keys(grouped).sort((a,b) => {
         const da = a.split('/');
         const db = b.split('/');
@@ -1620,7 +1620,12 @@ async function renderLaporan() {
         sortedDates.forEach(date => {
             const items = grouped[date];
             const total = items.reduce((s, i) => s + (i.type === 'pemasukan' ? Number(i.amount) : -Number(i.amount)), 0);
-            detail += `<div style="margin-top:12px;"><strong>📌 ${date}</strong> <span style="color:${total >= 0 ? '#4ade80' : '#f87171'}">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`;
+            detail += `<div style="margin-top:12px;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <strong style="font-size:15px;">📌 ${date}</strong>
+                    <span style="font-size:15px;font-weight:700;color:${total >= 0 ? '#4ade80' : '#f87171'};">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span>
+                </div>
+            </div>`;
             // Urutkan items berdasarkan waktu
             items.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
             items.forEach(i => {
@@ -1628,16 +1633,16 @@ async function renderLaporan() {
                 const isRecurring = i.description?.includes('(Ulang)');
                 const isPemasukan = i.type === 'pemasukan';
                 detail += `
-                    <div class="tx-item" style="padding:6px 0;cursor:pointer;border-left:3px solid ${isPemasukan ? '#4ade80' : (cat?.color || '#64748b')};padding-left:10px;" data-id="${i.id}">
+                    <div class="tx-item" style="padding:8px 0 8px 16px;cursor:pointer;border-left:3px solid ${isPemasukan ? '#4ade80' : (cat?.color || '#64748b')};margin-left:8px;" data-id="${i.id}">
                         <div class="left">
                             <div>
-                                <div class="desc" style="font-size:12px;">
-                                    ${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${isRecurring ? ' 🔄' : ''}
+                                <div class="desc" style="font-size:13px;font-weight:500;">
+                                    ${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}
                                 </div>
-                                <div style="font-size:10px;color:var(--text-secondary);">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'}</div>
+                                <div style="font-size:11px;color:var(--text-secondary);">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'}</div>
                             </div>
                         </div>
-                        <div class="amount ${isPemasukan ? 'income' : 'expense'}" style="font-size:12px;">
+                        <div class="amount ${isPemasukan ? 'income' : 'expense'}" style="font-size:14px;">
                             ${isPemasukan ? '+' : '-'}Rp ${formatRupiah(i.amount)}
                         </div>
                     </div>
@@ -1647,7 +1652,7 @@ async function renderLaporan() {
     }
     document.getElementById('detailTransaksi').innerHTML = detail;
     
-    // Events
+    // Events - klik item transaksi
     document.querySelectorAll('#detailTransaksi .tx-item').forEach(el => {
         el.onclick = () => {
             const id = el.dataset.id;
@@ -1655,6 +1660,8 @@ async function renderLaporan() {
             if (tx) showTransactionDetail(tx);
         };
     });
+    
+    // Navigasi bulan
     document.getElementById('prevMonth').onclick = () => {
         if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
         renderLaporan();
@@ -1663,6 +1670,8 @@ async function renderLaporan() {
         if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++;
         renderLaporan();
     };
+    
+    // Export PDF
     document.getElementById('exportPdfBtn').onclick = async function() {
         try {
             showToast('📑 Menyiapkan PDF...');
@@ -1670,26 +1679,38 @@ async function renderLaporan() {
             this.disabled = true;
             const el = document.createElement('div');
             el.style.cssText = 'padding:20px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;';
+            
+            // Build detail HTML for PDF
             let detailHtml = '';
             sortedDates.forEach(date => {
                 const items = grouped[date];
                 const total = items.reduce((s, i) => s + (i.type === 'pemasukan' ? Number(i.amount) : -Number(i.amount)), 0);
-                detailHtml += `<div style="margin-top:12px;"><strong>📌 ${date}</strong> <span style="color:${total >= 0 ? '#10b981' : '#ef4444'}">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span></div>`;
+                detailHtml += `<div style="margin-top:12px;padding:8px 0;border-bottom:1px solid #e2e8f0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <strong style="font-size:15px;">📌 ${date}</strong>
+                        <span style="font-size:15px;font-weight:700;color:${total >= 0 ? '#10b981' : '#ef4444'};">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span>
+                    </div>
+                </div>`;
                 items.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
                 items.forEach(i => {
                     const cat = getCategoryById(i.category_id);
                     const isPemasukan = i.type === 'pemasukan';
+                    const isRecurring = i.description?.includes('(Ulang)');
                     detailHtml += `
-                        <div style="padding:4px 0;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;font-size:12px;padding-left:16px;">
-                            <span>${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${i.description?.includes('(Ulang)') ? ' 🔄' : ''} ${cat ? cat.icon + ' ' + cat.name : ''}</span>
-                            <span style="color:${isPemasukan ? '#10b981' : '#ef4444'}">${isPemasukan ? '+' : '-'}Rp ${formatRupiah(i.amount)}</span>
+                        <div style="padding:6px 0 6px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;font-size:13px;border-left:3px solid ${isPemasukan ? '#10b981' : (cat?.color || '#94a3b8')};margin-left:8px;padding-left:16px;">
+                            <div>
+                                <span style="font-weight:500;">${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${isRecurring ? ' 🔄' : ''}</span>
+                                <div style="font-size:11px;color:#94a3b8;">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'}</div>
+                            </div>
+                            <span style="color:${isPemasukan ? '#10b981' : '#ef4444'};font-weight:600;">${isPemasukan ? '+' : '-'}Rp ${formatRupiah(i.amount)}</span>
                         </div>
                     `;
                 });
             });
+            
             el.innerHTML = `
-                <h1 style="text-align:center;color:#1e293b;">💰 Laporan Keuangan</h1>
-                <p style="text-align:center;color:#64748b;">${months[currentMonth]} ${currentYear}</p>
+                <h1 style="text-align:center;color:#1e293b;font-size:24px;">💰 Laporan Keuangan</h1>
+                <p style="text-align:center;color:#64748b;font-size:16px;">${months[currentMonth]} ${currentYear}</p>
                 <hr style="margin:20px 0;">
                 <div style="display:flex;justify-content:space-around;padding:16px;background:#f8fafc;border-radius:12px;">
                     <div><strong style="color:#10b981;">Pemasukan</strong><br>Rp ${formatRupiah(bulanPemasukan)}</div>
@@ -1697,16 +1718,26 @@ async function renderLaporan() {
                     <div><strong style="color:#3b82f6;">Saldo</strong><br>Rp ${formatRupiah(bulanPemasukan - bulanPengeluaran)}</div>
                 </div>
                 <div style="margin-top:12px;padding:12px;background:#f0f9ff;border-radius:8px;border:1px solid #3b82f620;">
-                    <div style="display:flex;justify-content:space-around;font-size:13px;">
+                    <div style="display:flex;justify-content:space-around;font-size:13px;flex-wrap:wrap;gap:8px;">
                         <span>💰 Total Pemasukan: <strong style="color:#10b981;">Rp ${formatRupiah(totalPemasukan)}</strong></span>
                         <span>💸 Total Pengeluaran: <strong style="color:#ef4444;">Rp ${formatRupiah(totalPengeluaran)}</strong></span>
                         <span>📊 Total Saldo: <strong style="color:${totalPemasukan - totalPengeluaran >= 0 ? '#10b981' : '#ef4444'};">Rp ${formatRupiah(totalPemasukan - totalPengeluaran)}</strong></span>
                     </div>
                 </div>
-                <div style="margin-top:20px;"><h3 style="color:#1e293b;">📋 Detail Transaksi</h3>${detailHtml}</div>
+                <div style="margin-top:20px;">
+                    <h3 style="color:#1e293b;font-size:18px;">📋 Detail Transaksi</h3>
+                    ${detailHtml}
+                </div>
                 <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
             `;
-            await html2pdf().set({ margin: 10, filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save();
+            
+            await html2pdf().set({ 
+                margin: 10, 
+                filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, 
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4' }
+            }).from(el).save();
+            
             showToast('✅ PDF berhasil!');
             this.textContent = '📑 PDF';
             this.disabled = false;
