@@ -1515,14 +1515,11 @@ async function deleteProof(txId) {
 // ============================================
 // RENDER LAPORAN - SEMUA TRANSAKSI (TERMASUK BERULANG)
 // ============================================
-// ============================================
-// RENDER LAPORAN - FIXED (SEMUA TRANSAKSI)
-// ============================================
 async function renderLaporan() {
     await loadTransactions();
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     
-    // AMBIL SEMUA TRANSAKSI (tanpa filter apapun)
+    // SEMUA TRANSAKSI (tanpa filter apapun)
     const all = [...transactions];
     all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     
@@ -1537,27 +1534,16 @@ async function renderLaporan() {
     
     const labels = [], data = [], colors = [];
     Object.entries(catTotals).forEach(([id, val]) => {
-        if (id === 'uncategorized') { 
-            labels.push('📁 Tanpa Kategori'); 
-            colors.push('#64748b'); 
-        } else { 
-            const cat = categories.find(c => c.id === id); 
-            if (cat) { 
-                labels.push(`${cat.icon} ${cat.name}`); 
-                colors.push(cat.color); 
-            } else { 
-                labels.push('📁 Unknown'); 
-                colors.push('#64748b'); 
-            } 
-        }
+        if (id === 'uncategorized') { labels.push('📁 Tanpa Kategori'); colors.push('#64748b'); }
+        else { const cat = categories.find(c => c.id === id); if (cat) { labels.push(`${cat.icon} ${cat.name}`); colors.push(cat.color); } else { labels.push('📁 Unknown'); colors.push('#64748b'); } }
         data.push(val);
     });
     
-    // AMBIL TRANSAKSI BULAN INI - TANPA FILTER APAPUN
+    // Filter bulan - TANPA filter "(Ulang)"
     const monthFiltered = transactions.filter(t => {
         const d = new Date(t.created_at);
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        // TIDAK ADA FILTER LAIN - SEMUA TRANSAKSI MASUK
+        // ❌ HAPUS: && !t.description?.includes('(Ulang)')
     });
     monthFiltered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
     
@@ -1566,11 +1552,6 @@ async function renderLaporan() {
         if (t.type === 'pemasukan') bulanPemasukan += Number(t.amount)||0;
         else bulanPengeluaran += Number(t.amount)||0;
     });
-    
-    // Log untuk debugging
-    console.log('📊 All transactions:', all.length);
-    console.log('📊 Month filtered:', monthFiltered.length);
-    console.log('📊 Month filtered details:', monthFiltered.map(t => `${t.description} (${t.type})`));
     
     let html = `
         <div class="header">
@@ -1611,35 +1592,11 @@ async function renderLaporan() {
     // Chart
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
     if (ctx && data.length) {
-        if (window.laporanChart && typeof window.laporanChart.destroy === 'function') {
-            window.laporanChart.destroy();
-        }
+        if (window.laporanChart && typeof window.laporanChart.destroy === 'function') window.laporanChart.destroy();
         window.laporanChart = new Chart(ctx, {
             type: 'pie',
-            data: {
-                labels,
-                datasets: [{
-                    data,
-                    backgroundColor: colors,
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            font: { size: 10 },
-                            padding: 8,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    }
-                }
-            }
+            data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8, usePointStyle: true } } } }
         });
     }
     
@@ -1650,8 +1607,6 @@ async function renderLaporan() {
         if (!grouped[d]) grouped[d] = [];
         grouped[d].push(t);
     });
-    
-    // Urutkan tanggal descending (terbaru dulu)
     const sortedDates = Object.keys(grouped).sort((a,b) => {
         const da = a.split('/');
         const db = b.split('/');
@@ -1671,7 +1626,6 @@ async function renderLaporan() {
                     <span style="font-size:15px;font-weight:700;color:${total >= 0 ? '#4ade80' : '#f87171'};">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span>
                 </div>
             </div>`;
-            // Urutkan items berdasarkan waktu
             items.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
             items.forEach(i => {
                 const cat = getCategoryById(i.category_id);
@@ -1697,10 +1651,6 @@ async function renderLaporan() {
     }
     document.getElementById('detailTransaksi').innerHTML = detail;
     
-    // Debug: cek detail di console
-    console.log('📋 Detail HTML length:', detail.length);
-    console.log('📋 Detail preview:', detail.substring(0, 200));
-    
     // Events
     document.querySelectorAll('#detailTransaksi .tx-item').forEach(el => {
         el.onclick = () => {
@@ -1709,29 +1659,21 @@ async function renderLaporan() {
             if (tx) showTransactionDetail(tx);
         };
     });
-    
     document.getElementById('prevMonth').onclick = () => {
-        if (currentMonth === 0) { currentMonth = 11; currentYear--; } 
-        else currentMonth--;
+        if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
         renderLaporan();
     };
-    
     document.getElementById('nextMonth').onclick = () => {
-        if (currentMonth === 11) { currentMonth = 0; currentYear++; } 
-        else currentMonth++;
+        if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++;
         renderLaporan();
     };
-    
-    // Export PDF
     document.getElementById('exportPdfBtn').onclick = async function() {
         try {
             showToast('📑 Menyiapkan PDF...');
             this.textContent = '⏳...';
             this.disabled = true;
-            
             const el = document.createElement('div');
             el.style.cssText = 'padding:20px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;';
-            
             let detailHtml = '';
             sortedDates.forEach(date => {
                 const items = grouped[date];
@@ -1758,7 +1700,6 @@ async function renderLaporan() {
                     `;
                 });
             });
-            
             el.innerHTML = `
                 <h1 style="text-align:center;color:#1e293b;font-size:24px;">💰 Laporan Keuangan</h1>
                 <p style="text-align:center;color:#64748b;font-size:16px;">${months[currentMonth]} ${currentYear}</p>
@@ -1781,14 +1722,7 @@ async function renderLaporan() {
                 </div>
                 <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
             `;
-            
-            await html2pdf().set({ 
-                margin: 10, 
-                filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, 
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4' }
-            }).from(el).save();
-            
+            await html2pdf().set({ margin: 10, filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save();
             showToast('✅ PDF berhasil!');
             this.textContent = '📑 PDF';
             this.disabled = false;
