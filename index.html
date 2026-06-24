@@ -2135,6 +2135,601 @@ async function renderLaporan() {
 }
 
 // ============================================
+// KUNCI SUKSES - SEDEKAH TRACKER
+// ============================================
+
+// Data sedekah types
+const SEDEKAH_TYPES = [
+    { id: 'pagi', label: 'Sedekah Pagi', icon: '🌅', frequency: 'daily', description: 'Setiap pagi sebelum memulai aktivitas' },
+    { id: 'saudara', label: 'Sedekah ke Saudara', icon: '👨‍👩‍👧', frequency: 'daily', description: 'Setiap hari untuk saudara/i' },
+    { id: 'kerabat', label: 'Sedekah ke Kerabat', icon: '👪', frequency: 'daily', description: 'Setiap hari untuk kerabat' },
+    { id: 'fakir', label: 'Sedekah Fakir/Miskin', icon: '🤲', frequency: 'daily', description: 'Setiap hari untuk fakir/miskin' },
+    { id: 'yatim', label: 'Sedekah Yatim', icon: '🧒', frequency: 'daily', description: 'Setiap hari untuk anak yatim' },
+    { id: 'masjid', label: 'Sedekah Masjid', icon: '🕌', frequency: 'daily', description: 'Setiap hari untuk masjid' },
+    { id: 'jumatan', label: 'Sedekah Jum\'at', icon: '📿', frequency: 'weekly', description: 'Setiap hari Jum\'at' },
+    { id: 'ramadhan', label: 'Sedekah Ramadhan', icon: '🌙', frequency: 'monthly', description: 'Setiap bulan Ramadhan' }
+];
+
+// Action types dengan poin
+const ACTION_TYPES = [
+    { id: 'uang', label: 'Uang', icon: '💰', points: 2 },
+    { id: 'makanan', label: 'Makanan', icon: '🍚', points: 2 },
+    { id: 'pakaian', label: 'Pakaian', icon: '👕', points: 2 },
+    { id: 'tenaga', label: 'Tenaga', icon: '💪', points: 2 },
+    { id: 'fikiran', label: 'Fikiran', icon: '🧠', points: 2 }
+];
+
+let sedekahData = [];
+let sedekahSettings = {};
+let sedekahHistory = [];
+
+// Load sedekah data from Supabase
+async function loadSedekahData() {
+    const uid = await userManager.getUserId();
+    if (!uid) { sedekahData = []; sedekahSettings = {}; sedekahHistory = []; return; }
+    try {
+        // Load settings
+        const { data: settings } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
+        sedekahSettings = settings || {};
+        
+        // Load history
+        const { data: history } = await sb.from('sedekah_history').select('*').eq('user_id', uid).order('created_at', { ascending: false });
+        sedekahHistory = history || [];
+        
+        // Load current data
+        const today = new Date().toISOString().split('T')[0];
+        const { data: current } = await sb.from('sedekah_data').select('*').eq('user_id', uid).eq('date', today).maybeSingle();
+        if (current) {
+            sedekahData = current.actions || [];
+        } else {
+            sedekahData = [];
+        }
+        
+        // Initialize if empty
+        if (!sedekahData.length) {
+            sedekahData = SEDEKAH_TYPES.map(st => ({
+                id: st.id,
+                completed: false,
+                actions: []
+            }));
+        }
+    } catch(e) { 
+        console.error('Load sedekah error:', e);
+        sedekahData = SEDEKAH_TYPES.map(st => ({
+            id: st.id,
+            completed: false,
+            actions: []
+        }));
+    }
+}
+
+// Save sedekah data
+async function saveSedekahData() {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: existing } = await sb.from('sedekah_data').select('id').eq('user_id', uid).eq('date', today).maybeSingle();
+        
+        if (existing) {
+            await sb.from('sedekah_data').update({ actions: sedekahData, updated_at: new Date().toISOString() }).eq('id', existing.id);
+        } else {
+            await sb.from('sedekah_data').insert({ user_id: uid, date: today, actions: sedekahData });
+        }
+        
+        // Save history when completed
+        const completed = sedekahData.filter(d => d.completed);
+        if (completed.length > 0) {
+            const todayHistory = sedekahHistory.find(h => h.date === today);
+            if (!todayHistory) {
+                await sb.from('sedekah_history').insert({
+                    user_id: uid,
+                    date: today,
+                    completed_types: completed.map(d => d.id),
+                    total_points: completed.reduce((sum, d) => sum + d.actions.length * 2, 0)
+                });
+                await loadSedekahData();
+            }
+        }
+    } catch(e) { console.error('Save sedekah error:', e); }
+}
+
+// Toggle sedekah type completion
+async function toggleSedekahType(typeId) {
+    const item = sedekahData.find(d => d.id === typeId);
+    if (!item) return;
+    
+    item.completed = !item.completed;
+    if (!item.completed) {
+        item.actions = [];
+    } else {
+        // Default action: uang
+        if (!item.actions.length) {
+            item.actions = ['uang'];
+        }
+    }
+    
+    await saveSedekahData();
+    renderKunciSukses();
+    checkAndSendNotification();
+}
+
+// Toggle action for sedekah type
+async function toggleAction(typeId, actionId) {
+    const item = sedekahData.find(d => d.id === typeId);
+    if (!item || !item.completed) return;
+    
+    const index = item.actions.indexOf(actionId);
+    if (index > -1) {
+        item.actions.splice(index, 1);
+    } else {
+        item.actions.push(actionId);
+    }
+    
+    await saveSedekahData();
+    renderKunciSukses();
+    checkAndSendNotification();
+}
+
+// Get today's score
+function getTodayScore() {
+    let total = 0;
+    sedekahData.forEach(d => {
+        if (d.completed) {
+            total += d.actions.length * 2;
+        }
+    });
+    return total;
+}
+
+// Get weekly score
+function getWeeklyScore() {
+    // Simple: return today's score for now
+    return getTodayScore();
+}
+
+// Get monthly score
+function getMonthlyScore() {
+    // Simple: return today's score for now
+    return getTodayScore();
+}
+
+// Check and send notification
+function checkAndSendNotification() {
+    const completedCount = sedekahData.filter(d => d.completed).length;
+    const totalTypes = SEDEKAH_TYPES.length;
+    
+    // Send notification if more than 50% completed
+    if (completedCount > totalTypes / 2) {
+        showToast(`🌟 Hebat! ${completedCount} sedekah hari ini selesai!`, 3000, 'success');
+        
+        // Request notification permission if needed
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('💰 Kunci Sukses', {
+                body: `Hari ini Anda telah menyelesaikan ${completedCount} jenis sedekah!`,
+                icon: '💰'
+            });
+        }
+    }
+}
+
+// Request notification permission
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+}
+
+// ============================================
+// RENDER KUNCI SUKSES
+// ============================================
+async function renderKunciSukses() {
+    await loadSedekahData();
+    await loadSedekahSettings();
+    
+    const score = getTodayScore();
+    const completed = sedekahData.filter(d => d.completed).length;
+    const total = SEDEKAH_TYPES.length;
+    const progress = Math.round((completed / total) * 100);
+    
+    const today = new Date().toISOString().split('T')[0];
+    const todayHistory = sedekahHistory.find(h => h.date === today);
+    const streak = sedekahHistory.filter(h => h.date === today).length > 0 ? '🔥 1 hari' : 'Mulai hari ini';
+    
+    let html = `
+        <div class="header">
+            <div class="header-user">
+                <div class="header-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">🔑</div>
+                <div class="header-info">
+                    <div class="header-name">Kunci Sukses</div>
+                    <div class="header-code">${completed}/${total} selesai</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" onclick="openPanduanSedekah()">📖</button>
+                <button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button>
+            </div>
+        </div>
+        
+        <!-- Score Card -->
+        <div class="balance-card" style="background:linear-gradient(135deg,#1e293b,#0f172a);">
+            <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
+                <div>
+                    <div class="balance-label">🌟 Poin Hari Ini</div>
+                    <div class="balance-amount" style="font-size:36px;">${score}</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,0.6);">${streak}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:12px;color:rgba(255,255,255,0.6);">Progress</div>
+                    <div style="font-size:28px;font-weight:700;color:#fbbf24;">${progress}%</div>
+                </div>
+            </div>
+            <div style="margin-top:12px;background:rgba(255,255,255,0.1);border-radius:8px;height:6px;overflow:hidden;position:relative;z-index:1;">
+                <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:8px;transition:width 0.5s ease;"></div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="stats-row">
+            <div class="stat-card" style="cursor:default;">
+                <div class="label">📅 Hari ini</div>
+                <div class="value" style="color:#fbbf24;">${completed}</div>
+            </div>
+            <div class="stat-card" style="cursor:default;">
+                <div class="label">📊 Minggu ini</div>
+                <div class="value" style="color:#fbbf24;">${getWeeklyScore()}</div>
+            </div>
+        </div>
+        
+        <!-- Settings Toggle -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <button class="modal-btn modal-btn-primary" style="flex:1;font-size:12px;" onclick="toggleSedekahNotifications()">
+                ${sedekahSettings.notifications_enabled !== false ? '🔔 Notifikasi Aktif' : '🔕 Notifikasi Nonaktif'}
+            </button>
+            <button class="modal-btn modal-btn-success" style="flex:1;font-size:12px;" onclick="exportSedekahPDF()">
+                📑 Export PDF
+            </button>
+        </div>
+        
+        <!-- Sedekah Types -->
+        <div class="card" style="padding:12px;">
+            <div class="card-title" style="margin-bottom:8px;">
+                <span>📋 Jenis Sedekah</span>
+                <span class="badge-count">${completed} selesai</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+                ${SEDEKAH_TYPES.map(st => {
+                    const data = sedekahData.find(d => d.id === st.id) || { completed: false, actions: [] };
+                    const isCompleted = data.completed;
+                    const actions = data.actions || [];
+                    const freq = st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan';
+                    
+                    // Get frequency indicator
+                    let freqColor = '#4ade80';
+                    if (st.frequency === 'weekly') freqColor = '#fbbf24';
+                    if (st.frequency === 'monthly') freqColor = '#f87171';
+                    
+                    return `
+                        <div style="background:${isCompleted ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)'};border-radius:12px;padding:12px;border:1px solid ${isCompleted ? 'rgba(16,185,129,0.3)' : 'var(--border-color)'};transition:all 0.3s ease;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" onclick="toggleSedekahType('${st.id}')">
+                                <div style="display:flex;gap:10px;align-items:center;">
+                                    <span style="font-size:22px;">${st.icon}</span>
+                                    <div>
+                                        <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${st.label}</div>
+                                        <div style="font-size:11px;color:var(--text-secondary);">${st.description}</div>
+                                        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">
+                                            <span style="background:${freqColor}22;padding:2px 8px;border-radius:10px;color:${freqColor};font-weight:500;">${freq}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    ${isCompleted ? `<span style="font-size:11px;color:#4ade80;font-weight:600;">✅ Selesai</span>` : `<span style="font-size:11px;color:var(--text-muted);">⏳ Belum</span>`}
+                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${isCompleted ? '#4ade80' : 'var(--border-color)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        ${isCompleted ? '<span style="color:#4ade80;">✓</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${isCompleted ? `
+                                <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color);">
+                                    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Pilih jenis sedekah (2 poin masing-masing):</div>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                        ${ACTION_TYPES.map(at => {
+                                            const isActive = actions.includes(at.id);
+                                            return `
+                                                <button onclick="event.stopPropagation();toggleAction('${st.id}','${at.id}')" 
+                                                    style="background:${isActive ? 'rgba(16,185,129,0.15)' : 'var(--bg-card)'};
+                                                           border:1px solid ${isActive ? '#4ade80' : 'var(--border-color)'};
+                                                           border-radius:20px;padding:4px 12px;font-size:11px;
+                                                           cursor:pointer;color:${isActive ? '#4ade80' : 'var(--text-secondary)'};
+                                                           transition:all 0.2s ease;display:flex;align-items:center;gap:4px;">
+                                                    ${at.icon} ${at.label}
+                                                    ${isActive ? ' ✓' : ''}
+                                                </button>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                    <div style="margin-top:6px;font-size:11px;color:var(--text-secondary);">
+                                        Poin: ${actions.length * 2} | ${actions.length} jenis
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        
+        <!-- History -->
+        <div class="card">
+            <div class="card-title"><span>📜 Riwayat Sedekah</span></div>
+            ${sedekahHistory.length === 0 ? 
+                '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada riwayat</div></div>' :
+                sedekahHistory.slice(0, 5).map(h => `
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                        <span>📅 ${formatDate(h.date)}</span>
+                        <span style="color:#fbbf24;font-weight:600;">${h.total_points || 0} poin</span>
+                        <span style="font-size:11px;color:var(--text-secondary);">${h.completed_types?.length || 0} jenis</span>
+                    </div>
+                `).join('')
+            }
+        </div>
+    `;
+    
+    document.getElementById('appContainer').innerHTML = html;
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        setTimeout(requestNotificationPermission, 1000);
+    }
+}
+
+// ============================================
+// SEDEKAH SETTINGS
+// ============================================
+async function loadSedekahSettings() {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    try {
+        const { data } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
+        sedekahSettings = data || { notifications_enabled: true };
+    } catch(e) { sedekahSettings = { notifications_enabled: true }; }
+}
+
+async function toggleSedekahNotifications() {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    const current = sedekahSettings.notifications_enabled !== false;
+    const newVal = !current;
+    try {
+        const { data: existing } = await sb.from('sedekah_settings').select('id').eq('user_id', uid).maybeSingle();
+        if (existing) {
+            await sb.from('sedekah_settings').update({ notifications_enabled: newVal }).eq('id', existing.id);
+        } else {
+            await sb.from('sedekah_settings').insert({ user_id: uid, notifications_enabled: newVal });
+        }
+        sedekahSettings.notifications_enabled = newVal;
+        showToast(newVal ? '🔔 Notifikasi diaktifkan' : '🔕 Notifikasi dinonaktifkan', 2000, 'success');
+        renderKunciSukses();
+    } catch(e) { showToast('❌ Gagal update', 2000, 'error'); }
+}
+
+// ============================================
+// PANDUAN SEDEKAH - PDF
+// ============================================
+function openPanduanSedekah() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-title">📖 Panduan Sedekah</div>
+            <div class="modal-subtitle">Panduan lengkap tentang sedekah dalam Islam</div>
+            
+            <div style="background:rgba(251,191,36,0.08);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid rgba(251,191,36,0.15);">
+                <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+                    <p style="margin-bottom:8px;">📌 <strong>Sedekah tidak mengurangi harta</strong> - Rasulullah ﷺ bersabda: <em>"Harta tidak akan berkurang karena sedekah."</em> (HR. Muslim)</p>
+                    <p style="margin-bottom:8px;">📌 <strong>Allah mengganti harta yang disedekahkan</strong> - <em>"Dan apa saja yang kamu infakkan, Allah akan menggantinya."</em> (QS. Saba': 39)</p>
+                    <p style="margin-bottom:8px;">📌 <strong>Doa malaikat setiap pagi</strong> - <em>"Ya Allah, berikanlah ganti kepada orang yang berinfak."</em> (HR. Bukhari dan Muslim)</p>
+                    <p>📌 <strong>Sedekah dilipatgandakan</strong> - <em>"Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh bulir."</em> (QS. Al-Baqarah: 261)</p>
+                </div>
+            </div>
+            
+            <div style="max-height:300px;overflow-y:auto;padding:4px 0;">
+                <div style="font-weight:600;font-size:14px;color:var(--text-primary);margin-bottom:8px;">🧾 Jenis-Jenis Sedekah</div>
+                <div style="display:grid;gap:6px;font-size:13px;color:var(--text-secondary);">
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>💰</span><span><strong>Harta</strong> - Memberikan sebagian harta kepada yang membutuhkan</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>😊</span><span><strong>Senyum</strong> - Senyum kepada saudaramu adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>💬</span><span><strong>Kata Baik</strong> - Kalimat yang baik adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🤝</span><span><strong>Menolong</strong> - Membantu orang lain adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🧹</span><span><strong>Menyingkirkan Gangguan</strong> - Dari jalan adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>📢</span><span><strong>Amar Ma'ruf</strong> - Mencegah kemungkaran adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🕋</span><span><strong>Berdzikir</strong> - Tasbih, tahmid, tahlil, takbir adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🍽️</span><span><strong>Memberi Makan</strong> - Memberikan makanan adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>📚</span><span><strong>Ilmu Bermanfaat</strong> - Mengajarkan ilmu adalah sedekah jariyah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>⚖️</span><span><strong>Berbuat Adil</strong> - Berlaku adil adalah sedekah</span></div>
+                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>👨‍👩‍👦</span><span><strong>Nafkah Keluarga</strong> - Memberi nafkah keluarga adalah sedekah</span></div>
+                </div>
+                
+                <div style="font-weight:600;font-size:14px;color:var(--text-primary);margin:12px 0 8px;">⏰ Waktu Terbaik Sedekah</div>
+                <div style="display:grid;gap:4px;font-size:13px;color:var(--text-secondary);">
+                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>🌟</span><span><strong>Saat Sehat</strong> - Sedekah paling utama ketika sehat dan masih membutuhkan</span></div>
+                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>🌅</span><span><strong>Setiap Pagi</strong> - Malaikat mendoakan orang yang berinfak setiap pagi</span></div>
+                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>📿</span><span><strong>Hari Jumat</strong> - Dianjurkan memperbanyak sedekah di hari Jumat</span></div>
+                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>🌙</span><span><strong>Bulan Ramadhan</strong> - Rasulullah lebih dermawan di bulan Ramadhan</span></div>
+                </div>
+            </div>
+            
+            <hr class="modal-divider">
+            <div class="modal-button-grid">
+                <button class="modal-btn modal-btn-primary" onclick="downloadPanduanSedekah()">📑 Download PDF</button>
+                <button class="modal-btn modal-btn-secondary" onclick="this.closest('.modal-overlay').remove()">Tutup</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// ============================================
+// DOWNLOAD PANDUAN SEDEKAH PDF
+// ============================================
+function downloadPanduanSedekah() {
+    const el = document.createElement('div');
+    el.style.cssText = 'padding:30px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;color:#1e293b;';
+    el.innerHTML = `
+        <h1 style="text-align:center;color:#1e293b;font-size:28px;margin-bottom:4px;">💰 Panduan Sedekah</h1>
+        <p style="text-align:center;color:#64748b;font-size:16px;">Berdasarkan Al-Qur'an dan Hadis Sahih</p>
+        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">📌 Sedekah Tidak Mengurangi Harta</h2>
+        <p style="color:#475569;font-size:15px;line-height:1.8;">Rasulullah ﷺ bersabda: <em>"Harta tidak akan berkurang karena sedekah."</em> (HR. Muslim)</p>
+        <p style="color:#475569;font-size:15px;line-height:1.8;margin-top:8px;">Maknanya, secara lahiriah harta mungkin berkurang jumlahnya, tetapi Allah menggantinya dengan keberkahan, perlindungan dari musibah, atau tambahan rezeki yang tidak disangka-sangka.</p>
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Allah Mengganti Harta yang Disedekahkan</h2>
+        <p style="color:#475569;font-size:15px;line-height:1.8;">Allah berfirman: <em>"Dan apa saja yang kamu infakkan, Allah akan menggantinya dan Dia-lah Pemberi rezeki yang terbaik."</em> (QS. Saba': 39)</p>
+        <p style="color:#475569;font-size:15px;line-height:1.8;margin-top:8px;">Ayat ini sering dijadikan dasar bahwa sedekah tidak membuat miskin, bahkan Allah menjanjikan penggantian.</p>
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Doa Malaikat Setiap Pagi</h2>
+        <p style="color:#475569;font-size:15px;line-height:1.8;">Rasulullah ﷺ bersabda: <em>"Setiap pagi dua malaikat turun. Salah satunya berdoa, 'Ya Allah, berikanlah ganti kepada orang yang berinfak.' Dan yang lainnya berdoa, 'Ya Allah, berikanlah kebinasaan kepada orang yang menahan hartanya.'"</em> (HR. Bukhari dan Muslim)</p>
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Perumpamaan Sedekah Dilipatgandakan</h2>
+        <p style="color:#475569;font-size:15px;line-height:1.8;">Allah berfirman: <em>"Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh bulir, pada setiap bulir seratus biji."</em> (QS. Al-Baqarah: 261)</p>
+        
+        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">🧾 Jenis-Jenis Sedekah</h2>
+        
+        <div style="display:grid;gap:8px;margin:12px 0;">
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">💰</span><div><strong>Sedekah Harta</strong><br><span style="font-size:13px;color:#64748b;">Memberikan sebagian harta kepada yang membutuhkan</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">😊</span><div><strong>Senyum</strong><br><span style="font-size:13px;color:#64748b;">Senyum kepada saudaramu adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">💬</span><div><strong>Kata Baik</strong><br><span style="font-size:13px;color:#64748b;">Kalimat yang baik adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🤝</span><div><strong>Menolong Orang Lain</strong><br><span style="font-size:13px;color:#64748b;">Membantu orang lain adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🧹</span><div><strong>Menyingkirkan Gangguan</strong><br><span style="font-size:13px;color:#64748b;">Menyingkirkan sesuatu yang mengganggu dari jalan adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">📢</span><div><strong>Amar Ma'ruf Nahi Munkar</strong><br><span style="font-size:13px;color:#64748b;">Menyuruh yang ma'ruf dan mencegah yang mungkar adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🕋</span><div><strong>Berdzikir</strong><br><span style="font-size:13px;color:#64748b;">Setiap tasbih, tahmid, tahlil, dan takbir adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🍽️</span><div><strong>Memberi Makan dan Minum</strong><br><span style="font-size:13px;color:#64748b;">Memberi makan orang yang membutuhkan adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">📚</span><div><strong>Mengajarkan Ilmu yang Bermanfaat</strong><br><span style="font-size:13px;color:#64748b;">Ilmu yang bermanfaat adalah sedekah jariyah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">⚖️</span><div><strong>Berbuat Adil</strong><br><span style="font-size:13px;color:#64748b;">Berlaku adil di antara dua orang adalah sedekah</span></div></div>
+            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">👨‍👩‍👦</span><div><strong>Memberi Nafkah kepada Keluarga</strong><br><span style="font-size:13px;color:#64748b;">Memberi nafkah keluarga dengan niat karena Allah adalah sedekah</span></div></div>
+        </div>
+        
+        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">⏰ Waktu Terbaik Sedekah</h2>
+        <div style="display:grid;gap:6px;margin:8px 0;">
+            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">🌟</span><div><strong>Saat Sehat dan Masih Membutuhkan Harta</strong><br><span style="font-size:13px;color:#64748b;">Ini adalah waktu yang paling utama. Jangan menunggu tua atau menjelang meninggal.</span></div></div>
+            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">🌅</span><div><strong>Setiap Hari Pagi</strong><br><span style="font-size:13px;color:#64748b;">Malaikat mendoakan orang yang berinfak setiap pagi.</span></div></div>
+            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">📿</span><div><strong>Hari Jumat</strong><br><span style="font-size:13px;color:#64748b;">Banyak ulama menganjurkan memperbanyak sedekah pada hari Jumat.</span></div></div>
+            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">🌙</span><div><strong>Bulan Ramadan</strong><br><span style="font-size:13px;color:#64748b;">Rasulullah lebih dermawan di bulan Ramadhan.</span></div></div>
+        </div>
+        
+        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
+        
+        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">💡 Sedekah Praktis Setiap Hari</h2>
+        <div style="display:grid;gap:4px;margin:8px 0;font-size:14px;color:#475569;">
+            <div>🕌 Shalat Dhuha</div>
+            <div>📿 Berdzikir</div>
+            <div>😊 Senyum kepada orang lain</div>
+            <div>👋 Mengucapkan salam</div>
+            <div>👴 Membantu orang tua</div>
+            <div>🐾 Memberi makan hewan</div>
+            <div>🧹 Menyingkirkan sampah dari jalan</div>
+            <div>📖 Mengajarkan ilmu</div>
+            <div>🍽️ Memberi makan atau minum orang lain</div>
+            <div>💰 Menyisihkan sebagian rezeki untuk yang membutuhkan</div>
+        </div>
+        
+        <div style="text-align:center;margin:20px 0 0;padding:16px;background:#f0f9ff;border-radius:12px;border:1px solid #3b82f620;">
+            <p style="font-size:14px;color:#475569;font-style:italic;">"Setiap kebaikan adalah sedekah."</p>
+            <p style="font-size:12px;color:#94a3b8;">(HR. Bukhari dan Muslim)</p>
+        </div>
+        
+        <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">
+            Dicetak: ${new Date().toLocaleString('id-ID')}
+        </div>
+    `;
+    
+    html2pdf().set({
+        margin: 10,
+        filename: 'panduan_sedekah.pdf',
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4' }
+    }).from(el).save().then(() => {
+        showToast('✅ PDF berhasil diunduh!', 2000, 'success');
+    }).catch(() => {
+        showToast('❌ Gagal membuat PDF', 2000, 'error');
+    });
+}
+
+// ============================================
+// EXPORT SEDEKAH PDF
+// ============================================
+function exportSedekahPDF() {
+    const today = new Date().toISOString().split('T')[0];
+    const completed = sedekahData.filter(d => d.completed);
+    const score = getTodayScore();
+    
+    const el = document.createElement('div');
+    el.style.cssText = 'padding:30px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;color:#1e293b;';
+    el.innerHTML = `
+        <h1 style="text-align:center;color:#1e293b;font-size:28px;">🔑 Laporan Sedekah Harian</h1>
+        <p style="text-align:center;color:#64748b;font-size:16px;">${formatDate(today)}</p>
+        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
+        
+        <div style="display:flex;justify-content:space-around;padding:16px;background:#f8fafc;border-radius:12px;margin:12px 0;">
+            <div><strong style="color:#fbbf24;">🌟 Poin</strong><br><span style="font-size:24px;font-weight:700;">${score}</span></div>
+            <div><strong style="color:#4ade80;">✅ Selesai</strong><br><span style="font-size:24px;font-weight:700;">${completed.length}</span></div>
+            <div><strong style="color:#94a3b8;">📋 Total</strong><br><span style="font-size:24px;font-weight:700;">${SEDEKAH_TYPES.length}</span></div>
+        </div>
+        
+        <h2 style="color:#1e293b;font-size:18px;margin:16px 0 8px;">📋 Detail Sedekah</h2>
+        ${SEDEKAH_TYPES.map(st => {
+            const data = sedekahData.find(d => d.id === st.id) || { completed: false, actions: [] };
+            const isCompleted = data.completed;
+            const actions = data.actions || [];
+            return `
+                <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #e2e8f0;background:${isCompleted ? '#f0fdf4' : '#f8fafc'};">
+                    <div>
+                        <span style="font-size:16px;">${st.icon}</span>
+                        <span style="font-weight:500;">${st.label}</span>
+                        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">${st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan'}</span>
+                    </div>
+                    <div>
+                        ${isCompleted ? 
+                            `<span style="color:#4ade80;">✅ ${actions.length} jenis · ${actions.length * 2} poin</span>` : 
+                            `<span style="color:#94a3b8;">⏳ Belum</span>`
+                        }
+                    </div>
+                </div>
+                ${isCompleted && actions.length ? `
+                    <div style="padding:4px 12px 8px 40px;font-size:12px;color:#64748b;background:#fafdfa;">
+                        ${actions.map(a => {
+                            const at = ACTION_TYPES.find(t => t.id === a);
+                            return at ? `${at.icon} ${at.label}` : a;
+                        }).join(' · ')}
+                    </div>
+                ` : ''}
+            `;
+        }).join('')}
+        
+        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
+        <div style="text-align:center;color:#94a3b8;font-size:12px;">
+            Dicetak: ${new Date().toLocaleString('id-ID')}
+        </div>
+    `;
+    
+    html2pdf().set({
+        margin: 10,
+        filename: `laporan_sedekah_${today}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4' }
+    }).from(el).save().then(() => {
+        showToast('✅ Laporan PDF berhasil diunduh!', 2000, 'success');
+    }).catch(() => {
+        showToast('❌ Gagal membuat PDF', 2000, 'error');
+    });
+}
+
+// ============================================
 // RENDER HOME
 // ============================================
 async function renderHome() {
@@ -2399,6 +2994,7 @@ function addBottomNav() {
                 <button class="menu-popup-item" data-nav="reminders"><span class="icon">⏰</span>Pengingat</button>
                 <button class="menu-popup-item" data-nav="kategori"><span class="icon">🏷️</span>Kategori</button>
                 <button class="menu-popup-item" data-nav="laporan"><span class="icon">📊</span>Laporan</button>
+                <button class="menu-popup-item" data-nav="kunci-sukses"><span class="icon">🔑</span>Kunci Sukses</button>
                 <button class="menu-popup-item" data-nav="settings"><span class="icon">⚙️</span>Settings</button>
             </div>
         </div>
