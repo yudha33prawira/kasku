@@ -162,7 +162,6 @@
         .modal-btn-danger { background: var(--gradient-danger); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
         .modal-btn-success { background: var(--gradient-success); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
         .modal-btn-warning { background: var(--gradient-warning); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
-        .modal-btn-wa { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37,211,102,0.3); }
         .modal-btn-sm { padding: 8px 12px; font-size: 12px; }
         
         .modal-divider { border: none; border-top: 1px solid var(--border-color); margin: 16px 0; }
@@ -171,7 +170,6 @@
         .modal-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
         .modal-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
         .modal-badge.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .modal-badge.purple { background: rgba(139,92,246,0.15); color: #a78bfa; }
         
         .toast { position: fixed; bottom: calc(var(--nav-height) + 30px); left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 300; box-shadow: var(--shadow); border: 1px solid var(--border-color); animation: toastIn 0.4s ease-out; max-width: 90%; text-align: center; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
@@ -202,12 +200,14 @@
         .sedekah-card .header .badge.weekly { background: rgba(251,191,36,0.15); color: #fbbf24; }
         .sedekah-card .header .badge.monthly { background: rgba(139,92,246,0.15); color: #a78bfa; }
         .sedekah-card .desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
-        .sedekah-card .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .sedekah-card .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
         .sedekah-card .actions .action-btn { padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-secondary); font-size: 11px; cursor: pointer; transition: var(--transition); }
         .sedekah-card .actions .action-btn.active { background: rgba(16,185,129,0.15); border-color: #4ade80; color: #4ade80; }
         .sedekah-card .actions .action-btn:active { transform: scale(0.95); }
         .sedekah-card .status-text { font-size: 11px; margin-top: 8px; color: var(--text-secondary); }
         .sedekah-card .status-text .highlight { color: #4ade80; font-weight: 600; }
+        .sedekah-card .reminder-btn { margin-top: 8px; padding: 4px 12px; border-radius: 16px; border: none; background: #60a5fa; color: white; font-size: 11px; cursor: pointer; }
+        .sedekah-card .reminder-btn:active { transform: scale(0.95); }
         
         .reminder-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
         .reminder-item:last-child { border-bottom: none; }
@@ -217,6 +217,19 @@
         .reminder-item .status { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
         .reminder-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
         .reminder-item .status.pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        
+        .task-preview { display: flex; flex-direction: column; gap: 6px; }
+        .task-preview-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; border-left: 3px solid var(--text-muted); color: var(--text-primary); }
+        .task-preview-item:active { transform: scale(0.98); }
+        .task-preview-item .icon { font-size: 18px; }
+        .task-preview-item .info { flex: 1; }
+        .task-preview-item .info .title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        .task-preview-item .info .date { font-size: 11px; color: var(--text-secondary); }
+        .task-preview-item .status { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
+        .task-preview-item .status.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+        .task-preview-item .status.warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .task-preview-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
+        .task-preview-item .status.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
         
         @media (max-width: 420px) {
             .app-container { padding: 12px 12px 20px; }
@@ -310,11 +323,11 @@ const SEDEKAH_TYPES = [
 ];
 
 const ACTION_TYPES = [
-    { id: 'uang', label: 'Uang', icon: '💰', points: 2 },
-    { id: 'makanan', label: 'Makanan', icon: '🍚', points: 2 },
-    { id: 'pakaian', label: 'Pakaian', icon: '👕', points: 2 },
-    { id: 'tenaga', label: 'Tenaga', icon: '💪', points: 2 },
-    { id: 'fikiran', label: 'Fikiran', icon: '🧠', points: 2 }
+    { id: 'uang', label: 'Uang', icon: '💰' },
+    { id: 'makanan', label: 'Makanan', icon: '🍚' },
+    { id: 'pakaian', label: 'Pakaian', icon: '👕' },
+    { id: 'tenaga', label: 'Tenaga', icon: '💪' },
+    { id: 'fikiran', label: 'Fikiran', icon: '🧠' }
 ];
 
 let sedekahData = [];
@@ -326,8 +339,6 @@ let sedekahReminders = [];
 // RAMADHAN CALENDAR (Otomatis)
 // ============================================
 function getRamadhanDates(year) {
-    // Data Ramadhan berdasarkan tahun Hijriah (perkiraan)
-    // Data ini berdasarkan kalender Islam global
     const ramadhanData = {
         2024: { start: '2024-03-11', end: '2024-04-09' },
         2025: { start: '2025-03-01', end: '2025-03-30' },
@@ -481,6 +492,57 @@ function getOverdueCount() {
     return count;
 }
 
+function getRunningText() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const msgs = [];
+    debts.forEach(d => {
+        if (d.status === 'lunas' || !d.due_date) return;
+        const due = new Date(d.due_date);
+        due.setHours(0,0,0,0);
+        const diff = Math.ceil((due - today) / (1000*60*60*24));
+        if (diff < 0) msgs.push({ text: `⚠️ TERLEWAT! ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} sudah jatuh tempo ${Math.abs(diff)} hari yang lalu!`, type: 'danger' });
+        else if (diff === 0) msgs.push({ text: `🔴 HARI INI! ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo HARI INI!`, type: 'danger' });
+        else if (diff <= 3) msgs.push({ text: `🟡 ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff} hari lagi!`, type: 'warning' });
+    });
+    tasks.forEach(t => {
+        if (t.is_completed || !t.due_date) return;
+        const due = new Date(t.due_date);
+        due.setHours(0,0,0,0);
+        const diff = Math.ceil((due - today) / (1000*60*60*24));
+        if (diff < 0) msgs.push({ text: `🔴 TERLEWAT! Tugas "${escapeHtml(t.title)}" sudah terlewat ${Math.abs(diff)} hari!`, type: 'danger' });
+        else if (diff === 0) msgs.push({ text: `🔴 HARI INI! Tugas "${escapeHtml(t.title)}" jatuh tempo HARI INI!`, type: 'danger' });
+        else if (diff <= 7) msgs.push({ text: `🟡 Tugas "${escapeHtml(t.title)}" jatuh tempo ${diff} hari lagi!`, type: 'warning' });
+    });
+    reminders.forEach(r => {
+        if (r.is_done || !r.due_date) return;
+        const due = new Date(r.due_date);
+        due.setHours(0,0,0,0);
+        const diff = Math.ceil((due - today) / (1000*60*60*24));
+        if (diff < 0) msgs.push({ text: `🔴 TERLEWAT! Pengingat "${escapeHtml(r.title)}" sudah terlewat ${Math.abs(diff)} hari!`, type: 'danger' });
+        else if (diff === 0) msgs.push({ text: `🔴 HARI INI! Pengingat "${escapeHtml(r.title)}" jatuh tempo HARI INI!`, type: 'danger' });
+        else if (diff <= 7) msgs.push({ text: `🟡 Pengingat "${escapeHtml(r.title)}" jatuh tempo ${diff} hari lagi!`, type: 'warning' });
+    });
+    msgs.sort((a,b) => {
+        if (a.type === 'danger' && b.type === 'warning') return -1;
+        if (a.type === 'warning' && b.type === 'danger') return 1;
+        return 0;
+    });
+    return msgs;
+}
+
+function renderRunningText() {
+    const msgs = getRunningText();
+    if (!msgs.length) return '';
+    const danger = msgs.filter(m => m.type === 'danger');
+    const warning = msgs.filter(m => m.type === 'warning');
+    let cls = danger.length ? 'danger' : (warning.length ? 'warning' : '');
+    let html = `<div class="running-text-container ${cls}"><div class="running-text">`;
+    danger.forEach(m => html += `<span class="text-danger">🔴 ${m.text}</span>`);
+    warning.forEach(m => html += `<span class="text-warning">🟡 ${m.text}</span>`);
+    html += `</div></div>`;
+    return html;
+}
+
 // ============================================
 // SEDEKAH FUNCTIONS
 // ============================================
@@ -488,19 +550,15 @@ async function loadSedekahData() {
     const uid = await userManager.getUserId();
     if (!uid) { sedekahData = []; sedekahSettings = {}; sedekahHistory = []; sedekahReminders = []; return; }
     try {
-        // Load settings
         const { data: settings } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
         sedekahSettings = settings || { notifications_enabled: true };
         
-        // Load history
         const { data: history } = await sb.from('sedekah_history').select('*').eq('user_id', uid).order('created_at', { ascending: false });
         sedekahHistory = history || [];
         
-        // Load reminders
         const { data: reminders } = await sb.from('sedekah_reminders').select('*').eq('user_id', uid).order('created_at', { ascending: false });
         sedekahReminders = reminders || [];
         
-        // Load current data
         const today = new Date().toISOString().split('T')[0];
         const { data: current } = await sb.from('sedekah_data').select('*').eq('user_id', uid).eq('date', today).maybeSingle();
         if (current) {
@@ -509,7 +567,6 @@ async function loadSedekahData() {
             sedekahData = [];
         }
         
-        // Initialize if empty
         if (!sedekahData.length) {
             sedekahData = SEDEKAH_TYPES.map(st => ({
                 id: st.id,
@@ -543,7 +600,6 @@ async function saveSedekahData() {
             await sb.from('sedekah_data').insert({ user_id: uid, date: today, actions: sedekahData });
         }
         
-        // Save history when completed
         const completed = sedekahData.filter(d => d.completed && d.enabled);
         if (completed.length > 0) {
             const todayHistory = sedekahHistory.find(h => h.date === today);
@@ -588,7 +644,6 @@ async function toggleSedekahComplete(typeId) {
     if (!item.completed) {
         item.actions = [];
     } else {
-        // Default action: uang
         if (!item.actions.length) {
             item.actions = ['uang'];
         }
@@ -597,7 +652,6 @@ async function toggleSedekahComplete(typeId) {
     await saveSedekahData();
     renderKunciSukses();
     
-    // Check if all enabled are completed
     const enabled = sedekahData.filter(d => d.enabled);
     const completed = enabled.filter(d => d.completed);
     if (enabled.length > 0 && enabled.length === completed.length) {
@@ -640,16 +694,13 @@ function getTodayEnabledCount() {
     return sedekahData.filter(d => d.enabled).length;
 }
 
-// ============================================
-// REMINDER FUNCTIONS
-// ============================================
 async function generateReminders() {
     const uid = await userManager.getUserId();
     if (!uid) return;
     
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    const dayOfWeek = today.getDay(); // 0 = Minggu, 5 = Jumat
+    const dayOfWeek = today.getDay();
     
     const enabledTypes = sedekahData.filter(d => d.enabled);
     
@@ -658,19 +709,15 @@ async function generateReminders() {
         if (!type) continue;
         
         let shouldRemind = false;
-        let reminderDate = todayStr;
         let isRamadhanSpecial = false;
         
-        // Check frequency
         if (type.frequency === 'daily') {
             shouldRemind = true;
         } else if (type.frequency === 'weekly') {
-            // Jum'at = 5
             if (dayOfWeek === 5) {
                 shouldRemind = true;
             }
         } else if (type.frequency === 'monthly') {
-            // Ramadhan: check if today is in Ramadhan
             if (isRamadhanDay(todayStr)) {
                 shouldRemind = true;
                 isRamadhanSpecial = true;
@@ -678,7 +725,6 @@ async function generateReminders() {
         }
         
         if (shouldRemind) {
-            // Check if reminder already exists for today
             const existing = sedekahReminders.find(r => 
                 r.sedekah_id === sedekah.id && 
                 r.date === todayStr
@@ -721,7 +767,6 @@ async function markReminderDone(reminderId) {
         const reminder = sedekahReminders.find(r => r.id === reminderId);
         if (reminder) {
             reminder.is_done = true;
-            // Also mark sedekah as completed for today
             const sedekah = sedekahData.find(d => d.id === reminder.sedekah_id);
             if (sedekah && !sedekah.completed) {
                 sedekah.completed = true;
@@ -779,7 +824,6 @@ async function renderKunciSukses() {
     const pendingReminders = todayReminders.filter(r => !r.is_done);
     const doneReminders = todayReminders.filter(r => r.is_done);
     
-    // Check Ramadhan
     const isRamadhan = isRamadhanToday();
     const ramadhanDays = getRamadhanDays();
     const ramadhanDayCount = ramadhanDays.length;
@@ -800,7 +844,6 @@ async function renderKunciSukses() {
             </div>
         </div>
         
-        <!-- Score Card -->
         <div class="balance-card" style="background:linear-gradient(135deg,#1e293b,#0f172a);">
             <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
                 <div>
@@ -831,7 +874,6 @@ async function renderKunciSukses() {
             ` : ''}
         </div>
         
-        <!-- Quick Stats -->
         <div class="stats-row">
             <div class="stat-card" style="cursor:default;">
                 <div class="label">📅 Hari ini</div>
@@ -843,7 +885,6 @@ async function renderKunciSukses() {
             </div>
         </div>
         
-        <!-- Settings -->
         <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
             <button class="modal-btn modal-btn-primary modal-btn-sm" style="flex:1;" onclick="toggleSedekahNotifications()">
                 ${sedekahSettings.notifications_enabled !== false ? '🔔 Notifikasi Aktif' : '🔕 Notifikasi Nonaktif'}
@@ -853,7 +894,6 @@ async function renderKunciSukses() {
             </button>
         </div>
         
-        <!-- Sedekah Types -->
         <div class="card" style="padding:12px;">
             <div class="card-title" style="margin-bottom:8px;">
                 <span>📋 Jenis Sedekah</span>
@@ -947,7 +987,6 @@ async function renderKunciSukses() {
             </div>
         </div>
         
-        <!-- Reminders Today -->
         <div class="card">
             <div class="card-title">
                 <span>⏰ Pengingat Hari Ini</span>
@@ -987,7 +1026,6 @@ async function renderKunciSukses() {
             }
         </div>
         
-        <!-- History -->
         <div class="card">
             <div class="card-title"><span>📜 Riwayat Sedekah</span></div>
             ${sedekahHistory.length === 0 ? 
@@ -1005,18 +1043,13 @@ async function renderKunciSukses() {
     
     document.getElementById('appContainer').innerHTML = html;
     
-    // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
         setTimeout(() => Notification.requestPermission(), 1000);
     }
     
-    // Generate reminders
     await generateReminders();
 }
 
-// ============================================
-// PANDUAN SEDEKAH
-// ============================================
 function openPanduanSedekah() {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
@@ -1024,7 +1057,6 @@ function openPanduanSedekah() {
         <div class="modal-content" style="max-width:500px;">
             <div class="modal-title">📖 Panduan Sedekah</div>
             <div class="modal-subtitle">Panduan lengkap tentang sedekah dalam Islam</div>
-            
             <div style="background:rgba(251,191,36,0.08);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid rgba(251,191,36,0.15);">
                 <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
                     <p style="margin-bottom:8px;">📌 <strong>Sedekah tidak mengurangi harta</strong> - Rasulullah ﷺ bersabda: <em>"Harta tidak akan berkurang karena sedekah."</em> (HR. Muslim)</p>
@@ -1033,24 +1065,6 @@ function openPanduanSedekah() {
                     <p>📌 <strong>Sedekah dilipatgandakan</strong> - <em>"Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh bulir."</em> (QS. Al-Baqarah: 261)</p>
                 </div>
             </div>
-            
-            <div style="max-height:300px;overflow-y:auto;padding:4px 0;">
-                <div style="font-weight:600;font-size:14px;color:var(--text-primary);margin-bottom:8px;">🧾 Jenis-Jenis Sedekah</div>
-                <div style="display:grid;gap:6px;font-size:13px;color:var(--text-secondary);">
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>💰</span><span><strong>Harta</strong> - Memberikan sebagian harta kepada yang membutuhkan</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>😊</span><span><strong>Senyum</strong> - Senyum kepada saudaramu adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>💬</span><span><strong>Kata Baik</strong> - Kalimat yang baik adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🤝</span><span><strong>Menolong</strong> - Membantu orang lain adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🧹</span><span><strong>Menyingkirkan Gangguan</strong> - Dari jalan adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>📢</span><span><strong>Amar Ma'ruf</strong> - Mencegah kemungkaran adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🕋</span><span><strong>Berdzikir</strong> - Tasbih, tahmid, tahlil, takbir adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>🍽️</span><span><strong>Memberi Makan</strong> - Memberikan makanan adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>📚</span><span><strong>Ilmu Bermanfaat</strong> - Mengajarkan ilmu adalah sedekah jariyah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>⚖️</span><span><strong>Berbuat Adil</strong> - Berlaku adil adalah sedekah</span></div>
-                    <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>👨‍👩‍👦</span><span><strong>Nafkah Keluarga</strong> - Memberi nafkah keluarga adalah sedekah</span></div>
-                </div>
-            </div>
-            
             <hr class="modal-divider">
             <div class="modal-button-grid">
                 <button class="modal-btn modal-btn-primary" onclick="downloadPanduanSedekah()">📑 Download PDF</button>
@@ -1068,53 +1082,33 @@ function downloadPanduanSedekah() {
         <h1 style="text-align:center;color:#1e293b;font-size:28px;margin-bottom:4px;">💰 Panduan Sedekah</h1>
         <p style="text-align:center;color:#64748b;font-size:16px;">Berdasarkan Al-Qur'an dan Hadis Sahih</p>
         <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
         <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">📌 Sedekah Tidak Mengurangi Harta</h2>
         <p style="color:#475569;font-size:15px;line-height:1.8;">Rasulullah ﷺ bersabda: <em>"Harta tidak akan berkurang karena sedekah."</em> (HR. Muslim)</p>
-        
         <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Allah Mengganti Harta yang Disedekahkan</h2>
         <p style="color:#475569;font-size:15px;line-height:1.8;">Allah berfirman: <em>"Dan apa saja yang kamu infakkan, Allah akan menggantinya dan Dia-lah Pemberi rezeki yang terbaik."</em> (QS. Saba': 39)</p>
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Doa Malaikat Setiap Pagi</h2>
-        <p style="color:#475569;font-size:15px;line-height:1.8;">Rasulullah ﷺ bersabda: <em>"Setiap pagi dua malaikat turun. Salah satunya berdoa, 'Ya Allah, berikanlah ganti kepada orang yang berinfak.' Dan yang lainnya berdoa, 'Ya Allah, berikanlah kebinasaan kepada orang yang menahan hartanya.'"</em> (HR. Bukhari dan Muslim)</p>
-        
         <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
         <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">
             Dicetak: ${new Date().toLocaleString('id-ID')}
         </div>
     `;
-    
-    html2pdf().set({
-        margin: 10,
-        filename: 'panduan_sedekah.pdf',
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4' }
-    }).from(el).save().then(() => {
-        showToast('✅ PDF berhasil diunduh!', 2000, 'success');
-    }).catch(() => {
-        showToast('❌ Gagal membuat PDF', 2000, 'error');
-    });
+    html2pdf().set({ margin: 10, filename: 'panduan_sedekah.pdf', html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save().then(() => showToast('✅ PDF berhasil diunduh!', 2000, 'success')).catch(() => showToast('❌ Gagal membuat PDF', 2000, 'error'));
 }
 
 function exportSedekahPDF() {
     const today = new Date().toISOString().split('T')[0];
     const completed = sedekahData.filter(d => d.enabled && d.completed);
     const score = getTodaySedekahScore();
-    
     const el = document.createElement('div');
     el.style.cssText = 'padding:30px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;color:#1e293b;';
     el.innerHTML = `
         <h1 style="text-align:center;color:#1e293b;font-size:28px;">🔑 Laporan Sedekah Harian</h1>
         <p style="text-align:center;color:#64748b;font-size:16px;">${formatDate(today)}</p>
         <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
         <div style="display:flex;justify-content:space-around;padding:16px;background:#f8fafc;border-radius:12px;margin:12px 0;">
             <div><strong style="color:#fbbf24;">🌟 Poin</strong><br><span style="font-size:24px;font-weight:700;">${score}</span></div>
             <div><strong style="color:#4ade80;">✅ Selesai</strong><br><span style="font-size:24px;font-weight:700;">${completed.length}</span></div>
             <div><strong style="color:#94a3b8;">📋 Total</strong><br><span style="font-size:24px;font-weight:700;">${SEDEKAH_TYPES.length}</span></div>
         </div>
-        
         <h2 style="color:#1e293b;font-size:18px;margin:16px 0 8px;">📋 Detail Sedekah</h2>
         ${SEDEKAH_TYPES.map(st => {
             const data = sedekahData.find(d => d.id === st.id) || { enabled: false, completed: false, actions: [] };
@@ -1123,45 +1117,16 @@ function exportSedekahPDF() {
             const actions = data.actions || [];
             return `
                 <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #e2e8f0;background:${isCompleted ? '#f0fdf4' : (isEnabled ? '#fffbeb' : '#f8fafc')};">
-                    <div>
-                        <span style="font-size:16px;">${st.icon}</span>
-                        <span style="font-weight:500;">${st.label}</span>
-                        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">${isEnabled ? '✅ Aktif' : '⏸️ Nonaktif'}</span>
-                    </div>
-                    <div>
-                        ${isCompleted ? 
-                            `<span style="color:#4ade80;">✅ ${actions.length} jenis · ${actions.length * st.pointsPerAction} poin</span>` : 
-                            `<span style="color:#94a3b8;">${isEnabled ? '⏳ Belum' : '⏸️'}</span>`
-                        }
-                    </div>
+                    <div><span style="font-size:16px;">${st.icon}</span><span style="font-weight:500;">${st.label}</span><span style="font-size:11px;color:#94a3b8;margin-left:8px;">${isEnabled ? '✅ Aktif' : '⏸️ Nonaktif'}</span></div>
+                    <div>${isCompleted ? `<span style="color:#4ade80;">✅ ${actions.length} jenis · ${actions.length * st.pointsPerAction} poin</span>` : `<span style="color:#94a3b8;">${isEnabled ? '⏳ Belum' : '⏸️'}</span>`}</div>
                 </div>
-                ${isCompleted && actions.length ? `
-                    <div style="padding:4px 12px 8px 40px;font-size:12px;color:#64748b;background:#fafdfa;">
-                        ${actions.map(a => {
-                            const at = ACTION_TYPES.find(t => t.id === a);
-                            return at ? `${at.icon} ${at.label}` : a;
-                        }).join(' · ')}
-                    </div>
-                ` : ''}
+                ${isCompleted && actions.length ? `<div style="padding:4px 12px 8px 40px;font-size:12px;color:#64748b;background:#fafdfa;">${actions.map(a => { const at = ACTION_TYPES.find(t => t.id === a); return at ? `${at.icon} ${at.label}` : a; }).join(' · ')}</div>` : ''}
             `;
         }).join('')}
-        
         <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        <div style="text-align:center;color:#94a3b8;font-size:12px;">
-            Dicetak: ${new Date().toLocaleString('id-ID')}
-        </div>
+        <div style="text-align:center;color:#94a3b8;font-size:12px;">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
     `;
-    
-    html2pdf().set({
-        margin: 10,
-        filename: `laporan_sedekah_${today}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4' }
-    }).from(el).save().then(() => {
-        showToast('✅ Laporan PDF berhasil diunduh!', 2000, 'success');
-    }).catch(() => {
-        showToast('❌ Gagal membuat PDF', 2000, 'error');
-    });
+    html2pdf().set({ margin: 10, filename: `laporan_sedekah_${today}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save().then(() => showToast('✅ Laporan PDF berhasil diunduh!', 2000, 'success')).catch(() => showToast('❌ Gagal membuat PDF', 2000, 'error'));
 }
 
 // ============================================
@@ -1289,6 +1254,17 @@ async function loadAllData() {
     await loadBudgets();
 }
 
+function getSpentByCategory(catId) {
+    let total = 0;
+    transactions.forEach(t => {
+        const d = new Date(t.created_at);
+        if (d.getMonth() === currentBudgetMonth && d.getFullYear() === currentBudgetYear && t.category_id === catId && t.type === 'pengeluaran') {
+            total += Number(t.amount) || 0;
+        }
+    });
+    return total;
+}
+
 // ============================================
 // RENDER HOME
 // ============================================
@@ -1323,6 +1299,7 @@ async function renderHome() {
             <div class="header-user"><div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div><div class="header-info"><div class="header-name">${escapeHtml(userName)}</div><div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}</div></div></div>
             <div class="header-actions"><button class="header-btn" id="reminderBtn">🔔${overdue > 0 ? `<span class="badge">${overdue}</span>` : ''}</button><button class="header-btn" id="openSettingsBtn">⚙️</button><button class="header-btn" id="logoutBtn" style="font-size:14px;">🚪</button></div>
         </div>
+        ${renderRunningText()}
         <div class="balance-card">
             <button class="balance-eye" id="toggleBalanceBtn">${isBalanceHidden ? '👁️‍🗨️' : '👁️'}</button>
             <div class="balance-label">Total Saldo</div>
@@ -1377,7 +1354,7 @@ async function renderHome() {
 }
 
 // ============================================
-// OTHER VIEW FUNCTIONS (Minimal untuk kompatibilitas)
+// OTHER VIEW FUNCTIONS
 // ============================================
 function getTaskStatus(t) {
     if (t.is_completed) return { label: '✅ Selesai', cls: 'done', color: '#4ade80' };
@@ -1390,6 +1367,15 @@ function getTaskStatus(t) {
     return { label: `⏳ ${diff} hari lagi`, cls: 'pending', color: '#94a3b8' };
 }
 
+function getUserEmail(userId) {
+    const m = familyMembers.find(f => f.user_id === userId);
+    return m?.users?.email || m?.users?.username || `User ${userId}`;
+}
+
+function showRemindersPopup() {
+    showToast('🔔 Lihat pengingat di menu Kunci Sukses', 2000, 'warning');
+}
+
 function openTaskModal(editId = null) {
     const isEdit = !!editId;
     const task = isEdit ? tasks.find(t => t.id === editId) : null;
@@ -1398,7 +1384,6 @@ function openTaskModal(editId = null) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${isEdit ? '✏️ Edit' : '✅ Tambah'} Tugas</div>
-            <div class="modal-subtitle">${isEdit ? 'Perbarui tugas Anda' : 'Buat tugas baru untuk dikerjakan'}</div>
             <input type="text" id="taskTitle" class="modal-input" placeholder="Judul tugas" value="${isEdit ? escapeHtml(task.title) : ''}">
             <textarea id="taskDesc" class="modal-textarea" placeholder="Deskripsi (opsional)">${isEdit ? escapeHtml(task.description||'') : ''}</textarea>
             <input type="date" id="taskDue" class="modal-input" value="${isEdit ? formatDateInput(task.due_date) : ''}">
@@ -1725,17 +1710,6 @@ async function renderBudgetPage() {
     }).join('');
     document.getElementById('prevBudgetMonth').onclick = () => { if (currentBudgetMonth === 0) { currentBudgetMonth = 11; currentBudgetYear--; } else currentBudgetMonth--; renderBudgetPage(); };
     document.getElementById('nextBudgetMonth').onclick = () => { if (currentBudgetMonth === 11) { currentBudgetMonth = 0; currentBudgetYear++; } else currentBudgetMonth++; renderBudgetPage(); };
-}
-
-function getSpentByCategory(catId) {
-    let total = 0;
-    transactions.forEach(t => {
-        const d = new Date(t.created_at);
-        if (d.getMonth() === currentBudgetMonth && d.getFullYear() === currentBudgetYear && t.category_id === catId && t.type === 'pengeluaran') {
-            total += Number(t.amount) || 0;
-        }
-    });
-    return total;
 }
 
 function openBudgetModal(editId = null) {
@@ -2101,10 +2075,6 @@ async function joinFamily(familyId) {
 function copyFamilyId() {
     if (!currentFamilyId) { showToast('❌ Tidak ada keluarga', 2000, 'error'); return; }
     navigator.clipboard.writeText(currentFamilyId).then(() => showToast('✅ ID disalin!', 2000, 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = currentFamilyId; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('✅ ID disalin!', 2000, 'success'); });
-}
-
-function showRemindersPopup() {
-    showToast('🔔 Lihat pengingat di menu Kunci Sukses', 2000, 'warning');
 }
 
 // ============================================
