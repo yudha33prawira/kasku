@@ -412,6 +412,113 @@ if ('serviceWorker' in navigator) {
         .recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
         .recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
         
+        /* Sedekah action chip */
+        .action-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            background: rgba(16,185,129,0.12);
+            color: #4ade80;
+            border: 1px solid rgba(16,185,129,0.2);
+        }
+        
+        .action-chip.selected {
+            background: rgba(16,185,129,0.2);
+            border-color: #4ade80;
+        }
+        
+        .action-chip.unselected {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .sedekah-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+        .sedekah-card:active { transform: scale(0.98); }
+        .sedekah-card.completed {
+            border-color: rgba(16,185,129,0.3);
+            background: rgba(16,185,129,0.06);
+        }
+        .sedekah-card .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .sedekah-card .left-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .sedekah-card .icon { font-size: 22px; }
+        .sedekah-card .label { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .sedekah-card .desc { font-size: 11px; color: var(--text-secondary); }
+        .sedekah-card .freq-badge {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+            background: rgba(59,130,246,0.12);
+            color: #60a5fa;
+        }
+        .sedekah-card .status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        .sedekah-card .status-badge.done { background: rgba(16,185,129,0.15); color: #4ade80; }
+        .sedekah-card .status-badge.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .sedekah-card .actions-row {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .sedekah-card .actions-row .action-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        .action-select-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 8px 0 12px;
+        }
+        .action-select-btn {
+            padding: 12px 8px;
+            border-radius: var(--radius-xs);
+            border: 2px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .action-select-btn:active { transform: scale(0.95); }
+        .action-select-btn .action-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+        .action-select-btn.selected {
+            border-color: #4ade80;
+            background: rgba(16,185,129,0.08);
+            color: #4ade80;
+        }
+        
         @media (max-width: 420px) {
             .app-container { padding: 12px 12px 20px; }
             .balance-amount { font-size: 26px; }
@@ -420,6 +527,7 @@ if ('serviceWorker' in navigator) {
             .nav-center-btn { width: 44px; height: 44px; font-size: 24px; }
             .bottom-nav { padding: 4px 6px; height: 64px; }
             .modal-content { padding: 20px 16px; }
+            .action-select-grid { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -2168,7 +2276,7 @@ async function loadSedekahData() {
     const uid = await userManager.getUserId();
     if (!uid) { sedekahData = []; sedekahSettings = {}; sedekahHistory = []; return; }
     try {
-        // Load settings
+        // Load settings (keep for other settings but remove notification toggle UI)
         const { data: settings } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
         sedekahSettings = settings || {};
         
@@ -2234,90 +2342,138 @@ async function saveSedekahData() {
     } catch(e) { console.error('Save sedekah error:', e); }
 }
 
-// Toggle sedekah type completion
-async function toggleSedekahType(typeId) {
-    const item = sedekahData.find(d => d.id === typeId);
-    if (!item) return;
+// ============================================
+// OPEN SEDEKAH ACTION MODAL (POPUP PILIHAN)
+// ============================================
+function openSedekahActionModal(typeId) {
+    const st = SEDEKAH_TYPES.find(t => t.id === typeId);
+    if (!st) return;
     
-    item.completed = !item.completed;
-    if (!item.completed) {
-        item.actions = [];
-    } else {
-        // Default action: uang
-        if (!item.actions.length) {
-            item.actions = ['uang'];
+    const current = sedekahData.find(d => d.id === typeId) || { completed: false, actions: [] };
+    const selectedActions = new Set(current.actions || []);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-title">${st.icon} ${st.label}</div>
+            <div class="modal-subtitle">${st.description}</div>
+            
+            <div style="background:rgba(251,191,36,0.06);border-radius:var(--radius-xs);padding:10px 12px;margin-bottom:12px;border:1px solid rgba(251,191,36,0.12);">
+                <div style="font-size:12px;color:var(--text-secondary);">Pilih jenis sedekah yang Anda lakukan:</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Setiap jenis mendapat <strong style="color:#fbbf24;">2 poin</strong></div>
+            </div>
+            
+            <div class="action-select-grid">
+                ${ACTION_TYPES.map(at => {
+                    const isSelected = selectedActions.has(at.id);
+                    return `
+                        <button class="action-select-btn ${isSelected ? 'selected' : ''}" data-action="${at.id}" onclick="toggleActionSelect(this, '${at.id}')">
+                            <span class="action-icon">${at.icon}</span>
+                            ${at.label}
+                            ${isSelected ? ' ✅' : ''}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+            
+            <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin:4px 0 8px;">
+                <span id="selectedCountLabel">${selectedActions.size}</span> jenis dipilih · <span id="pointsLabel">${selectedActions.size * 2}</span> poin
+            </div>
+            
+            <hr class="modal-divider">
+            
+            <div class="modal-button-grid">
+                <button id="saveSedekahActions" class="modal-btn modal-btn-primary">✅ Simpan</button>
+                <button id="closeSedekahActions" class="modal-btn modal-btn-secondary">Batal</button>
+                ${current.completed ? `<button id="resetSedekahActions" class="modal-btn modal-btn-danger">↩️ Batalkan</button>` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Store selected actions in a Set for the modal
+    const selectedSet = new Set(selectedActions);
+    
+    // Toggle function for action buttons
+    window.toggleActionSelect = function(btn, actionId) {
+        const isSelected = selectedSet.has(actionId);
+        if (isSelected) {
+            selectedSet.delete(actionId);
+            btn.classList.remove('selected');
+            btn.innerHTML = `<span class="action-icon">${ACTION_TYPES.find(a => a.id === actionId).icon}</span> ${ACTION_TYPES.find(a => a.id === actionId).label}`;
+        } else {
+            selectedSet.add(actionId);
+            btn.classList.add('selected');
+            btn.innerHTML = `<span class="action-icon">${ACTION_TYPES.find(a => a.id === actionId).icon}</span> ${ACTION_TYPES.find(a => a.id === actionId).label} ✅`;
         }
+        document.getElementById('selectedCountLabel').textContent = selectedSet.size;
+        document.getElementById('pointsLabel').textContent = selectedSet.size * 2;
+    };
+    
+    document.getElementById('saveSedekahActions').onclick = async () => {
+        const actions = Array.from(selectedSet);
+        const item = sedekahData.find(d => d.id === typeId);
+        if (item) {
+            item.completed = actions.length > 0;
+            item.actions = actions;
+        } else {
+            sedekahData.push({
+                id: typeId,
+                completed: actions.length > 0,
+                actions: actions
+            });
+        }
+        await saveSedekahData();
+        modal.remove();
+        
+        // Show toast based on actions
+        if (actions.length > 0) {
+            const totalPoints = actions.length * 2;
+            showToast(`✅ ${st.label} selesai! +${totalPoints} poin 🎉`, 2500, 'success');
+        } else {
+            showToast(`↩️ ${st.label} dibatalkan`, 2000, 'warning');
+        }
+        
+        renderKunciSukses();
+    };
+    
+    if (current.completed) {
+        document.getElementById('resetSedekahActions').onclick = async () => {
+            const item = sedekahData.find(d => d.id === typeId);
+            if (item) {
+                item.completed = false;
+                item.actions = [];
+            }
+            await saveSedekahData();
+            modal.remove();
+            showToast(`↩️ ${st.label} dibatalkan`, 2000, 'warning');
+            renderKunciSukses();
+        };
     }
     
-    await saveSedekahData();
-    renderKunciSukses();
-    checkAndSendNotification();
+    document.getElementById('closeSedekahActions').onclick = () => modal.remove();
 }
 
-// Toggle action for sedekah type
-async function toggleAction(typeId, actionId) {
-    const item = sedekahData.find(d => d.id === typeId);
-    if (!item || !item.completed) return;
-    
-    const index = item.actions.indexOf(actionId);
-    if (index > -1) {
-        item.actions.splice(index, 1);
-    } else {
-        item.actions.push(actionId);
-    }
-    
-    await saveSedekahData();
-    renderKunciSukses();
-    checkAndSendNotification();
-}
-
-// Get today's score
+// ============================================
+// GET TODAY'S SCORE
+// ============================================
 function getTodayScore() {
     let total = 0;
     sedekahData.forEach(d => {
         if (d.completed) {
-            total += d.actions.length * 2;
+            total += (d.actions || []).length * 2;
         }
     });
     return total;
 }
 
-// Get weekly score
 function getWeeklyScore() {
-    // Simple: return today's score for now
-    return getTodayScore();
+    return getTodayScore(); // simplified
 }
 
-// Get monthly score
 function getMonthlyScore() {
-    // Simple: return today's score for now
-    return getTodayScore();
-}
-
-// Check and send notification
-function checkAndSendNotification() {
-    const completedCount = sedekahData.filter(d => d.completed).length;
-    const totalTypes = SEDEKAH_TYPES.length;
-    
-    // Send notification if more than 50% completed
-    if (completedCount > totalTypes / 2) {
-        showToast(`🌟 Hebat! ${completedCount} sedekah hari ini selesai!`, 3000, 'success');
-        
-        // Request notification permission if needed
-        if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('💰 Kunci Sukses', {
-                body: `Hari ini Anda telah menyelesaikan ${completedCount} jenis sedekah!`,
-                icon: '💰'
-            });
-        }
-    }
-}
-
-// Request notification permission
-function requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
+    return getTodayScore(); // simplified
 }
 
 // ============================================
@@ -2325,7 +2481,6 @@ function requestNotificationPermission() {
 // ============================================
 async function renderKunciSukses() {
     await loadSedekahData();
-    await loadSedekahSettings();
     
     const score = getTodayScore();
     const completed = sedekahData.filter(d => d.completed).length;
@@ -2334,7 +2489,7 @@ async function renderKunciSukses() {
     
     const today = new Date().toISOString().split('T')[0];
     const todayHistory = sedekahHistory.find(h => h.date === today);
-    const streak = sedekahHistory.filter(h => h.date === today).length > 0 ? '🔥 1 hari' : 'Mulai hari ini';
+    const streak = todayHistory ? '🔥 1 hari' : 'Mulai hari ini';
     
     let html = `
         <div class="header">
@@ -2376,20 +2531,15 @@ async function renderKunciSukses() {
                 <div class="value" style="color:#fbbf24;">${completed}</div>
             </div>
             <div class="stat-card" style="cursor:default;">
-                <div class="label">📊 Minggu ini</div>
-                <div class="value" style="color:#fbbf24;">${getWeeklyScore()}</div>
+                <div class="label">📊 Total poin</div>
+                <div class="value" style="color:#fbbf24;">${score}</div>
             </div>
         </div>
         
-        <!-- Settings Toggle -->
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-            <button class="modal-btn modal-btn-primary" style="flex:1;font-size:12px;" onclick="toggleSedekahNotifications()">
-                ${sedekahSettings.notifications_enabled !== false ? '🔔 Notifikasi Aktif' : '🔕 Notifikasi Nonaktif'}
-            </button>
-            <button class="modal-btn modal-btn-success" style="flex:1;font-size:12px;" onclick="exportSedekahPDF()">
-                📑 Export PDF
-            </button>
-        </div>
+        <!-- Export Button -->
+        <button class="modal-btn modal-btn-success modal-btn-full" style="margin-bottom:12px;" onclick="exportSedekahPDF()">
+            📑 Export Laporan PDF
+        </button>
         
         <!-- Sedekah Types -->
         <div class="card" style="padding:12px;">
@@ -2402,56 +2552,44 @@ async function renderKunciSukses() {
                     const data = sedekahData.find(d => d.id === st.id) || { completed: false, actions: [] };
                     const isCompleted = data.completed;
                     const actions = data.actions || [];
-                    const freq = st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan';
+                    const actionLabels = actions.map(id => {
+                        const a = ACTION_TYPES.find(at => at.id === id);
+                        return a ? `${a.icon} ${a.label}` : id;
+                    });
+                    const actionPoints = actions.length * 2;
                     
-                    // Get frequency indicator
                     let freqColor = '#4ade80';
                     if (st.frequency === 'weekly') freqColor = '#fbbf24';
                     if (st.frequency === 'monthly') freqColor = '#f87171';
                     
                     return `
-                        <div style="background:${isCompleted ? 'rgba(16,185,129,0.08)' : 'var(--bg-card)'};border-radius:12px;padding:12px;border:1px solid ${isCompleted ? 'rgba(16,185,129,0.3)' : 'var(--border-color)'};transition:all 0.3s ease;">
-                            <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" onclick="toggleSedekahType('${st.id}')">
-                                <div style="display:flex;gap:10px;align-items:center;">
-                                    <span style="font-size:22px;">${st.icon}</span>
+                        <div class="sedekah-card ${isCompleted ? 'completed' : ''}" onclick="openSedekahActionModal('${st.id}')">
+                            <div class="top-row">
+                                <div class="left-section">
+                                    <span class="icon">${st.icon}</span>
                                     <div>
-                                        <div style="font-weight:600;font-size:14px;color:var(--text-primary);">${st.label}</div>
-                                        <div style="font-size:11px;color:var(--text-secondary);">${st.description}</div>
-                                        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">
-                                            <span style="background:${freqColor}22;padding:2px 8px;border-radius:10px;color:${freqColor};font-weight:500;">${freq}</span>
+                                        <div class="label">${st.label}</div>
+                                        <div class="desc">${st.description}</div>
+                                        <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;">
+                                            <span class="freq-badge" style="background:${freqColor}22;color:${freqColor};">${st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan'}</span>
+                                            ${isCompleted ? `<span class="freq-badge" style="background:rgba(16,185,129,0.15);color:#4ade80;">✅ Selesai</span>` : `<span class="freq-badge" style="background:rgba(148,163,184,0.15);color:#94a3b8;">⏳ Belum</span>`}
                                         </div>
                                     </div>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:8px;">
-                                    ${isCompleted ? `<span style="font-size:11px;color:#4ade80;font-weight:600;">✅ Selesai</span>` : `<span style="font-size:11px;color:var(--text-muted);">⏳ Belum</span>`}
-                                    <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${isCompleted ? '#4ade80' : 'var(--border-color)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        ${isCompleted ? '<span style="color:#4ade80;">✓</span>' : ''}
-                                    </div>
+                                <div style="text-align:right;">
+                                    ${isCompleted ? `<div style="font-size:18px;font-weight:700;color:#4ade80;">+${actionPoints}</div>` : `<div style="font-size:14px;color:var(--text-muted);">0</div>`}
+                                    <div style="font-size:10px;color:var(--text-secondary);">poin</div>
                                 </div>
                             </div>
-                            
-                            ${isCompleted ? `
-                                <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-color);">
-                                    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px;">Pilih jenis sedekah (2 poin masing-masing):</div>
-                                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                                        ${ACTION_TYPES.map(at => {
-                                            const isActive = actions.includes(at.id);
-                                            return `
-                                                <button onclick="event.stopPropagation();toggleAction('${st.id}','${at.id}')" 
-                                                    style="background:${isActive ? 'rgba(16,185,129,0.15)' : 'var(--bg-card)'};
-                                                           border:1px solid ${isActive ? '#4ade80' : 'var(--border-color)'};
-                                                           border-radius:20px;padding:4px 12px;font-size:11px;
-                                                           cursor:pointer;color:${isActive ? '#4ade80' : 'var(--text-secondary)'};
-                                                           transition:all 0.2s ease;display:flex;align-items:center;gap:4px;">
-                                                    ${at.icon} ${at.label}
-                                                    ${isActive ? ' ✓' : ''}
-                                                </button>
-                                            `;
-                                        }).join('')}
-                                    </div>
-                                    <div style="margin-top:6px;font-size:11px;color:var(--text-secondary);">
-                                        Poin: ${actions.length * 2} | ${actions.length} jenis
-                                    </div>
+                            ${isCompleted && actions.length > 0 ? `
+                                <div class="actions-row">
+                                    <span class="action-label">📌 ${actions.length} jenis:</span>
+                                    ${actionLabels.map(label => `<span class="action-chip selected">${label}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                            ${!isCompleted ? `
+                                <div class="actions-row">
+                                    <span class="action-label" style="color:var(--text-muted);">Klik untuk memilih jenis sedekah</span>
                                 </div>
                             ` : ''}
                         </div>
@@ -2477,43 +2615,6 @@ async function renderKunciSukses() {
     `;
     
     document.getElementById('appContainer').innerHTML = html;
-    
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-        setTimeout(requestNotificationPermission, 1000);
-    }
-}
-
-// ============================================
-// SEDEKAH SETTINGS
-// ============================================
-async function loadSedekahSettings() {
-    const uid = await userManager.getUserId();
-    if (!uid) return;
-    try {
-        const { data } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
-        sedekahSettings = data || { notifications_enabled: true };
-    } catch(e) { 
-        sedekahSettings = { notifications_enabled: true }; 
-    }
-}
-
-async function toggleSedekahNotifications() {
-    const uid = await userManager.getUserId();
-    if (!uid) return;
-    const current = sedekahSettings.notifications_enabled !== false;
-    const newVal = !current;
-    try {
-        const { data: existing } = await sb.from('sedekah_settings').select('id').eq('user_id', uid).maybeSingle();
-        if (existing) {
-            await sb.from('sedekah_settings').update({ notifications_enabled: newVal }).eq('id', existing.id);
-        } else {
-            await sb.from('sedekah_settings').insert({ user_id: uid, notifications_enabled: newVal });
-        }
-        sedekahSettings.notifications_enabled = newVal;
-        showToast(newVal ? '🔔 Notifikasi diaktifkan' : '🔕 Notifikasi dinonaktifkan', 2000, 'success');
-        renderKunciSukses();
-    } catch(e) { showToast('❌ Gagal update', 2000, 'error'); }
 }
 
 // ============================================
@@ -2688,6 +2789,10 @@ function exportSedekahPDF() {
             const data = sedekahData.find(d => d.id === st.id) || { completed: false, actions: [] };
             const isCompleted = data.completed;
             const actions = data.actions || [];
+            const actionLabels = actions.map(id => {
+                const a = ACTION_TYPES.find(at => at.id === id);
+                return a ? `${a.icon} ${a.label}` : id;
+            });
             return `
                 <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #e2e8f0;background:${isCompleted ? '#f0fdf4' : '#f8fafc'};">
                     <div>
@@ -2704,10 +2809,7 @@ function exportSedekahPDF() {
                 </div>
                 ${isCompleted && actions.length ? `
                     <div style="padding:4px 12px 8px 40px;font-size:12px;color:#64748b;background:#fafdfa;">
-                        ${actions.map(a => {
-                            const at = ACTION_TYPES.find(t => t.id === a);
-                            return at ? `${at.icon} ${at.label}` : a;
-                        }).join(' · ')}
+                        ${actionLabels.join(' · ')}
                     </div>
                 ` : ''}
             `;
