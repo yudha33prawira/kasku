@@ -1,539 +1,499 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
 <script>
-// Register Service Worker
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js');
     });
 }
 </script>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <title>Keuangan Keluarga - Premium</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: rgba(255,255,255,0.06);
-            --bg-card-hover: rgba(255,255,255,0.10);
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border-color: rgba(255,255,255,0.06);
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
-            --radius: 20px;
-            --radius-sm: 12px;
-            --radius-xs: 8px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            --gradient-success: linear-gradient(135deg, #10b981, #059669);
-            --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
-            --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
-            --nav-height: 70px;
-            --danger-color: #f87171;
-            --warning-color: #fbbf24;
-            --success-color: #4ade80;
-        }
-        
-        body { background: var(--bg-primary); font-family: 'Inter', -apple-system, sans-serif; color: var(--text-primary); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); transition: background 0.3s ease; }
-        
-        body.light {
-            --bg-primary: #f1f5f9;
-            --bg-secondary: #ffffff;
-            --bg-card: rgba(0,0,0,0.04);
-            --bg-card-hover: rgba(0,0,0,0.08);
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --border-color: rgba(0,0,0,0.06);
-            --shadow: 0 8px 32px rgba(0,0,0,0.08);
-        }
-        
-        body.light .balance-card,
-        body.light .balance-card * { color: #ffffff !important; }
-        body.light .balance-card .balance-label,
-        body.light .balance-card .stat-label { color: rgba(255,255,255,0.7) !important; }
-        body.light .balance-card .balance-amount { color: #ffffff !important; }
-        body.light .balance-card .stat-value.income { color: #4ade80 !important; }
-        body.light .balance-card .stat-value.expense { color: #f87171 !important; }
-        body.light .balance-card .balance-eye { color: #ffffff !important; background: rgba(255,255,255,0.1) !important; }
-        
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
-        
-        .loading-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.6s ease; }
-        .loading-overlay.hidden { opacity: 0; pointer-events: none; }
-        .loading-logo { font-size: 64px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite; }
-        .loading-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .loading-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; }
-        .loading-bar { width: 200px; height: 4px; background: var(--bg-card); border-radius: 4px; overflow: hidden; }
-        .loading-bar-fill { height: 100%; background: var(--gradient-primary); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; background-size: 200% 100%; }
-        .loading-percent { color: var(--text-muted); font-size: 12px; margin-top: 12px; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        
-        .app-container { max-width: 420px; margin: 0 auto; padding: 16px 16px 20px; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-card); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 16px; }
-        .header-user { display: flex; align-items: center; gap: 10px; }
-        .header-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
-        .header-info { line-height: 1.3; }
-        .header-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-        .header-code { font-size: 11px; color: var(--text-secondary); }
-        .header-actions { display: flex; gap: 8px; align-items: center; }
-        .header-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-secondary); font-size: 16px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; position: relative; }
-        .header-btn:active { transform: scale(0.92); }
-        .header-btn .badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 9px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        
-        .running-text-container { border-radius: var(--radius-sm); padding: 10px 16px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; transition: all 0.3s ease; }
-        .running-text-container.danger { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .running-text-container.warning { background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.15); }
-        .running-text { display: inline-block; animation: scrollText 25s linear infinite; font-size: 12px; font-weight: 500; }
-        .running-text .text-danger { color: #f87171; font-weight: 600; }
-        .running-text .text-warning { color: #fbbf24; font-weight: 500; }
-        .running-text span { margin-right: 30px; }
-        @keyframes scrollText { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        
-        .balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; color: #ffffff; }
-        .balance-card::before { content: ''; position: absolute; top: -50%; right: -30%; width: 60%; height: 200%; background: radial-gradient(circle, rgba(59,130,246,0.10), transparent 70%); pointer-events: none; }
-        .balance-label { font-size: 12px; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
-        .balance-amount { font-size: 32px; font-weight: 800; margin: 6px 0; letter-spacing: -0.5px; color: #ffffff; }
-        .balance-stats { display: flex; gap: 24px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1; }
-        .stat-item { flex: 1; }
-        .stat-label { font-size: 11px; color: rgba(255,255,255,0.6); }
-        .stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; color: #ffffff; }
-        .stat-value.income { color: #4ade80; }
-        .stat-value.expense { color: #f87171; }
-        .balance-eye { position: absolute; right: 16px; top: 16px; background: rgba(255,255,255,0.08); border: none; border-radius: 30px; padding: 4px 12px; color: #ffffff; font-size: 12px; cursor: pointer; z-index: 2; }
-        
-        .card { background: var(--bg-card); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 12px; border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; color: var(--text-primary); }
-        .card:active { transform: scale(0.98); }
-        .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); }
-        .card-title .badge-count { font-size: 11px; font-weight: 500; color: var(--text-secondary); background: var(--bg-card); padding: 2px 10px; border-radius: 20px; }
-        
-        .task-preview { display: flex; flex-direction: column; gap: 6px; }
-        .task-preview-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; border-left: 3px solid var(--text-muted); color: var(--text-primary); }
-        .task-preview-item:active { transform: scale(0.98); }
-        .task-preview-item .icon { font-size: 18px; }
-        .task-preview-item .info { flex: 1; }
-        .task-preview-item .info .title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-        .task-preview-item .info .date { font-size: 11px; color: var(--text-secondary); }
-        .task-preview-item .status { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
-        .task-preview-item .status.danger { background: rgba(239,68,68,0.15); color: #f87171; }
-        .task-preview-item .status.warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
-        .task-preview-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
-        .task-preview-item .status.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
-        
-        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-        .stat-card { background: var(--bg-card); border-radius: var(--radius-sm); padding: 14px; text-align: center; border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; color: var(--text-primary); }
-        .stat-card:active { transform: scale(0.96); }
-        .stat-card .label { font-size: 11px; color: var(--text-secondary); }
-        .stat-card .value { font-size: 18px; font-weight: 700; margin-top: 2px; color: var(--text-primary); }
-        .stat-card .value.income { color: #10b981; }
-        .stat-card .value.expense { color: #ef4444; }
-        
-        .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); color: var(--text-primary); }
-        .tx-item:last-child { border-bottom: none; }
-        .tx-item:active { opacity: 0.7; }
-        .tx-item .left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-        .tx-item .left .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-        .tx-item .left .desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
-        .tx-item .left .meta { font-size: 11px; color: var(--text-secondary); }
-        .tx-item .amount { font-weight: 600; font-size: 14px; flex-shrink: 0; }
-        .tx-item .amount.income { color: #10b981; }
-        .tx-item .amount.expense { color: #ef4444; }
-        .tx-item.task-item { border-left: 3px solid var(--text-muted); padding-left: 12px; }
-        
-        .family-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
-        .family-badge.owner { background: rgba(139,92,246,0.2); color: #a78bfa; }
-        .family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
-        
-        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); color: var(--text-primary); }
-        .category-item:last-child { border-bottom: none; }
-        .category-item:active { opacity: 0.7; }
-        .category-item .left { display: flex; align-items: center; gap: 10px; }
-        .category-item .left .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); flex-shrink: 0; }
-        .category-item .left .name { font-weight: 500; font-size: 14px; color: var(--text-primary); }
-        .category-item .left .type-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); }
-        
-        .debt-group { padding: 14px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: var(--transition); color: var(--text-primary); }
-        .debt-group:active { transform: scale(0.98); }
-        .debt-group .header { display: flex; justify-content: space-between; align-items: center; padding: 0; background: none; border: none; }
-        .debt-group .header .name { font-weight: 600; font-size: 15px; color: var(--text-primary); }
-        .debt-group .header .total { font-weight: 700; font-size: 15px; color: var(--text-primary); }
-        .debt-group .header .total.income { color: #10b981; }
-        .debt-group .header .total.expense { color: #ef4444; }
-        .debt-group .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-        .debt-group .sub .wa-badge { color: #25D366; }
-        .debt-group-item { padding: 10px 0; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
-        
-        .bottom-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; z-index: 100; height: var(--nav-height); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: var(--radius-sm); transition: var(--transition); flex: 1; position: relative; min-width: 0; }
-        .nav-item .nav-icon { font-size: 20px; transition: var(--transition); }
-        .nav-item .nav-label { font-size: 9px; font-weight: 500; color: inherit; transition: var(--transition); }
-        .nav-item:active { transform: scale(0.92); }
-        .nav-item.active { color: #3b82f6; }
-        .nav-item.active .nav-icon { transform: translateY(-2px); }
-        .nav-item .nav-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 8px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
-        
-        .nav-center { flex: 0 0 auto; margin-top: -20px; }
-        .nav-center-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--gradient-primary); border: none; color: white; font-size: 28px; font-weight: 300; cursor: pointer; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); transition: var(--transition); display: flex; align-items: center; justify-content: center; }
-        .nav-center-btn:active { transform: scale(0.92); }
-        
-        #moreMenuPopup { position: fixed; bottom: calc(var(--nav-height) + 20px); left: 50%; transform: translateX(-50%) scale(0.9); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); padding: 12px; z-index: 99; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-        #moreMenuPopup.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
-        .menu-popup-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border: none; border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; transition: var(--transition); font-size: 12px; font-weight: 500; }
-        .menu-popup-item:active { transform: scale(0.95); }
-        .menu-popup-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
-        .menu-popup-item .icon { font-size: 24px; }
-        
-        /* ============================================
-           PREMIUM MODAL
-           ============================================ */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(16px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
-            padding: 20px;
-            animation: modalFadeIn 0.3s ease-out;
-        }
-        @keyframes modalFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .modal-content {
-            background: var(--bg-secondary);
-            border-radius: var(--radius);
-            padding: 28px 24px;
-            width: 100%;
-            max-width: 380px;
-            max-height: 85vh;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            color: var(--text-primary);
-            animation: modalSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        @keyframes modalSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.96);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-        
-        .modal-content::-webkit-scrollbar { width: 3px; }
-        .modal-content::-webkit-scrollbar-track { background: transparent; }
-        .modal-content::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 20px;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.3px;
-        }
-        
-        .modal-subtitle {
-            text-align: center;
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-top: -12px;
-            margin-bottom: 16px;
-        }
-        
-        .modal-input, .modal-select, .modal-textarea {
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border: 1.5px solid var(--border-color);
-            border-radius: var(--radius-sm);
-            background: var(--bg-card);
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: var(--transition);
-            font-family: inherit;
-        }
-        .modal-input:focus, .modal-select:focus, .modal-textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-        }
-        .modal-input::placeholder, .modal-select::placeholder, .modal-textarea::placeholder {
-            color: var(--text-muted);
-        }
-        .modal-textarea { min-height: 80px; resize: vertical; }
-        .modal-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
-        
-        .modal-button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 16px;
-        }
-        .modal-btn {
-            padding: 12px 16px;
-            border: none;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: var(--transition);
-            text-align: center;
-            font-family: inherit;
-        }
-        .modal-btn:active { transform: scale(0.96); }
-        .modal-btn-full { grid-column: span 2; }
-        .modal-btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
-        .modal-btn-primary:hover { box-shadow: 0 4px 20px rgba(59,130,246,0.4); transform: translateY(-1px); }
-        .modal-btn-secondary { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); }
-        .modal-btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
-        .modal-btn-danger { background: var(--gradient-danger); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
-        .modal-btn-danger:hover { box-shadow: 0 4px 20px rgba(239,68,68,0.4); transform: translateY(-1px); }
-        .modal-btn-success { background: var(--gradient-success); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-        .modal-btn-success:hover { box-shadow: 0 4px 20px rgba(16,185,129,0.4); transform: translateY(-1px); }
-        .modal-btn-warning { background: var(--gradient-warning); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
-        .modal-btn-warning:hover { box-shadow: 0 4px 20px rgba(245,158,11,0.4); transform: translateY(-1px); }
-        .modal-btn-wa { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37,211,102,0.3); }
-        .modal-btn-wa:hover { box-shadow: 0 4px 20px rgba(37,211,102,0.4); transform: translateY(-1px); }
-        
-        .modal-divider {
-            border: none;
-            border-top: 1px solid var(--border-color);
-            margin: 16px 0;
-        }
-        
-        .modal-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .modal-badge.success { background: rgba(16,185,129,0.15); color: #4ade80; }
-        .modal-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
-        .modal-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .modal-badge.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        
-        .modal-detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .modal-detail-row:last-child { border-bottom: none; }
-        .modal-detail-label { color: var(--text-secondary); font-size: 13px; }
-        .modal-detail-value { color: var(--text-primary); font-weight: 500; font-size: 13px; }
-        
-        .modal-proof-img {
-            max-width: 100%;
-            max-height: 180px;
-            border-radius: var(--radius-xs);
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .modal-proof-img:hover { opacity: 0.9; }
-        
-        .modal-upload-area {
-            border: 2px dashed var(--border-color);
-            border-radius: var(--radius-sm);
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: var(--transition);
-            background: var(--bg-card);
-        }
-        .modal-upload-area:hover { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
-        .modal-upload-area .icon { font-size: 36px; display: block; margin-bottom: 4px; }
-        .modal-upload-area .text { font-size: 13px; color: var(--text-secondary); }
-        .modal-upload-area .hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        
-        .toast { position: fixed; bottom: calc(var(--nav-height) + 30px); left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 300; box-shadow: var(--shadow); border: 1px solid var(--border-color); animation: toastIn 0.4s ease-out; max-width: 90%; text-align: center; }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
-        .toast.success { border-color: #4ade80; }
-        .toast.error { border-color: #f87171; }
-        .toast.warning { border-color: #fbbf24; }
-        
-        .empty-state { text-align: center; padding: 30px 20px; color: var(--text-secondary); }
-        .empty-state .icon { font-size: 48px; margin-bottom: 8px; }
-        .empty-state .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-        .empty-state .desc { font-size: 13px; margin-top: 4px; color: var(--text-secondary); }
-        
-        .budget-item { padding: 14px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: var(--transition); color: var(--text-primary); }
-        .budget-item:active { transform: scale(0.98); }
-        .budget-item .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 0; background: none; border: none; }
-        .budget-item .header .name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
-        .budget-item .header .status { font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 20px; }
-        .budget-item .progress { height: 4px; background: var(--bg-card); border-radius: 4px; overflow: hidden; margin-top: 8px; }
-        .budget-item .progress .fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-        .budget-item .amounts { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-        
-        .filter { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
-        .filter-btn { padding: 8px 16px; border: none; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; transition: var(--transition); }
-        .filter-btn.active { background: var(--gradient-primary); color: white; }
-        .filter-btn:active { transform: scale(0.95); }
-        
-        .password-wrapper { position: relative; }
-        .password-wrapper input { padding-right: 50px; }
-        .toggle-password { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; color: var(--text-secondary); }
-        
-        .recurring-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-        .recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
-        .recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
-        
-        /* Sedekah action chip */
-        .action-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 500;
-            background: rgba(16,185,129,0.12);
-            color: #4ade80;
-            border: 1px solid rgba(16,185,129,0.2);
-        }
-        
-        .action-chip.selected {
-            background: rgba(16,185,129,0.2);
-            border-color: #4ade80;
-        }
-        
-        .action-chip.unselected {
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            border-color: var(--border-color);
-        }
-        
-        .sedekah-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-sm);
-            padding: 14px 16px;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            margin-bottom: 8px;
-        }
-        .sedekah-card:active { transform: scale(0.98); }
-        .sedekah-card.completed {
-            border-color: rgba(16,185,129,0.3);
-            background: rgba(16,185,129,0.06);
-        }
-        .sedekah-card .top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .sedekah-card .left-section {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .sedekah-card .icon { font-size: 22px; }
-        .sedekah-card .label { font-weight: 600; font-size: 14px; color: var(--text-primary); }
-        .sedekah-card .desc { font-size: 11px; color: var(--text-secondary); }
-        .sedekah-card .freq-badge {
-            font-size: 9px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 500;
-            background: rgba(59,130,246,0.12);
-            color: #60a5fa;
-        }
-        .sedekah-card .status-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
-        .sedekah-card .status-badge.done { background: rgba(16,185,129,0.15); color: #4ade80; }
-        .sedekah-card .status-badge.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
-        .sedekah-card .actions-row {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .sedekah-card .actions-row .action-label {
-            font-size: 10px;
-            color: var(--text-secondary);
-        }
-        
-        .action-select-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin: 8px 0 12px;
-        }
-        .action-select-btn {
-            padding: 12px 8px;
-            border-radius: var(--radius-xs);
-            border: 2px solid var(--border-color);
-            background: var(--bg-card);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .action-select-btn:active { transform: scale(0.95); }
-        .action-select-btn .action-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-        .action-select-btn.selected {
-            border-color: #4ade80;
-            background: rgba(16,185,129,0.08);
-            color: #4ade80;
-        }
-        
-        @media (max-width: 420px) {
-            .app-container { padding: 12px 12px 20px; }
-            .balance-amount { font-size: 26px; }
-            .header-name { font-size: 13px; }
-            .nav-item .nav-label { font-size: 8px; }
-            .nav-center-btn { width: 44px; height: 44px; font-size: 24px; }
-            .bottom-nav { padding: 4px 6px; height: 64px; }
-            .modal-content { padding: 20px 16px; }
-            .action-select-grid { grid-template-columns: 1fr 1fr; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Keuangan Keluarga - Premium</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: rgba(255,255,255,0.06);
+    --bg-card-hover: rgba(255,255,255,0.10);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: rgba(255,255,255,0.06);
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    --gradient-success: linear-gradient(135deg, #10b981, #059669);
+    --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
+    --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
+    --nav-height: 70px;
+    --danger-color: #f87171;
+    --warning-color: #fbbf24;
+    --success-color: #4ade80;
+}
+body { background: var(--bg-primary); font-family: 'Inter', -apple-system, sans-serif; color: var(--text-primary); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); transition: background 0.3s ease; }
+body.light {
+    --bg-primary: #f1f5f9;
+    --bg-secondary: #ffffff;
+    --bg-card: rgba(0,0,0,0.04);
+    --bg-card-hover: rgba(0,0,0,0.08);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: rgba(0,0,0,0.06);
+    --shadow: 0 8px 32px rgba(0,0,0,0.08);
+}
+body.light .balance-card,
+body.light .balance-card * { color: #ffffff !important; }
+body.light .balance-card .balance-label,
+body.light .balance-card .stat-label { color: rgba(255,255,255,0.7) !important; }
+body.light .balance-card .balance-amount { color: #ffffff !important; }
+body.light .balance-card .stat-value.income { color: #4ade80 !important; }
+body.light .balance-card .stat-value.expense { color: #f87171 !important; }
+body.light .balance-card .balance-eye { color: #ffffff !important; background: rgba(255,255,255,0.1) !important; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+.loading-overlay { position: fixed; inset: 0; background: var(--bg-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.6s ease; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.loading-logo { font-size: 64px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite; }
+.loading-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.loading-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 30px; }
+.loading-bar { width: 200px; height: 4px; background: var(--bg-card); border-radius: 4px; overflow: hidden; }
+.loading-bar-fill { height: 100%; background: var(--gradient-primary); border-radius: 4px; animation: shimmer 1.5s ease-in-out infinite; background-size: 200% 100%; }
+.loading-percent { color: var(--text-muted); font-size: 12px; margin-top: 12px; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.app-container { max-width: 420px; margin: 0 auto; padding: 16px 16px 20px; }
+.header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-card); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); margin-bottom: 16px; }
+.header-user { display: flex; align-items: center; gap: 10px; }
+.header-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gradient-primary); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
+.header-info { line-height: 1.3; }
+.header-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.header-code { font-size: 11px; color: var(--text-secondary); }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.header-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--bg-card); color: var(--text-secondary); font-size: 16px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; position: relative; }
+.header-btn:active { transform: scale(0.92); }
+.header-btn .badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 9px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.running-text-container { border-radius: var(--radius-sm); padding: 10px 16px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; transition: all 0.3s ease; }
+.running-text-container.danger { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); }
+.running-text-container.warning { background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.15); }
+.running-text { display: inline-block; animation: scrollText 25s linear infinite; font-size: 12px; font-weight: 500; }
+.running-text .text-danger { color: #f87171; font-weight: 600; }
+.running-text .text-warning { color: #fbbf24; font-weight: 500; }
+.running-text span { margin-right: 30px; }
+@keyframes scrollText { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+.balance-card { background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.05); position: relative; overflow: hidden; color: #ffffff; }
+.balance-card::before { content: ''; position: absolute; top: -50%; right: -30%; width: 60%; height: 200%; background: radial-gradient(circle, rgba(59,130,246,0.10), transparent 70%); pointer-events: none; }
+.balance-label { font-size: 12px; color: rgba(255,255,255,0.7); letter-spacing: 0.5px; }
+.balance-amount { font-size: 32px; font-weight: 800; margin: 6px 0; letter-spacing: -0.5px; color: #ffffff; }
+.balance-stats { display: flex; gap: 24px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1; }
+.stat-item { flex: 1; }
+.stat-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+.stat-value { font-size: 16px; font-weight: 700; margin-top: 2px; color: #ffffff; }
+.stat-value.income { color: #4ade80; }
+.stat-value.expense { color: #f87171; }
+.balance-eye { position: absolute; right: 16px; top: 16px; background: rgba(255,255,255,0.08); border: none; border-radius: 30px; padding: 4px 12px; color: #ffffff; font-size: 12px; cursor: pointer; z-index: 2; }
+.card { background: var(--bg-card); backdrop-filter: blur(10px); border-radius: var(--radius); padding: 18px 16px; margin-bottom: 12px; border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; color: var(--text-primary); }
+.card:active { transform: scale(0.98); }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); }
+.card-title .badge-count { font-size: 11px; font-weight: 500; color: var(--text-secondary); background: var(--bg-card); padding: 2px 10px; border-radius: 20px; }
+.task-preview { display: flex; flex-direction: column; gap: 6px; }
+.task-preview-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; border-left: 3px solid var(--text-muted); color: var(--text-primary); }
+.task-preview-item:active { transform: scale(0.98); }
+.task-preview-item .icon { font-size: 18px; }
+.task-preview-item .info { flex: 1; }
+.task-preview-item .info .title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.task-preview-item .info .date { font-size: 11px; color: var(--text-secondary); }
+.task-preview-item .status { font-size: 11px; padding: 2px 10px; border-radius: 20px; font-weight: 500; }
+.task-preview-item .status.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+.task-preview-item .status.warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.task-preview-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
+.task-preview-item .status.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-card { background: var(--bg-card); border-radius: var(--radius-sm); padding: 14px; text-align: center; border: 1px solid var(--border-color); transition: var(--transition); cursor: pointer; color: var(--text-primary); }
+.stat-card:active { transform: scale(0.96); }
+.stat-card .label { font-size: 11px; color: var(--text-secondary); }
+.stat-card .value { font-size: 18px; font-weight: 700; margin-top: 2px; color: var(--text-primary); }
+.stat-card .value.income { color: #10b981; }
+.stat-card .value.expense { color: #ef4444; }
+.tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); color: var(--text-primary); }
+.tx-item:last-child { border-bottom: none; }
+.tx-item:active { opacity: 0.7; }
+.tx-item .left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.tx-item .left .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tx-item .left .desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
+.tx-item .left .meta { font-size: 11px; color: var(--text-secondary); }
+.tx-item .amount { font-weight: 600; font-size: 14px; flex-shrink: 0; }
+.tx-item .amount.income { color: #10b981; }
+.tx-item .amount.expense { color: #ef4444; }
+.tx-item.task-item { border-left: 3px solid var(--text-muted); padding-left: 12px; }
+.family-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.family-badge.owner { background: rgba(139,92,246,0.2); color: #a78bfa; }
+.family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.category-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); color: var(--text-primary); }
+.category-item:last-child { border-bottom: none; }
+.category-item:active { opacity: 0.7; }
+.category-item .left { display: flex; align-items: center; gap: 10px; }
+.category-item .left .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); flex-shrink: 0; }
+.category-item .left .name { font-weight: 500; font-size: 14px; color: var(--text-primary); }
+.category-item .left .type-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); }
+.debt-group { padding: 14px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: var(--transition); color: var(--text-primary); }
+.debt-group:active { transform: scale(0.98); }
+.debt-group .header { display: flex; justify-content: space-between; align-items: center; padding: 0; background: none; border: none; }
+.debt-group .header .name { font-weight: 600; font-size: 15px; color: var(--text-primary); }
+.debt-group .header .total { font-weight: 700; font-size: 15px; color: var(--text-primary); }
+.debt-group .header .total.income { color: #10b981; }
+.debt-group .header .total.expense { color: #ef4444; }
+.debt-group .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.debt-group .sub .wa-badge { color: #25D366; }
+.debt-group-item { padding: 10px 0; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+.bottom-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; z-index: 100; height: var(--nav-height); }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 10px; border-radius: var(--radius-sm); transition: var(--transition); flex: 1; position: relative; min-width: 0; }
+.nav-item .nav-icon { font-size: 20px; transition: var(--transition); }
+.nav-item .nav-label { font-size: 9px; font-weight: 500; color: inherit; transition: var(--transition); }
+.nav-item:active { transform: scale(0.92); }
+.nav-item.active { color: #3b82f6; }
+.nav-item.active .nav-icon { transform: translateY(-2px); }
+.nav-item .nav-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 8px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 20px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.nav-center { flex: 0 0 auto; margin-top: -20px; }
+.nav-center-btn { width: 50px; height: 50px; border-radius: 50%; background: var(--gradient-primary); border: none; color: white; font-size: 28px; font-weight: 300; cursor: pointer; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); transition: var(--transition); display: flex; align-items: center; justify-content: center; }
+.nav-center-btn:active { transform: scale(0.92); }
+#moreMenuPopup { position: fixed; bottom: calc(var(--nav-height) + 20px); left: 50%; transform: translateX(-50%) scale(0.9); max-width: 420px; width: calc(100% - 32px); background: var(--bg-secondary); backdrop-filter: blur(20px); border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); padding: 12px; z-index: 99; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+#moreMenuPopup.open { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+.menu-popup-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border: none; border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; transition: var(--transition); font-size: 12px; font-weight: 500; }
+.menu-popup-item:active { transform: scale(0.95); }
+.menu-popup-item:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.menu-popup-item .icon { font-size: 24px; }
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(16px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+    animation: modalFadeIn 0.3s ease-out;
+}
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    color: var(--text-primary);
+    animation: modalSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+.modal-content::-webkit-scrollbar { width: 3px; }
+.modal-content::-webkit-scrollbar-track { background: transparent; }
+.modal-content::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 20px;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.3px;
+}
+.modal-subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: -12px;
+    margin-bottom: 16px;
+}
+.modal-input, .modal-select, .modal-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.modal-input:focus, .modal-select:focus, .modal-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+.modal-input::placeholder, .modal-select::placeholder, .modal-textarea::placeholder {
+    color: var(--text-muted);
+}
+.modal-textarea { min-height: 80px; resize: vertical; }
+.modal-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+.modal-button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+}
+.modal-btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    font-family: inherit;
+}
+.modal-btn:active { transform: scale(0.96); }
+.modal-btn-full { grid-column: span 2; }
+.modal-btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.modal-btn-primary:hover { box-shadow: 0 4px 20px rgba(59,130,246,0.4); transform: translateY(-1px); }
+.modal-btn-secondary { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-color); }
+.modal-btn-secondary:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+.modal-btn-danger { background: var(--gradient-danger); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+.modal-btn-danger:hover { box-shadow: 0 4px 20px rgba(239,68,68,0.4); transform: translateY(-1px); }
+.modal-btn-success { background: var(--gradient-success); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+.modal-btn-success:hover { box-shadow: 0 4px 20px rgba(16,185,129,0.4); transform: translateY(-1px); }
+.modal-btn-warning { background: var(--gradient-warning); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+.modal-btn-warning:hover { box-shadow: 0 4px 20px rgba(245,158,11,0.4); transform: translateY(-1px); }
+.modal-btn-wa { background: #25D366; color: white; box-shadow: 0 4px 12px rgba(37,211,102,0.3); }
+.modal-btn-wa:hover { box-shadow: 0 4px 20px rgba(37,211,102,0.4); transform: translateY(-1px); }
+.modal-divider { border: none; border-top: 1px solid var(--border-color); margin: 16px 0; }
+.modal-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.modal-badge.success { background: rgba(16,185,129,0.15); color: #4ade80; }
+.modal-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+.modal-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.modal-badge.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.modal-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-detail-row:last-child { border-bottom: none; }
+.modal-detail-label { color: var(--text-secondary); font-size: 13px; }
+.modal-detail-value { color: var(--text-primary); font-weight: 500; font-size: 13px; }
+.modal-proof-img {
+    max-width: 100%;
+    max-height: 180px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.modal-proof-img:hover { opacity: 0.9; }
+.modal-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--bg-card);
+}
+.modal-upload-area:hover { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
+.modal-upload-area .icon { font-size: 36px; display: block; margin-bottom: 4px; }
+.modal-upload-area .text { font-size: 13px; color: var(--text-secondary); }
+.modal-upload-area .hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.toast { position: fixed; bottom: calc(var(--nav-height) + 30px); left: 50%; transform: translateX(-50%); background: var(--bg-secondary); color: var(--text-primary); padding: 14px 28px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; z-index: 300; box-shadow: var(--shadow); border: 1px solid var(--border-color); animation: toastIn 0.4s ease-out; max-width: 90%; text-align: center; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
+.toast.success { border-color: #4ade80; }
+.toast.error { border-color: #f87171; }
+.toast.warning { border-color: #fbbf24; }
+.empty-state { text-align: center; padding: 30px 20px; color: var(--text-secondary); }
+.empty-state .icon { font-size: 48px; margin-bottom: 8px; }
+.empty-state .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.empty-state .desc { font-size: 13px; margin-top: 4px; color: var(--text-secondary); }
+.budget-item { padding: 14px 12px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-bottom: 8px; cursor: pointer; transition: var(--transition); color: var(--text-primary); }
+.budget-item:active { transform: scale(0.98); }
+.budget-item .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 0; background: none; border: none; }
+.budget-item .header .name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.budget-item .header .status { font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 20px; }
+.budget-item .progress { height: 4px; background: var(--bg-card); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+.budget-item .progress .fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.budget-item .amounts { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.filter { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+.filter-btn { padding: 8px 16px; border: none; border-radius: 20px; background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap; transition: var(--transition); }
+.filter-btn.active { background: var(--gradient-primary); color: white; }
+.filter-btn:active { transform: scale(0.95); }
+.password-wrapper { position: relative; }
+.password-wrapper input { padding-right: 50px; }
+.toggle-password { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; cursor: pointer; opacity: 0.6; color: var(--text-secondary); }
+.recurring-badge { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
+.recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
+.sedekah-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    margin-bottom: 8px;
+}
+.sedekah-card.completed {
+    border-color: rgba(16,185,129,0.3);
+    background: rgba(16,185,129,0.06);
+}
+.sedekah-card .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.sedekah-card .left-section {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.sedekah-card .icon { font-size: 22px; }
+.sedekah-card .label { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.sedekah-card .desc { font-size: 11px; color: var(--text-secondary); }
+.sedekah-card .freq-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    background: rgba(59,130,246,0.12);
+    color: #60a5fa;
+}
+.sedekah-card .status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 20px;
+}
+.sedekah-card .status-badge.done { background: rgba(16,185,129,0.15); color: #4ade80; }
+.sedekah-card .status-badge.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.sedekah-card .actions-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.sedekah-card .actions-row .action-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+.action-select-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0 12px;
+}
+.action-select-btn {
+    padding: 12px 8px;
+    border-radius: var(--radius-xs);
+    border: 2px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+}
+.action-select-btn:active { transform: scale(0.95); }
+.action-select-btn .action-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+.action-select-btn.selected {
+    border-color: #4ade80;
+    background: rgba(16,185,129,0.08);
+    color: #4ade80;
+}
+.nominal-input {
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: var(--radius-xs);
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 14px;
+    width: 100%;
+}
+.nominal-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+.reminder-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+.reminder-toggle.active {
+    background: rgba(16,185,129,0.1);
+    border-color: #4ade80;
+    color: #4ade80;
+}
+.reminder-toggle .icon { font-size: 14px; }
+.sedekah-chart-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+}
+@media (max-width: 420px) {
+    .app-container { padding: 12px 12px 20px; }
+    .balance-amount { font-size: 26px; }
+    .header-name { font-size: 13px; }
+    .nav-item .nav-label { font-size: 8px; }
+    .nav-center-btn { width: 44px; height: 44px; font-size: 24px; }
+    .bottom-nav { padding: 4px 6px; height: 64px; }
+    .modal-content { padding: 20px 16px; }
+    .action-select-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
 </head>
 <body>
 
-<!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-logo">💰</div>
     <div class="loading-title">Keuangan Keluarga</div>
@@ -542,10 +502,8 @@ if ('serviceWorker' in navigator) {
     <div class="loading-percent" id="loadingPercent">0%</div>
 </div>
 
-<!-- APP CONTAINER -->
 <div class="app-container" id="appContainer"></div>
 
-<!-- LOGIN MODAL -->
 <div id="loginModal" class="modal-overlay" style="display:none;">
     <div class="modal-content">
         <div class="modal-title" id="modalTitle">💰 Keuangan Keluarga</div>
@@ -597,12 +555,36 @@ let currentFamilyId = null;
 let familyMembers = [];
 let familyInfo = null;
 
+// Sedekah data
+const SEDEKAH_TYPES = [
+    { id: 'pagi', label: 'Sedekah Pagi', icon: '🌅', frequency: 'daily' },
+    { id: 'saudara', label: 'Sedekah ke Saudara', icon: '👨‍👩‍👧', frequency: 'daily' },
+    { id: 'kerabat', label: 'Sedekah ke Kerabat', icon: '👪', frequency: 'daily' },
+    { id: 'fakir', label: 'Sedekah Fakir/Miskin', icon: '🤲', frequency: 'daily' },
+    { id: 'yatim', label: 'Sedekah Yatim', icon: '🧒', frequency: 'daily' },
+    { id: 'masjid', label: 'Sedekah Masjid', icon: '🕌', frequency: 'daily' },
+    { id: 'jumatan', label: 'Sedekah Jum\'at', icon: '📿', frequency: 'weekly' },
+    { id: 'ramadhan', label: 'Sedekah Ramadhan', icon: '🌙', frequency: 'monthly' }
+];
+
+const ACTION_TYPES = [
+    { id: 'uang', label: 'Uang', icon: '💰' },
+    { id: 'makanan', label: 'Makanan', icon: '🍚' },
+    { id: 'pakaian', label: 'Pakaian', icon: '👕' },
+    { id: 'tenaga', label: 'Tenaga', icon: '💪' },
+    { id: 'fikiran', label: 'Fikiran', icon: '🧠' }
+];
+
+let sedekahData = []; // { id, completed, actions: [{actionId, nominal}] }
+let sedekahReminders = {}; // { typeId: true/false }
+let sedekahHistory = []; // [{id, typeId, actions, nominal, points, date, created_at}]
+let sedekahChart = null;
+
 // ============================================
 // CUSTOM USER MANAGER
 // ============================================
 class CustomUserManager {
     constructor(sb) { this.sb = sb; this.authUser = null; this.customUser = null; }
-    
     async setupCustomUser(authUser) {
         if (!authUser) return null;
         try {
@@ -643,7 +625,6 @@ function initSupabase() {
     }
     return false;
 }
-
 function showToast(msg, duration = 3000, type = '') {
     let t = document.querySelector('.toast');
     if (t) t.remove();
@@ -653,7 +634,6 @@ function showToast(msg, duration = 3000, type = '') {
     document.body.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(-10px)'; setTimeout(() => t.remove(), 300); }, duration);
 }
-
 function formatRupiah(n) { return n ? new Intl.NumberFormat('id-ID').format(n) : '0'; }
 function parseRupiah(s) { return parseInt((s || '0').replace(/\./g, '').replace(/[^0-9]/g, '')) || 0; }
 function escapeHtml(s) { if (!s) return ''; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
@@ -661,14 +641,6 @@ function getCategoryById(id) { return categories.find(c => c.id === id); }
 function formatDate(d) { if (!d) return '-'; const dt = new Date(d); return `${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()}`; }
 function formatDateInput(d) { if (!d) return ''; const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
 function capitalizeName(s) { if (!s) return ''; return s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
-
-function formatWhatsAppNumber(input) {
-    let number = input.replace(/[^0-9]/g, '');
-    if (number.startsWith('0')) number = '62' + number.substring(1);
-    if (!number.startsWith('62')) number = '62' + number;
-    if (number.length > 14) number = number.substring(0, 14);
-    return number;
-}
 
 function showLoading() {
     const ov = document.getElementById('loadingOverlay');
@@ -726,13 +698,9 @@ function getOverdueCount() {
     return count;
 }
 
-// ============================================
-// GET RUNNING TEXT
-// ============================================
 function getRunningText() {
     const today = new Date(); today.setHours(0,0,0,0);
     const msgs = [];
-    
     debts.forEach(d => {
         if (d.status === 'lunas' || !d.due_date) return;
         const due = new Date(d.due_date);
@@ -742,7 +710,6 @@ function getRunningText() {
         else if (diff === 0) msgs.push({ text: `🔴 HARI INI! ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo HARI INI!`, type: 'danger' });
         else if (diff <= 3) msgs.push({ text: `🟡 ${d.type === 'piutang' ? 'Piutang' : 'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff} hari lagi!`, type: 'warning' });
     });
-    
     tasks.forEach(t => {
         if (t.is_completed || !t.due_date) return;
         const due = new Date(t.due_date);
@@ -752,7 +719,6 @@ function getRunningText() {
         else if (diff === 0) msgs.push({ text: `🔴 HARI INI! Tugas "${escapeHtml(t.title)}" jatuh tempo HARI INI!`, type: 'danger' });
         else if (diff <= 7) msgs.push({ text: `🟡 Tugas "${escapeHtml(t.title)}" jatuh tempo ${diff} hari lagi!`, type: 'warning' });
     });
-    
     reminders.forEach(r => {
         if (r.is_done || !r.due_date) return;
         const due = new Date(r.due_date);
@@ -762,7 +728,6 @@ function getRunningText() {
         else if (diff === 0) msgs.push({ text: `🔴 HARI INI! Pengingat "${escapeHtml(r.title)}" jatuh tempo HARI INI!`, type: 'danger' });
         else if (diff <= 7) msgs.push({ text: `🟡 Pengingat "${escapeHtml(r.title)}" jatuh tempo ${diff} hari lagi!`, type: 'warning' });
     });
-    
     msgs.sort((a,b) => {
         if (a.type === 'danger' && b.type === 'warning') return -1;
         if (a.type === 'warning' && b.type === 'danger') return 1;
@@ -770,7 +735,6 @@ function getRunningText() {
     });
     return msgs;
 }
-
 function renderRunningText() {
     const msgs = getRunningText();
     if (!msgs.length) return '';
@@ -782,91 +746,6 @@ function renderRunningText() {
     warning.forEach(m => html += `<span class="text-warning">🟡 ${m.text}</span>`);
     html += `</div></div>`;
     return html;
-}
-
-// ============================================
-// RECURRING TRANSACTION FUNCTIONS
-// ============================================
-async function createRecurringTransaction(original) {
-    const uid = await userManager.getUserId();
-    if (!uid) return null;
-    try {
-        const date = new Date(original.created_at);
-        const day = date.getDate();
-        const { data: recurring, error } = await sb.from('recurring_transactions').insert({
-            user_id: uid,
-            original_transaction_id: original.id,
-            description: original.description,
-            amount: original.amount,
-            type: original.type,
-            category_id: original.category_id || null,
-            day_of_month: day,
-            start_date: new Date().toISOString().split('T')[0],
-            is_active: true,
-            last_generated: new Date().toISOString().split('T')[0]
-        }).select().single();
-        if (error) throw error;
-        return recurring;
-    } catch(e) { console.error('Create recurring error:', e); return null; }
-}
-
-async function generateRecurringTransaction(id) {
-    try {
-        const { data: r, error } = await sb.from('recurring_transactions').select('*').eq('id', id).single();
-        if (error) throw error;
-        if (!r || !r.is_active) return null;
-        if (r.end_date && new Date() > new Date(r.end_date)) {
-            await sb.from('recurring_transactions').update({ is_active: false }).eq('id', id);
-            return null;
-        }
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        if (r.last_generated) {
-            const lastGen = new Date(r.last_generated);
-            if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) return null;
-        }
-        const nextMonth = currentMonth + 1;
-        const nextYear = currentYear + (nextMonth > 11 ? 1 : 0);
-        const targetMonth = nextMonth > 11 ? 0 : nextMonth;
-        const targetYear = nextYear;
-        const targetDate = new Date(targetYear, targetMonth, r.day_of_month);
-        if (targetDate > now) return null;
-        const monthStart = new Date(targetYear, targetMonth, 1);
-        const monthEnd = new Date(targetYear, targetMonth + 1, 1);
-        const { data: existing } = await sb.from('transactions').select('id').eq('user_id', r.user_id).eq('description', r.description + ' (Ulang)').gte('created_at', monthStart.toISOString()).lt('created_at', monthEnd.toISOString()).maybeSingle();
-        if (existing) {
-            await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0] }).eq('id', id);
-            return null;
-        }
-        const { data: tx, error: txErr } = await sb.from('transactions').insert({
-            user_id: r.user_id,
-            description: r.description + ' (Ulang)',
-            amount: r.amount,
-            type: r.type,
-            category_id: r.category_id || null,
-            created_at: targetDate.toISOString()
-        }).select().single();
-        if (txErr) throw txErr;
-        await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0], updated_at: new Date().toISOString() }).eq('id', id);
-        return tx;
-    } catch(e) { console.error('Generate recurring error:', e); return null; }
-}
-
-async function processRecurringTransactions() {
-    const uid = await userManager.getUserId();
-    if (!uid) return;
-    try {
-        const { data: list, error } = await sb.from('recurring_transactions').select('*').eq('user_id', uid).eq('is_active', true);
-        if (error) { if (error.code === '42P01') return; throw error; }
-        if (!list || !list.length) return;
-        let generated = 0;
-        for (const r of list) {
-            const result = await generateRecurringTransaction(r.id);
-            if (result) generated++;
-        }
-        if (generated) { await loadTransactions(); }
-    } catch(e) { console.error('Process recurring error:', e); }
 }
 
 // ============================================
@@ -889,7 +768,6 @@ async function loadFamilyData() {
         }
     } catch(e) { currentFamilyId = null; familyMembers = []; familyInfo = null; }
 }
-
 async function loadCategories() {
     const uid = await userManager.getUserId();
     if (!uid) { categories = []; return; }
@@ -904,7 +782,6 @@ async function loadCategories() {
         categories = data || [];
     } catch(e) { categories = []; }
 }
-
 async function loadTransactions() {
     const uid = await userManager.getUserId();
     if (!uid) { transactions = []; return; }
@@ -919,7 +796,6 @@ async function loadTransactions() {
         transactions = (data || []).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
     } catch(e) { transactions = []; }
 }
-
 async function loadDebts() {
     const uid = await userManager.getUserId();
     if (!uid) { debts = []; return; }
@@ -939,7 +815,6 @@ async function loadDebts() {
         });
     } catch(e) { debts = []; }
 }
-
 async function loadSavings() {
     const uid = await userManager.getUserId();
     if (!uid) { savings = []; return; }
@@ -948,7 +823,6 @@ async function loadSavings() {
         savings = data || [];
     } catch(e) { savings = []; }
 }
-
 async function loadTasks() {
     const uid = await userManager.getUserId();
     if (!uid) { tasks = []; return; }
@@ -968,7 +842,6 @@ async function loadTasks() {
         });
     } catch(e) { tasks = []; }
 }
-
 async function loadReminders() {
     const uid = await userManager.getUserId();
     if (!uid) { reminders = []; return; }
@@ -988,7 +861,6 @@ async function loadReminders() {
         });
     } catch(e) { reminders = []; }
 }
-
 async function loadBudgets() {
     const uid = await userManager.getUserId();
     if (!uid) { budgets = []; return; }
@@ -997,7 +869,6 @@ async function loadBudgets() {
         budgets = data || [];
     } catch(e) { budgets = []; }
 }
-
 async function loadAllData() {
     await loadFamilyData();
     await loadCategories();
@@ -1007,8 +878,8 @@ async function loadAllData() {
     await loadTasks();
     await loadReminders();
     await loadBudgets();
+    await loadSedekahData();
 }
-
 function getSpentByCategory(catId) {
     let total = 0;
     transactions.forEach(t => {
@@ -1018,6 +889,14 @@ function getSpentByCategory(catId) {
         }
     });
     return total;
+}
+function setupRupiahInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function() {
+        const val = this.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+        this.value = val ? formatRupiah(parseInt(val)) : '';
+    });
 }
 
 // ============================================
@@ -1052,18 +931,16 @@ async function toggleTheme() {
 }
 
 // ============================================
-// SHOW REMINDERS POPUP (PREMIUM)
+// SHOW REMINDERS POPUP
 // ============================================
 function showRemindersPopup() {
     const msgs = getRunningText();
     if (!msgs.length) { showToast('✅ Tidak ada peringatan', 2000, 'success'); return; }
-    
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     let content = `<div class="modal-content"><div class="modal-title">⚠️ Peringatan</div>`;
     const danger = msgs.filter(m => m.type === 'danger');
     const warning = msgs.filter(m => m.type === 'warning');
-    
     if (danger.length) {
         content += `<div style="margin:8px 0 12px;font-size:13px;font-weight:600;color:#f87171;">🔴 Segera</div>`;
         danger.forEach(m => {
@@ -1082,7 +959,7 @@ function showRemindersPopup() {
 }
 
 // ============================================
-// CATEGORY FUNCTIONS (PREMIUM MODAL)
+// CATEGORY FUNCTIONS
 // ============================================
 async function renderKategori() {
     await loadCategories();
@@ -1120,7 +997,6 @@ async function renderKategori() {
     }
     container.innerHTML = list;
 }
-
 function openCategoryFormModal(editId = null) {
     const isEdit = !!editId;
     const cat = isEdit ? categories.find(c => c.id === editId) : null;
@@ -1179,7 +1055,6 @@ function getTaskStatus(t) {
     if (diff <= 7) return { label: `🟡 ${diff} hari lagi`, cls: 'warning', color: '#fbbf24' };
     return { label: `⏳ ${diff} hari lagi`, cls: 'pending', color: '#94a3b8' };
 }
-
 function openTaskModal(editId = null) {
     const isEdit = !!editId;
     const task = isEdit ? tasks.find(t => t.id === editId) : null;
@@ -1214,7 +1089,6 @@ function openTaskModal(editId = null) {
     if (isEdit) { document.getElementById('deleteTask').onclick = async () => { if (confirm('Hapus tugas?')) { await sb.from('tasks').delete().eq('id', editId); showToast('✅ Tugas dihapus', 2000, 'success'); modal.remove(); await loadTasks(); renderCurrentView(); } }; }
     document.getElementById('closeTask').onclick = () => modal.remove();
 }
-
 async function renderTasks() {
     await loadTasks();
     const pending = tasks.filter(t => !t.is_completed);
@@ -1251,7 +1125,7 @@ async function renderTasks() {
 }
 
 // ============================================
-// DEBT FUNCTIONS (PREMIUM MODAL)
+// DEBT FUNCTIONS
 // ============================================
 function openDebtModal(editId = null) {
     const isEdit = !!editId;
@@ -1342,7 +1216,6 @@ function openDebtModal(editId = null) {
     }
     document.getElementById('closeDebt').onclick = () => modal.remove();
 }
-
 function showDebtDetail(debt) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
@@ -1386,7 +1259,6 @@ function showDebtDetail(debt) {
     }
     document.getElementById('closeDebtDetail').onclick = () => modal.remove();
 }
-
 function showDebtGroupDetail(name) {
     const items = debts.filter(d => d.contact_name === name);
     const modal = document.createElement('div');
@@ -1432,7 +1304,6 @@ function showDebtGroupDetail(name) {
         };
     });
 }
-
 async function renderHutang() {
     await loadDebts();
     let piutang = 0, hutang = 0;
@@ -1468,7 +1339,7 @@ async function renderHutang() {
 }
 
 // ============================================
-// RENDER SAVINGS (PREMIUM MODAL)
+// RENDER SAVINGS
 // ============================================
 async function renderSavings() {
     await loadSavings();
@@ -1489,7 +1360,6 @@ async function renderSavings() {
         </div>
     `).join('');
 }
-
 function openSavingsModal(editId=null) {
     const isEdit = !!editId;
     const s = isEdit ? savings.find(s => s.id === editId) : null;
@@ -1527,7 +1397,7 @@ function openSavingsModal(editId=null) {
 }
 
 // ============================================
-// RENDER REMINDERS (PREMIUM MODAL)
+// RENDER REMINDERS
 // ============================================
 async function renderReminders() {
     await loadReminders();
@@ -1546,7 +1416,6 @@ async function renderReminders() {
         </div>`;
     }).join('');
 }
-
 function openReminderModal(editId=null) {
     const isEdit = !!editId;
     const r = isEdit ? reminders.find(r => r.id === editId) : null;
@@ -1586,7 +1455,7 @@ function openReminderModal(editId=null) {
 }
 
 // ============================================
-// RENDER BUDGET (PREMIUM MODAL)
+// RENDER BUDGET
 // ============================================
 async function renderBudgetPage() {
     await loadTransactions();
@@ -1633,7 +1502,6 @@ async function renderBudgetPage() {
     document.getElementById('prevBudgetMonth').onclick = () => { if (currentBudgetMonth === 0) { currentBudgetMonth = 11; currentBudgetYear--; } else currentBudgetMonth--; renderBudgetPage(); };
     document.getElementById('nextBudgetMonth').onclick = () => { if (currentBudgetMonth === 11) { currentBudgetMonth = 0; currentBudgetYear++; } else currentBudgetMonth++; renderBudgetPage(); };
 }
-
 function openBudgetModal(editId = null) {
     const isEdit = !!editId;
     const b = isEdit ? budgets.find(b => b.id === editId) : null;
@@ -1681,17 +1549,10 @@ async function renderTransaksi() {
     let recurringIds = new Set();
     if (uid) {
         try {
-            const { data: recurringList } = await sb
-                .from('recurring_transactions')
-                .select('original_transaction_id')
-                .eq('user_id', uid)
-                .eq('is_active', true);
-            if (recurringList) {
-                recurringIds = new Set(recurringList.map(r => r.original_transaction_id));
-            }
+            const { data: recurringList } = await sb.from('recurring_transactions').select('original_transaction_id').eq('user_id', uid).eq('is_active', true);
+            if (recurringList) { recurringIds = new Set(recurringList.map(r => r.original_transaction_id)); }
         } catch(e) {}
     }
-    
     const html = `
         <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
         <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="pushHistory(currentNav);currentNav='laporan';updateNav();renderLaporan();">📊 Laporan</button></div>
@@ -1699,78 +1560,47 @@ async function renderTransaksi() {
         <div class="card"><div id="transaksiList"></div></div>
     `;
     document.getElementById('appContainer').innerHTML = html;
-    
     let data = [...transactions];
     if (transaksiFilter === 'income') data = data.filter(t => t.type === 'pemasukan');
     else if (transaksiFilter === 'expense') data = data.filter(t => t.type === 'pengeluaran');
-    
     const container = document.getElementById('transaksiList');
     if (!data.length) { container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div class="title">Tidak ada transaksi</div></div>'; return; }
-    
     container.innerHTML = data.map(t => {
         const cat = getCategoryById(t.category_id);
         const isRecurring = t.description?.includes('(Ulang)');
         const isOriginalRecurring = !isRecurring && recurringIds.has(t.id);
-        
         return `<div class="tx-item" data-id="${t.id}" style="${isOriginalRecurring ? 'border-left:3px solid #10b981;' : ''}">
             <div class="left">
                 <span class="dot" style="background:${cat?.color || '#64748b'}"></span>
                 <div>
-                    <div class="desc">
-                        ${escapeHtml(t.description)}
-                        ${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}
-                        ${isOriginalRecurring ? ' <span style="font-size:10px;color:#10b981;font-weight:600;">🔁</span>' : ''}
-                        ${isOriginalRecurring ? ' <span class="recurring-badge active">R</span>' : ''}
-                    </div>
+                    <div class="desc">${escapeHtml(t.description)}${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}${isOriginalRecurring ? ' <span style="font-size:10px;color:#10b981;font-weight:600;">🔁</span>' : ''}${isOriginalRecurring ? ' <span class="recurring-badge active">R</span>' : ''}</div>
                     <div class="meta">${formatDate(t.created_at)}${t.user_id !== currentCustomUser?.id ? ' · ' + getUserEmail(t.user_id) : ''}</div>
                 </div>
             </div>
             <div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div>
         </div>`;
     }).join('');
-    
-    document.querySelectorAll('.tx-item').forEach(el => {
-        el.onclick = () => {
-            const id = el.dataset.id;
-            const tx = transactions.find(t => t.id === id);
-            if (tx) showTransactionDetail(tx);
-        };
-    });
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.onclick = () => {
-            transaksiFilter = btn.dataset.filter;
-            renderTransaksi();
-        };
-    });
+    document.querySelectorAll('.tx-item').forEach(el => { el.onclick = () => { const id = el.dataset.id; const tx = transactions.find(t => t.id === id); if (tx) showTransactionDetail(tx); }; });
+    document.querySelectorAll('.filter-btn').forEach(btn => { btn.onclick = () => { transaksiFilter = btn.dataset.filter; renderTransaksi(); }; });
 }
 
 // ============================================
-// TRANSACTION DETAIL & MODAL (PREMIUM)
+// TRANSACTION DETAIL & MODAL
 // ============================================
 async function showTransactionDetail(tx) {
     const cat = getCategoryById(tx.category_id);
     const isRecurring = tx.description?.includes('(Ulang)');
     const uid = await userManager.getUserId();
-    
     let recurringData = null;
     let isOriginalRecurring = false;
     if (uid) {
         try {
-            const { data: recurring } = await sb
-                .from('recurring_transactions')
-                .select('*')
-                .eq('original_transaction_id', tx.id)
-                .maybeSingle();
-            if (recurring) {
-                recurringData = recurring;
-                isOriginalRecurring = true;
-            }
+            const { data: recurring } = await sb.from('recurring_transactions').select('*').eq('original_transaction_id', tx.id).maybeSingle();
+            if (recurring) { recurringData = recurring; isOriginalRecurring = true; }
         } catch(e) {}
     }
-    
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
-    
     let recurringInfo = '';
     if (isRecurring) {
         recurringInfo = `<div class="modal-detail-row"><span class="modal-detail-label">🔄 Status</span><span class="modal-detail-value"><span class="modal-badge info">Transaksi Berulang</span></span></div>`;
@@ -1782,7 +1612,6 @@ async function showTransactionDetail(tx) {
             <div class="modal-detail-row"><span class="modal-detail-label">📅 Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
         `;
     }
-    
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">📋 Detail Transaksi</div>
@@ -1797,41 +1626,25 @@ async function showTransactionDetail(tx) {
             <hr class="modal-divider">
             <div class="modal-button-grid">
                 <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
-                ${isOriginalRecurring && recurringData ? `
-                    <button id="toggleRecurringBtn" class="modal-btn ${recurringData.is_active ? 'modal-btn-warning' : 'modal-btn-success'}">
-                        ${recurringData.is_active ? '⏸️ Nonaktifkan' : '▶️ Aktifkan'}
-                    </button>
-                ` : ''}
+                ${isOriginalRecurring && recurringData ? `<button id="toggleRecurringBtn" class="modal-btn ${recurringData.is_active ? 'modal-btn-warning' : 'modal-btn-success'}">${recurringData.is_active ? '⏸️ Nonaktifkan' : '▶️ Aktifkan'}</button>` : ''}
                 <button id="deleteTxBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
                 <button id="closeDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
-    
-    document.getElementById('editTxBtn').onclick = () => {
-        modal.remove();
-        openTransaksiModal(null, tx.id);
-    };
-    
+    document.getElementById('editTxBtn').onclick = () => { modal.remove(); openTransaksiModal(null, tx.id); };
     if (isOriginalRecurring && recurringData) {
         document.getElementById('toggleRecurringBtn').onclick = async () => {
             const newStatus = !recurringData.is_active;
-            await sb.from('recurring_transactions')
-                .update({ is_active: newStatus, updated_at: new Date().toISOString() })
-                .eq('id', recurringData.id);
+            await sb.from('recurring_transactions').update({ is_active: newStatus, updated_at: new Date().toISOString() }).eq('id', recurringData.id);
             showToast(newStatus ? '✅ Transaksi berulang diaktifkan' : '⏸️ Transaksi berulang dinonaktifkan', 2000, 'success');
-            modal.remove();
-            await loadTransactions();
-            renderCurrentView();
+            modal.remove(); await loadTransactions(); renderCurrentView();
         };
     }
-    
     document.getElementById('deleteTxBtn').onclick = async () => {
         if (confirm('Hapus transaksi ini?')) {
-            if (isOriginalRecurring && recurringData) {
-                await sb.from('recurring_transactions').delete().eq('id', recurringData.id);
-            }
+            if (isOriginalRecurring && recurringData) { await sb.from('recurring_transactions').delete().eq('id', recurringData.id); }
             if (tx.proof_url) {
                 const parts = tx.proof_url.split('/');
                 const path = parts.slice(parts.indexOf('transaction-proofs') + 1).join('/');
@@ -1839,40 +1652,11 @@ async function showTransactionDetail(tx) {
             }
             await sb.from('transactions').delete().eq('id', tx.id);
             showToast('✅ Transaksi dihapus', 2000, 'success');
-            modal.remove();
-            await loadTransactions();
-            renderCurrentView();
+            modal.remove(); await loadTransactions(); renderCurrentView();
         }
     };
-    
     document.getElementById('closeDetailBtn').onclick = () => modal.remove();
 }
-
-async function deleteTransaction(id) {
-    const tx = transactions.find(t => t.id === id);
-    if (tx?.proof_url) {
-        const parts = tx.proof_url.split('/');
-        const path = parts.slice(parts.indexOf('transaction-proofs') + 1).join('/');
-        await sb.storage.from('transaction-proofs').remove([path]);
-    }
-    await sb.from('transactions').delete().eq('id', id);
-    await loadTransactions();
-    renderCurrentView();
-    showToast('✅ Transaksi dihapus', 2000, 'success');
-}
-
-function setupRupiahInput(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('input', function() {
-        const val = this.value.replace(/\./g, '').replace(/[^0-9]/g, '');
-        this.value = val ? formatRupiah(parseInt(val)) : '';
-    });
-}
-
-// ============================================
-// OPEN TRANSACTION MODAL (PREMIUM)
-// ============================================
 function openTransaksiModal(predefinedType = null, editId = null) {
     const isEdit = !!editId;
     const tx = isEdit ? transactions.find(t => t.id === editId) : null;
@@ -1896,22 +1680,9 @@ function openTransaksiModal(predefinedType = null, editId = null) {
             </select>
             <div style="background:rgba(59,130,246,0.05);padding:12px;border-radius:12px;margin:12px 0;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="font-size:18px;">📸</span><span style="font-weight:600;">Bukti</span></div>
-                ${isEdit && tx?.proof_url ? `
-                    <div id="proofPreview"><img src="${tx.proof_url}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
-                ` : `
-                    <div id="proofUploadArea" class="modal-upload-area">
-                        <span class="icon">📁</span>
-                        <span class="text">Klik untuk upload bukti</span>
-                        <span class="hint">JPG, PNG, WEBP (max 5MB)</span>
-                        <input type="file" id="proofInput" accept="image/*" style="display:none;">
-                    </div>
-                    <div id="proofPreview" style="display:none;margin-top:8px;">
-                        <img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);">
-                        <div style="display:flex;gap:8px;margin-top:8px;">
-                            <button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button>
-                            <button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button>
-                        </div>
-                    </div>
+                ${isEdit && tx?.proof_url ? `<div id="proofPreview"><img src="${tx.proof_url}" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>` : `
+                    <div id="proofUploadArea" class="modal-upload-area"><span class="icon">📁</span><span class="text">Klik untuk upload bukti</span><span class="hint">JPG, PNG, WEBP (max 5MB)</span><input type="file" id="proofInput" accept="image/*" style="display:none;"></div>
+                    <div id="proofPreview" style="display:none;margin-top:8px;"><img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
                 `}
             </div>
             ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Transaksi akan muncul otomatis bulan depan</div></div>` : ''}
@@ -1923,13 +1694,11 @@ function openTransaksiModal(predefinedType = null, editId = null) {
     `;
     document.body.appendChild(modal);
     setupRupiahInput('modalJum');
-    
     let selectedFile = null;
     const proofInput = document.getElementById('proofInput');
     const proofUploadArea = document.getElementById('proofUploadArea');
     const proofPreview = document.getElementById('proofPreview');
     const proofPreviewImg = document.getElementById('proofPreviewImg');
-    
     if (proofUploadArea) proofUploadArea.onclick = () => proofInput.click();
     proofInput?.addEventListener('change', function(e) {
         const file = this.files[0];
@@ -1950,10 +1719,7 @@ function openTransaksiModal(predefinedType = null, editId = null) {
             if (isEdit && tx?.proof_url) window._removeOldProof = true;
         };
     });
-    document.querySelectorAll('#changeProofBtn').forEach(btn => {
-        btn.onclick = function(e) { e.stopPropagation(); if (proofInput) proofInput.click(); };
-    });
-    
+    document.querySelectorAll('#changeProofBtn').forEach(btn => { btn.onclick = function(e) { e.stopPropagation(); if (proofInput) proofInput.click(); }; });
     document.getElementById('saveTransaksi').onclick = async () => {
         const desc = document.getElementById('modalDesk').value.trim();
         const amount = parseRupiah(document.getElementById('modalJum').value);
@@ -1974,9 +1740,7 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                     await uploadProof(selectedFile, editId);
                 }
                 showToast('✅ Transaksi diupdate', 2000, 'success');
-                modal.remove();
-                await loadTransactions();
-                renderCurrentView();
+                modal.remove(); await loadTransactions(); renderCurrentView();
             } else {
                 data.user_id = uid;
                 const { data: newTx, error } = await sb.from('transactions').insert(data).select();
@@ -1993,15 +1757,12 @@ function openTransaksiModal(predefinedType = null, editId = null) {
                     }
                 }
                 showToast('✅ Transaksi ditambahkan', 2000, 'success');
-                modal.remove();
-                await loadTransactions();
-                renderCurrentView();
+                modal.remove(); await loadTransactions(); renderCurrentView();
             }
         } catch(e) { showToast('❌ Error: ' + e.message, 3000, 'error'); }
     };
     document.getElementById('closeModal').onclick = () => modal.remove();
 }
-
 async function uploadProof(file, txId) {
     if (!file) return null;
     try {
@@ -2014,7 +1775,6 @@ async function uploadProof(file, txId) {
         return data.publicUrl;
     } catch(e) { showToast('❌ Gagal upload: ' + e.message, 3000, 'error'); return null; }
 }
-
 async function deleteProof(txId) {
     try {
         const { data: tx } = await sb.from('transactions').select('proof_url').eq('id', txId).single();
@@ -2027,15 +1787,87 @@ async function deleteProof(txId) {
 }
 
 // ============================================
+// RECURRING TRANSACTION FUNCTIONS
+// ============================================
+async function createRecurringTransaction(original) {
+    const uid = await userManager.getUserId();
+    if (!uid) return null;
+    try {
+        const date = new Date(original.created_at);
+        const day = date.getDate();
+        const { data: recurring, error } = await sb.from('recurring_transactions').insert({
+            user_id: uid,
+            original_transaction_id: original.id,
+            description: original.description,
+            amount: original.amount,
+            type: original.type,
+            category_id: original.category_id || null,
+            day_of_month: day,
+            start_date: new Date().toISOString().split('T')[0],
+            is_active: true,
+            last_generated: new Date().toISOString().split('T')[0]
+        }).select().single();
+        if (error) throw error;
+        return recurring;
+    } catch(e) { console.error('Create recurring error:', e); return null; }
+}
+async function generateRecurringTransaction(id) {
+    try {
+        const { data: r, error } = await sb.from('recurring_transactions').select('*').eq('id', id).single();
+        if (error) throw error;
+        if (!r || !r.is_active) return null;
+        if (r.end_date && new Date() > new Date(r.end_date)) { await sb.from('recurring_transactions').update({ is_active: false }).eq('id', id); return null; }
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        if (r.last_generated) {
+            const lastGen = new Date(r.last_generated);
+            if (lastGen.getMonth() === currentMonth && lastGen.getFullYear() === currentYear) return null;
+        }
+        const nextMonth = currentMonth + 1;
+        const nextYear = currentYear + (nextMonth > 11 ? 1 : 0);
+        const targetMonth = nextMonth > 11 ? 0 : nextMonth;
+        const targetYear = nextYear;
+        const targetDate = new Date(targetYear, targetMonth, r.day_of_month);
+        if (targetDate > now) return null;
+        const monthStart = new Date(targetYear, targetMonth, 1);
+        const monthEnd = new Date(targetYear, targetMonth + 1, 1);
+        const { data: existing } = await sb.from('transactions').select('id').eq('user_id', r.user_id).eq('description', r.description + ' (Ulang)').gte('created_at', monthStart.toISOString()).lt('created_at', monthEnd.toISOString()).maybeSingle();
+        if (existing) { await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0] }).eq('id', id); return null; }
+        const { data: tx, error: txErr } = await sb.from('transactions').insert({
+            user_id: r.user_id,
+            description: r.description + ' (Ulang)',
+            amount: r.amount,
+            type: r.type,
+            category_id: r.category_id || null,
+            created_at: targetDate.toISOString()
+        }).select().single();
+        if (txErr) throw txErr;
+        await sb.from('recurring_transactions').update({ last_generated: new Date().toISOString().split('T')[0], updated_at: new Date().toISOString() }).eq('id', id);
+        return tx;
+    } catch(e) { console.error('Generate recurring error:', e); return null; }
+}
+async function processRecurringTransactions() {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    try {
+        const { data: list, error } = await sb.from('recurring_transactions').select('*').eq('user_id', uid).eq('is_active', true);
+        if (error) { if (error.code === '42P01') return; throw error; }
+        if (!list || !list.length) return;
+        let generated = 0;
+        for (const r of list) { const result = await generateRecurringTransaction(r.id); if (result) generated++; }
+        if (generated) { await loadTransactions(); }
+    } catch(e) { console.error('Process recurring error:', e); }
+}
+
+// ============================================
 // RENDER LAPORAN
 // ============================================
 async function renderLaporan() {
     await loadTransactions();
     const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    
     const all = [...transactions];
     all.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    
     let totalPemasukan = 0, totalPengeluaran = 0;
     const catTotals = {};
     all.forEach(t => {
@@ -2044,26 +1876,16 @@ async function renderLaporan() {
         const cid = t.category_id || 'uncategorized';
         catTotals[cid] = (catTotals[cid]||0) + Number(t.amount);
     });
-    
     const labels = [], data = [], colors = [];
     Object.entries(catTotals).forEach(([id, val]) => {
         if (id === 'uncategorized') { labels.push('📁 Tanpa Kategori'); colors.push('#64748b'); }
         else { const cat = categories.find(c => c.id === id); if (cat) { labels.push(`${cat.icon} ${cat.name}`); colors.push(cat.color); } else { labels.push('📁 Unknown'); colors.push('#64748b'); } }
         data.push(val);
     });
-    
-    const monthFiltered = transactions.filter(t => {
-        const d = new Date(t.created_at);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    });
+    const monthFiltered = transactions.filter(t => { const d = new Date(t.created_at); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; });
     monthFiltered.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-    
     let bulanPemasukan = 0, bulanPengeluaran = 0;
-    monthFiltered.forEach(t => {
-        if (t.type === 'pemasukan') bulanPemasukan += Number(t.amount)||0;
-        else bulanPengeluaran += Number(t.amount)||0;
-    });
-    
+    monthFiltered.forEach(t => { if (t.type === 'pemasukan') bulanPemasukan += Number(t.amount)||0; else bulanPengeluaran += Number(t.amount)||0; });
     let html = `
         <div class="header">
             <div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
@@ -2089,7 +1911,7 @@ async function renderLaporan() {
             </div>
         </div>
         <div class="card">
-            <div class="card-title"><span>📊 Statistik Kategori (Semua)</span><button id="exportPdfBtn" style="background:var(--gradient-primary);border:none;border-radius:20px;padding:6px 14px;color:white;font-size:11px;font-weight:600;cursor:pointer;">📑 PDF</button></div>
+            <div class="card-title"><span>📊 Statistik Kategori (Semua)</span></div>
             <canvas id="laporanChart" style="max-height:200px;width:100%;"></canvas>
             ${data.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada data</div></div>' : ''}
         </div>
@@ -2099,7 +1921,6 @@ async function renderLaporan() {
         </div>
     `;
     document.getElementById('appContainer').innerHTML = html;
-    
     const ctx = document.getElementById('laporanChart')?.getContext('2d');
     if (ctx && data.length) {
         if (window.laporanChart && typeof window.laporanChart.destroy === 'function') window.laporanChart.destroy();
@@ -2109,7 +1930,6 @@ async function renderLaporan() {
             options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8, usePointStyle: true } } } }
         });
     }
-    
     const grouped = {};
     monthFiltered.forEach(t => {
         const d = formatDate(t.created_at);
@@ -2121,7 +1941,6 @@ async function renderLaporan() {
         const db = b.split('/');
         return new Date(db[2], db[1]-1, db[0]) - new Date(da[2], da[1]-1, da[0]);
     });
-    
     let detail = '';
     if (!sortedDates.length) {
         detail = '<div class="empty-state" style="padding:20px 0;"><div class="desc">Tidak ada transaksi bulan ini</div></div>';
@@ -2159,230 +1978,138 @@ async function renderLaporan() {
         });
     }
     document.getElementById('detailTransaksi').innerHTML = detail;
-    
-    document.querySelectorAll('#detailTransaksi .tx-item').forEach(el => {
-        el.onclick = () => {
-            const id = el.dataset.id;
-            const tx = transactions.find(t => t.id === id);
-            if (tx) showTransactionDetail(tx);
-        };
-    });
-    document.getElementById('prevMonth').onclick = () => {
-        if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--;
-        renderLaporan();
-    };
-    document.getElementById('nextMonth').onclick = () => {
-        if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++;
-        renderLaporan();
-    };
-    document.getElementById('exportPdfBtn').onclick = async function() {
-        try {
-            showToast('📑 Menyiapkan PDF...', 2000);
-            this.textContent = '⏳...';
-            this.disabled = true;
-            const el = document.createElement('div');
-            el.style.cssText = 'padding:20px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;';
-            let detailHtml = '';
-            sortedDates.forEach(date => {
-                const items = grouped[date];
-                const total = items.reduce((s, i) => s + (i.type === 'pemasukan' ? Number(i.amount) : -Number(i.amount)), 0);
-                detailHtml += `<div style="margin-top:12px;padding:8px 0;border-bottom:1px solid #e2e8f0;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <strong style="font-size:15px;">📌 ${date}</strong>
-                        <span style="font-size:15px;font-weight:700;color:${total >= 0 ? '#10b981' : '#ef4444'};">${total >= 0 ? '+' : '-'}Rp ${formatRupiah(Math.abs(total))}</span>
-                    </div>
-                </div>`;
-                items.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-                items.forEach(i => {
-                    const cat = getCategoryById(i.category_id);
-                    const isPemasukan = i.type === 'pemasukan';
-                    const isRecurring = i.description?.includes('(Ulang)');
-                    detailHtml += `
-                        <div style="padding:6px 0 6px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;font-size:13px;border-left:3px solid ${isPemasukan ? '#10b981' : (cat?.color || '#94a3b8')};margin-left:8px;padding-left:16px;">
-                            <div>
-                                <span style="font-weight:500;">${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${isRecurring ? ' 🔄' : ''}</span>
-                                <div style="font-size:11px;color:#94a3b8;">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'}</div>
-                            </div>
-                            <span style="color:${isPemasukan ? '#10b981' : '#ef4444'};font-weight:600;">${isPemasukan ? '+' : '-'}Rp ${formatRupiah(i.amount)}</span>
-                        </div>
-                    `;
-                });
-            });
-            el.innerHTML = `
-                <h1 style="text-align:center;color:#1e293b;font-size:24px;">💰 Laporan Keuangan</h1>
-                <p style="text-align:center;color:#64748b;font-size:16px;">${months[currentMonth]} ${currentYear}</p>
-                <hr style="margin:20px 0;">
-                <div style="display:flex;justify-content:space-around;padding:16px;background:#f8fafc;border-radius:12px;">
-                    <div><strong style="color:#10b981;">Pemasukan</strong><br>Rp ${formatRupiah(bulanPemasukan)}</div>
-                    <div><strong style="color:#ef4444;">Pengeluaran</strong><br>Rp ${formatRupiah(bulanPengeluaran)}</div>
-                    <div><strong style="color:#3b82f6;">Saldo</strong><br>Rp ${formatRupiah(bulanPemasukan - bulanPengeluaran)}</div>
-                </div>
-                <div style="margin-top:12px;padding:12px;background:#f0f9ff;border-radius:8px;border:1px solid #3b82f620;">
-                    <div style="display:flex;justify-content:space-around;font-size:13px;flex-wrap:wrap;gap:8px;">
-                        <span>💰 Total Pemasukan: <strong style="color:#10b981;">Rp ${formatRupiah(totalPemasukan)}</strong></span>
-                        <span>💸 Total Pengeluaran: <strong style="color:#ef4444;">Rp ${formatRupiah(totalPengeluaran)}</strong></span>
-                        <span>📊 Total Saldo: <strong style="color:${totalPemasukan - totalPengeluaran >= 0 ? '#10b981' : '#ef4444'};">Rp ${formatRupiah(totalPemasukan - totalPengeluaran)}</strong></span>
-                    </div>
-                </div>
-                <div style="margin-top:20px;">
-                    <h3 style="color:#1e293b;font-size:18px;">📋 Detail Transaksi</h3>
-                    ${detailHtml}
-                </div>
-                <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">Dicetak: ${new Date().toLocaleString('id-ID')}</div>
-            `;
-            await html2pdf().set({ margin: 10, filename: `laporan_${currentYear}_${String(currentMonth+1).padStart(2,'0')}.pdf`, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } }).from(el).save();
-            showToast('✅ PDF berhasil!', 2000, 'success');
-            this.textContent = '📑 PDF';
-            this.disabled = false;
-        } catch(e) {
-            showToast('❌ Gagal: ' + e.message, 3000, 'error');
-            this.textContent = '📑 PDF';
-            this.disabled = false;
-        }
-    };
+    document.querySelectorAll('#detailTransaksi .tx-item').forEach(el => { el.onclick = () => { const id = el.dataset.id; const tx = transactions.find(t => t.id === id); if (tx) showTransactionDetail(tx); }; });
+    document.getElementById('prevMonth').onclick = () => { if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--; renderLaporan(); };
+    document.getElementById('nextMonth').onclick = () => { if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++; renderLaporan(); };
 }
 
 // ============================================
-// KUNCI SUKSES - SEDEKAH TRACKER
+// SEDEKAH FUNCTIONS (KUNCI SUKSES)
 // ============================================
-
-// Data sedekah types
-const SEDEKAH_TYPES = [
-    { id: 'pagi', label: 'Sedekah Pagi', icon: '🌅', frequency: 'daily', description: 'Setiap pagi sebelum memulai aktivitas' },
-    { id: 'saudara', label: 'Sedekah ke Saudara', icon: '👨‍👩‍👧', frequency: 'daily', description: 'Setiap hari untuk saudara/i' },
-    { id: 'kerabat', label: 'Sedekah ke Kerabat', icon: '👪', frequency: 'daily', description: 'Setiap hari untuk kerabat' },
-    { id: 'fakir', label: 'Sedekah Fakir/Miskin', icon: '🤲', frequency: 'daily', description: 'Setiap hari untuk fakir/miskin' },
-    { id: 'yatim', label: 'Sedekah Yatim', icon: '🧒', frequency: 'daily', description: 'Setiap hari untuk anak yatim' },
-    { id: 'masjid', label: 'Sedekah Masjid', icon: '🕌', frequency: 'daily', description: 'Setiap hari untuk masjid' },
-    { id: 'jumatan', label: 'Sedekah Jum\'at', icon: '📿', frequency: 'weekly', description: 'Setiap hari Jum\'at' },
-    { id: 'ramadhan', label: 'Sedekah Ramadhan', icon: '🌙', frequency: 'monthly', description: 'Setiap bulan Ramadhan' }
-];
-
-// Action types dengan poin
-const ACTION_TYPES = [
-    { id: 'uang', label: 'Uang', icon: '💰', points: 2 },
-    { id: 'makanan', label: 'Makanan', icon: '🍚', points: 2 },
-    { id: 'pakaian', label: 'Pakaian', icon: '👕', points: 2 },
-    { id: 'tenaga', label: 'Tenaga', icon: '💪', points: 2 },
-    { id: 'fikiran', label: 'Fikiran', icon: '🧠', points: 2 }
-];
-
-let sedekahData = [];
-let sedekahSettings = {};
-let sedekahHistory = [];
-
-// Load sedekah data from Supabase
 async function loadSedekahData() {
     const uid = await userManager.getUserId();
-    if (!uid) { sedekahData = []; sedekahSettings = {}; sedekahHistory = []; return; }
+    if (!uid) { sedekahData = []; sedekahReminders = {}; sedekahHistory = []; return; }
     try {
-        // Load settings (keep for other settings but remove notification toggle UI)
-        const { data: settings } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
-        sedekahSettings = settings || {};
-        
-        // Load history
-        const { data: history } = await sb.from('sedekah_history').select('*').eq('user_id', uid).order('created_at', { ascending: false });
-        sedekahHistory = history || [];
-        
-        // Load current data
+        // Load today's data
         const today = new Date().toISOString().split('T')[0];
         const { data: current } = await sb.from('sedekah_data').select('*').eq('user_id', uid).eq('date', today).maybeSingle();
         if (current) {
             sedekahData = current.actions || [];
         } else {
-            sedekahData = [];
+            sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
         }
-        
-        // Initialize if empty
-        if (!sedekahData.length) {
-            sedekahData = SEDEKAH_TYPES.map(st => ({
-                id: st.id,
-                completed: false,
-                actions: []
-            }));
+        // Load reminders
+        const { data: reminders } = await sb.from('sedekah_reminders').select('*').eq('user_id', uid);
+        sedekahReminders = {};
+        if (reminders) {
+            reminders.forEach(r => { sedekahReminders[r.type_id] = r.enabled; });
         }
-    } catch(e) { 
+        // Load history
+        const { data: history } = await sb.from('sedekah_history').select('*').eq('user_id', uid).order('created_at', { ascending: false });
+        sedekahHistory = history || [];
+    } catch(e) {
         console.error('Load sedekah error:', e);
-        sedekahData = SEDEKAH_TYPES.map(st => ({
-            id: st.id,
-            completed: false,
-            actions: []
-        }));
+        sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
+        sedekahReminders = {};
+        sedekahHistory = [];
     }
 }
-
-// Save sedekah data
 async function saveSedekahData() {
     const uid = await userManager.getUserId();
     if (!uid) return;
     try {
         const today = new Date().toISOString().split('T')[0];
         const { data: existing } = await sb.from('sedekah_data').select('id').eq('user_id', uid).eq('date', today).maybeSingle();
-        
         if (existing) {
             await sb.from('sedekah_data').update({ actions: sedekahData, updated_at: new Date().toISOString() }).eq('id', existing.id);
         } else {
             await sb.from('sedekah_data').insert({ user_id: uid, date: today, actions: sedekahData });
         }
-        
-        // Save history when completed
-        const completed = sedekahData.filter(d => d.completed);
+        // Save history jika ada yang baru selesai
+        const completed = sedekahData.filter(d => d.completed && d.actions && d.actions.length > 0);
         if (completed.length > 0) {
             const todayHistory = sedekahHistory.find(h => h.date === today);
             if (!todayHistory) {
-                await sb.from('sedekah_history').insert({
-                    user_id: uid,
-                    date: today,
-                    completed_types: completed.map(d => d.id),
-                    total_points: completed.reduce((sum, d) => sum + d.actions.length * 2, 0)
-                });
+                // Simpan history per jenis
+                for (const item of completed) {
+                    const totalNominal = item.actions.reduce((sum, a) => sum + (a.nominal || 0), 0);
+                    const points = item.actions.length * 2;
+                    await sb.from('sedekah_history').insert({
+                        user_id: uid,
+                        date: today,
+                        type_id: item.id,
+                        actions: item.actions,
+                        nominal: totalNominal,
+                        points: points,
+                        created_at: new Date().toISOString()
+                    });
+                }
                 await loadSedekahData();
             }
         }
     } catch(e) { console.error('Save sedekah error:', e); }
 }
+async function toggleSedekahReminder(typeId) {
+    const uid = await userManager.getUserId();
+    if (!uid) return;
+    const current = sedekahReminders[typeId] || false;
+    const newVal = !current;
+    try {
+        const { data: existing } = await sb.from('sedekah_reminders').select('id').eq('user_id', uid).eq('type_id', typeId).maybeSingle();
+        if (existing) {
+            await sb.from('sedekah_reminders').update({ enabled: newVal, updated_at: new Date().toISOString() }).eq('id', existing.id);
+        } else {
+            await sb.from('sedekah_reminders').insert({ user_id: uid, type_id: typeId, enabled: newVal });
+        }
+        sedekahReminders[typeId] = newVal;
+        showToast(newVal ? `🔔 Reminder ${SEDEKAH_TYPES.find(t=>t.id===typeId)?.label} diaktifkan` : `🔕 Reminder ${SEDEKAH_TYPES.find(t=>t.id===typeId)?.label} dinonaktifkan`, 2000, 'success');
+        renderKunciSukses();
+    } catch(e) { showToast('❌ Gagal update', 2000, 'error'); }
+}
+async function deleteSedekahHistory(historyId) {
+    if (!confirm('Hapus riwayat ini?')) return;
+    try {
+        await sb.from('sedekah_history').delete().eq('id', historyId);
+        showToast('✅ Riwayat dihapus', 2000, 'success');
+        await loadSedekahData();
+        renderKunciSukses();
+    } catch(e) { showToast('❌ Gagal hapus', 2000, 'error'); }
+}
 
 // ============================================
-// OPEN SEDEKAH ACTION MODAL (POPUP PILIHAN)
+// OPEN SEDEKAH ACTION MODAL
 // ============================================
 function openSedekahActionModal(typeId) {
     const st = SEDEKAH_TYPES.find(t => t.id === typeId);
     if (!st) return;
-    
     const current = sedekahData.find(d => d.id === typeId) || { completed: false, actions: [] };
-    const selectedActions = new Set(current.actions || []);
-    
+    const selectedActions = current.actions ? current.actions.map(a => ({ ...a })) : [];
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-title">${st.icon} ${st.label}</div>
-            <div class="modal-subtitle">${st.description}</div>
-            
-            <div style="background:rgba(251,191,36,0.06);border-radius:var(--radius-xs);padding:10px 12px;margin-bottom:12px;border:1px solid rgba(251,191,36,0.12);">
-                <div style="font-size:12px;color:var(--text-secondary);">Pilih jenis sedekah yang Anda lakukan:</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Setiap jenis mendapat <strong style="color:#fbbf24;">2 poin</strong></div>
-            </div>
-            
+            <div class="modal-subtitle">Pilih jenis dan nominal jika berupa uang</div>
             <div class="action-select-grid">
                 ${ACTION_TYPES.map(at => {
-                    const isSelected = selectedActions.has(at.id);
+                    const sel = selectedActions.find(a => a.actionId === at.id);
                     return `
-                        <button class="action-select-btn ${isSelected ? 'selected' : ''}" data-action="${at.id}" onclick="toggleActionSelect(this, '${at.id}')">
+                        <button class="action-select-btn ${sel ? 'selected' : ''}" data-action="${at.id}" onclick="toggleActionSelect(this, '${at.id}')">
                             <span class="action-icon">${at.icon}</span>
                             ${at.label}
-                            ${isSelected ? ' ✅' : ''}
+                            ${sel ? ' ✅' : ''}
                         </button>
                     `;
                 }).join('')}
             </div>
-            
-            <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin:4px 0 8px;">
-                <span id="selectedCountLabel">${selectedActions.size}</span> jenis dipilih · <span id="pointsLabel">${selectedActions.size * 2}</span> poin
+            <div id="nominalInputContainer" style="${selectedActions.find(a => a.actionId === 'uang') ? 'display:block' : 'display:none'};">
+                <input type="text" id="nominalSedekah" class="nominal-input" placeholder="Nominal uang yang disedekahkan" value="${selectedActions.find(a => a.actionId === 'uang')?.nominal ? formatRupiah(selectedActions.find(a => a.actionId === 'uang').nominal) : ''}">
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Nominal akan otomatis masuk ke transaksi pengeluaran dengan kategori "Sedekah"</div>
             </div>
-            
+            <div style="text-align:center;font-size:13px;color:var(--text-secondary);margin:4px 0 8px;">
+                <span id="selectedCountLabel">${selectedActions.length}</span> jenis dipilih · <span id="pointsLabel">${selectedActions.length * 2}</span> poin
+            </div>
             <hr class="modal-divider">
-            
             <div class="modal-button-grid">
                 <button id="saveSedekahActions" class="modal-btn modal-btn-primary">✅ Simpan</button>
                 <button id="closeSedekahActions" class="modal-btn modal-btn-secondary">Batal</button>
@@ -2391,53 +2118,83 @@ function openSedekahActionModal(typeId) {
         </div>
     `;
     document.body.appendChild(modal);
-    
-    // Store selected actions in a Set for the modal
-    const selectedSet = new Set(selectedActions);
-    
+    // Setup rupiah input
+    const nominalInput = document.getElementById('nominalSedekah');
+    if (nominalInput) {
+        nominalInput.addEventListener('input', function() {
+            const val = this.value.replace(/\./g, '').replace(/[^0-9]/g, '');
+            this.value = val ? formatRupiah(parseInt(val)) : '';
+        });
+    }
     // Toggle function for action buttons
     window.toggleActionSelect = function(btn, actionId) {
-        const isSelected = selectedSet.has(actionId);
+        const isSelected = selectedActions.some(a => a.actionId === actionId);
         if (isSelected) {
-            selectedSet.delete(actionId);
+            const idx = selectedActions.findIndex(a => a.actionId === actionId);
+            if (idx > -1) selectedActions.splice(idx, 1);
             btn.classList.remove('selected');
             btn.innerHTML = `<span class="action-icon">${ACTION_TYPES.find(a => a.id === actionId).icon}</span> ${ACTION_TYPES.find(a => a.id === actionId).label}`;
         } else {
-            selectedSet.add(actionId);
+            selectedActions.push({ actionId, nominal: 0 });
             btn.classList.add('selected');
             btn.innerHTML = `<span class="action-icon">${ACTION_TYPES.find(a => a.id === actionId).icon}</span> ${ACTION_TYPES.find(a => a.id === actionId).label} ✅`;
         }
-        document.getElementById('selectedCountLabel').textContent = selectedSet.size;
-        document.getElementById('pointsLabel').textContent = selectedSet.size * 2;
+        // Show/hide nominal input
+        const uangSelected = selectedActions.some(a => a.actionId === 'uang');
+        document.getElementById('nominalInputContainer').style.display = uangSelected ? 'block' : 'none';
+        document.getElementById('selectedCountLabel').textContent = selectedActions.length;
+        document.getElementById('pointsLabel').textContent = selectedActions.length * 2;
     };
-    
     document.getElementById('saveSedekahActions').onclick = async () => {
-        const actions = Array.from(selectedSet);
+        const actions = selectedActions.map(a => {
+            if (a.actionId === 'uang') {
+                const nominal = parseRupiah(document.getElementById('nominalSedekah').value);
+                return { actionId: 'uang', nominal };
+            }
+            return { actionId: a.actionId, nominal: 0 };
+        });
         const item = sedekahData.find(d => d.id === typeId);
         if (item) {
             item.completed = actions.length > 0;
             item.actions = actions;
         } else {
-            sedekahData.push({
-                id: typeId,
-                completed: actions.length > 0,
-                actions: actions
+            sedekahData.push({ id: typeId, completed: actions.length > 0, actions });
+        }
+        // Jika ada nominal uang, buat transaksi pengeluaran
+        const uangAction = actions.find(a => a.actionId === 'uang');
+        if (uangAction && uangAction.nominal > 0) {
+            const uid = await userManager.getUserId();
+            // Cari kategori "Sedekah" atau buat otomatis
+            let sedekahCat = categories.find(c => c.name.toLowerCase() === 'sedekah' && c.type === 'pengeluaran');
+            if (!sedekahCat) {
+                // Buat kategori sedekah
+                const { data: newCat } = await sb.from('categories').insert({
+                    user_id: uid,
+                    name: 'Sedekah',
+                    icon: '🕌',
+                    type: 'pengeluaran',
+                    color: '#10b981'
+                }).select().single();
+                sedekahCat = newCat;
+                await loadCategories();
+            }
+            const desc = `Sedekah ${st.label}`;
+            await sb.from('transactions').insert({
+                user_id: uid,
+                description: desc,
+                amount: uangAction.nominal,
+                type: 'pengeluaran',
+                category_id: sedekahCat.id,
+                created_at: new Date().toISOString()
             });
+            showToast(`💰 Sedekah uang Rp ${formatRupiah(uangAction.nominal)} dicatat`, 2000, 'success');
+            await loadTransactions();
         }
         await saveSedekahData();
         modal.remove();
-        
-        // Show toast based on actions
-        if (actions.length > 0) {
-            const totalPoints = actions.length * 2;
-            showToast(`✅ ${st.label} selesai! +${totalPoints} poin 🎉`, 2500, 'success');
-        } else {
-            showToast(`↩️ ${st.label} dibatalkan`, 2000, 'warning');
-        }
-        
+        showToast(`✅ ${st.label} selesai! +${actions.length * 2} poin 🎉`, 2500, 'success');
         renderKunciSukses();
     };
-    
     if (current.completed) {
         document.getElementById('resetSedekahActions').onclick = async () => {
             const item = sedekahData.find(d => d.id === typeId);
@@ -2451,29 +2208,7 @@ function openSedekahActionModal(typeId) {
             renderKunciSukses();
         };
     }
-    
     document.getElementById('closeSedekahActions').onclick = () => modal.remove();
-}
-
-// ============================================
-// GET TODAY'S SCORE
-// ============================================
-function getTodayScore() {
-    let total = 0;
-    sedekahData.forEach(d => {
-        if (d.completed) {
-            total += (d.actions || []).length * 2;
-        }
-    });
-    return total;
-}
-
-function getWeeklyScore() {
-    return getTodayScore(); // simplified
-}
-
-function getMonthlyScore() {
-    return getTodayScore(); // simplified
 }
 
 // ============================================
@@ -2481,17 +2216,29 @@ function getMonthlyScore() {
 // ============================================
 async function renderKunciSukses() {
     await loadSedekahData();
-    
-    const score = getTodayScore();
+    await loadTransactions();
+    // Hitung total saldo
+    let totalPemasukan = 0, totalPengeluaran = 0;
+    transactions.forEach(t => {
+        if (t.type === 'pemasukan') totalPemasukan += Number(t.amount)||0;
+        else totalPengeluaran += Number(t.amount)||0;
+    });
+    const totalSaldo = totalPemasukan - totalPengeluaran;
+    const targetSedekah = Math.round(totalSaldo * 0.005); // 0.5%
+    // Hitung total sedekah hari ini
+    let totalSedekahHariIni = 0;
+    const today = new Date().toISOString().split('T')[0];
+    sedekahHistory.filter(h => h.date === today).forEach(h => {
+        totalSedekahHariIni += h.nominal || 0;
+    });
+    const progress = targetSedekah > 0 ? Math.min((totalSedekahHariIni / targetSedekah) * 100, 100) : 0;
+    // Hitung poin hari ini
+    let pointsToday = 0;
+    sedekahData.forEach(d => { if (d.completed) pointsToday += (d.actions || []).length * 2; });
     const completed = sedekahData.filter(d => d.completed).length;
     const total = SEDEKAH_TYPES.length;
-    const progress = Math.round((completed / total) * 100);
-    
-    const today = new Date().toISOString().split('T')[0];
-    const todayHistory = sedekahHistory.find(h => h.date === today);
-    const streak = todayHistory ? '🔥 1 hari' : 'Mulai hari ini';
-    
-    let html = `
+    const progressCount = Math.round((completed / total) * 100);
+    const html = `
         <div class="header">
             <div class="header-user">
                 <div class="header-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">🔑</div>
@@ -2505,42 +2252,37 @@ async function renderKunciSukses() {
                 <button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button>
             </div>
         </div>
-        
+        <!-- Grafik Target Sedekah -->
+        <div class="sedekah-chart-container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-size:13px;font-weight:600;">🎯 Target Sedekah Hari Ini</span>
+                <span style="font-size:12px;color:var(--text-secondary);">0.5% dari saldo</span>
+            </div>
+            <div style="height:8px;background:var(--bg-card);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:4px;transition:width 0.5s;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-top:4px;">
+                <span>Rp ${formatRupiah(totalSedekahHariIni)}</span>
+                <span>Target: Rp ${formatRupiah(targetSedekah)}</span>
+            </div>
+        </div>
         <!-- Score Card -->
         <div class="balance-card" style="background:linear-gradient(135deg,#1e293b,#0f172a);">
             <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
                 <div>
                     <div class="balance-label">🌟 Poin Hari Ini</div>
-                    <div class="balance-amount" style="font-size:36px;">${score}</div>
-                    <div style="font-size:12px;color:rgba(255,255,255,0.6);">${streak}</div>
+                    <div class="balance-amount" style="font-size:36px;">${pointsToday}</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,0.6);">${completed} jenis selesai</div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-size:12px;color:rgba(255,255,255,0.6);">Progress</div>
-                    <div style="font-size:28px;font-weight:700;color:#fbbf24;">${progress}%</div>
+                    <div style="font-size:28px;font-weight:700;color:#fbbf24;">${progressCount}%</div>
                 </div>
             </div>
             <div style="margin-top:12px;background:rgba(255,255,255,0.1);border-radius:8px;height:6px;overflow:hidden;position:relative;z-index:1;">
-                <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:8px;transition:width 0.5s ease;"></div>
+                <div style="height:100%;width:${progressCount}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:8px;transition:width 0.5s ease;"></div>
             </div>
         </div>
-        
-        <!-- Quick Stats -->
-        <div class="stats-row">
-            <div class="stat-card" style="cursor:default;">
-                <div class="label">📅 Hari ini</div>
-                <div class="value" style="color:#fbbf24;">${completed}</div>
-            </div>
-            <div class="stat-card" style="cursor:default;">
-                <div class="label">📊 Total poin</div>
-                <div class="value" style="color:#fbbf24;">${score}</div>
-            </div>
-        </div>
-        
-        <!-- Export Button -->
-        <button class="modal-btn modal-btn-success modal-btn-full" style="margin-bottom:12px;" onclick="exportSedekahPDF()">
-            📑 Export Laporan PDF
-        </button>
-        
         <!-- Sedekah Types -->
         <div class="card" style="padding:12px;">
             <div class="card-title" style="margin-bottom:8px;">
@@ -2552,26 +2294,24 @@ async function renderKunciSukses() {
                     const data = sedekahData.find(d => d.id === st.id) || { completed: false, actions: [] };
                     const isCompleted = data.completed;
                     const actions = data.actions || [];
-                    const actionLabels = actions.map(id => {
-                        const a = ACTION_TYPES.find(at => at.id === id);
-                        return a ? `${a.icon} ${a.label}` : id;
+                    const actionLabels = actions.map(a => {
+                        const at = ACTION_TYPES.find(at => at.id === a.actionId);
+                        return at ? `${at.icon} ${at.label}` : a.actionId;
                     });
                     const actionPoints = actions.length * 2;
-                    
-                    let freqColor = '#4ade80';
-                    if (st.frequency === 'weekly') freqColor = '#fbbf24';
-                    if (st.frequency === 'monthly') freqColor = '#f87171';
-                    
+                    const reminderEnabled = sedekahReminders[st.id] || false;
+                    const freqLabel = st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan';
+                    const freqColor = st.frequency === 'daily' ? '#4ade80' : st.frequency === 'weekly' ? '#fbbf24' : '#f87171';
                     return `
-                        <div class="sedekah-card ${isCompleted ? 'completed' : ''}" onclick="openSedekahActionModal('${st.id}')">
-                            <div class="top-row">
+                        <div class="sedekah-card ${isCompleted ? 'completed' : ''}" style="position:relative;">
+                            <div class="top-row" onclick="openSedekahActionModal('${st.id}')">
                                 <div class="left-section">
                                     <span class="icon">${st.icon}</span>
                                     <div>
                                         <div class="label">${st.label}</div>
-                                        <div class="desc">${st.description}</div>
+                                        <div class="desc">${st.frequency === 'daily' ? 'Setiap hari' : st.frequency === 'weekly' ? 'Setiap Jumat' : 'Setiap Ramadhan'}</div>
                                         <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;">
-                                            <span class="freq-badge" style="background:${freqColor}22;color:${freqColor};">${st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan'}</span>
+                                            <span class="freq-badge" style="background:${freqColor}22;color:${freqColor};">${freqLabel}</span>
                                             ${isCompleted ? `<span class="freq-badge" style="background:rgba(16,185,129,0.15);color:#4ade80;">✅ Selesai</span>` : `<span class="freq-badge" style="background:rgba(148,163,184,0.15);color:#94a3b8;">⏳ Belum</span>`}
                                         </div>
                                     </div>
@@ -2585,40 +2325,49 @@ async function renderKunciSukses() {
                                 <div class="actions-row">
                                     <span class="action-label">📌 ${actions.length} jenis:</span>
                                     ${actionLabels.map(label => `<span class="action-chip selected">${label}</span>`).join('')}
+                                    ${actions.some(a => a.actionId === 'uang' && a.nominal > 0) ? `<span class="action-chip selected">💰 Rp ${formatRupiah(actions.find(a => a.actionId === 'uang')?.nominal || 0)}</span>` : ''}
                                 </div>
                             ` : ''}
-                            ${!isCompleted ? `
-                                <div class="actions-row">
-                                    <span class="action-label" style="color:var(--text-muted);">Klik untuk memilih jenis sedekah</span>
+                            <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+                                <div class="reminder-toggle ${reminderEnabled ? 'active' : ''}" onclick="event.stopPropagation();toggleSedekahReminder('${st.id}')">
+                                    <span class="icon">${reminderEnabled ? '🔔' : '🔕'}</span>
+                                    <span>${reminderEnabled ? 'Reminder Aktif' : 'Aktifkan Reminder'}</span>
                                 </div>
-                            ` : ''}
+                                ${isCompleted ? `<span style="font-size:11px;color:var(--text-secondary);">${new Date().toISOString().split('T')[0] === new Date().toISOString().split('T')[0] ? 'Hari ini' : ''}</span>` : ''}
+                            </div>
                         </div>
                     `;
                 }).join('')}
             </div>
         </div>
-        
         <!-- History -->
         <div class="card">
             <div class="card-title"><span>📜 Riwayat Sedekah</span></div>
-            ${sedekahHistory.length === 0 ? 
-                '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada riwayat</div></div>' :
-                sedekahHistory.slice(0, 5).map(h => `
-                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                        <span>📅 ${formatDate(h.date)}</span>
-                        <span style="color:#fbbf24;font-weight:600;">${h.total_points || 0} poin</span>
-                        <span style="font-size:11px;color:var(--text-secondary);">${h.completed_types?.length || 0} jenis</span>
-                    </div>
-                `).join('')
+            ${sedekahHistory.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada riwayat</div></div>' :
+                sedekahHistory.slice(0, 10).map(h => {
+                    const st = SEDEKAH_TYPES.find(t => t.id === h.type_id);
+                    return `
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);align-items:center;">
+                            <div>
+                                <span>${st ? st.icon : '📌'} ${st ? st.label : h.type_id}</span>
+                                <div style="font-size:11px;color:var(--text-secondary);">${formatDate(h.date)}</div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <span style="color:#fbbf24;font-weight:600;">${h.points || 0} poin</span>
+                                ${h.nominal > 0 ? `<span style="color:#10b981;font-size:12px;">Rp ${formatRupiah(h.nominal)}</span>` : ''}
+                                <button onclick="deleteSedekahHistory('${h.id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('')
             }
         </div>
     `;
-    
     document.getElementById('appContainer').innerHTML = html;
 }
 
 // ============================================
-// PANDUAN SEDEKAH - PDF
+// PANDUAN SEDEKAH
 // ============================================
 function openPanduanSedekah() {
     const modal = document.createElement('div');
@@ -2627,7 +2376,6 @@ function openPanduanSedekah() {
         <div class="modal-content" style="max-width:500px;">
             <div class="modal-title">📖 Panduan Sedekah</div>
             <div class="modal-subtitle">Panduan lengkap tentang sedekah dalam Islam</div>
-            
             <div style="background:rgba(251,191,36,0.08);border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid rgba(251,191,36,0.15);">
                 <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
                     <p style="margin-bottom:8px;">📌 <strong>Sedekah tidak mengurangi harta</strong> - Rasulullah ﷺ bersabda: <em>"Harta tidak akan berkurang karena sedekah."</em> (HR. Muslim)</p>
@@ -2636,7 +2384,6 @@ function openPanduanSedekah() {
                     <p>📌 <strong>Sedekah dilipatgandakan</strong> - <em>"Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh bulir."</em> (QS. Al-Baqarah: 261)</p>
                 </div>
             </div>
-            
             <div style="max-height:300px;overflow-y:auto;padding:4px 0;">
                 <div style="font-weight:600;font-size:14px;color:var(--text-primary);margin-bottom:8px;">🧾 Jenis-Jenis Sedekah</div>
                 <div style="display:grid;gap:6px;font-size:13px;color:var(--text-secondary);">
@@ -2652,185 +2399,14 @@ function openPanduanSedekah() {
                     <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>⚖️</span><span><strong>Berbuat Adil</strong> - Berlaku adil adalah sedekah</span></div>
                     <div style="display:flex;gap:8px;padding:6px 8px;background:var(--bg-card);border-radius:8px;"><span>👨‍👩‍👦</span><span><strong>Nafkah Keluarga</strong> - Memberi nafkah keluarga adalah sedekah</span></div>
                 </div>
-                
-                <div style="font-weight:600;font-size:14px;color:var(--text-primary);margin:12px 0 8px;">⏰ Waktu Terbaik Sedekah</div>
-                <div style="display:grid;gap:4px;font-size:13px;color:var(--text-secondary);">
-                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>🌟</span><span><strong>Saat Sehat</strong> - Sedekah paling utama ketika sehat dan masih membutuhkan</span></div>
-                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>🌅</span><span><strong>Setiap Pagi</strong> - Malaikat mendoakan orang yang berinfak setiap pagi</span></div>
-                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>📿</span><span><strong>Hari Jumat</strong> - Dianjurkan memperbanyak sedekah di hari Jumat</span></div>
-                    <div style="display:flex;gap:8px;padding:4px 8px;"><span>🌙</span><span><strong>Bulan Ramadhan</strong> - Rasulullah lebih dermawan di bulan Ramadhan</span></div>
-                </div>
             </div>
-            
             <hr class="modal-divider">
             <div class="modal-button-grid">
-                <button class="modal-btn modal-btn-primary" onclick="downloadPanduanSedekah()">📑 Download PDF</button>
-                <button class="modal-btn modal-btn-secondary" onclick="this.closest('.modal-overlay').remove()">Tutup</button>
+                <button class="modal-btn modal-btn-secondary modal-btn-full" onclick="this.closest('.modal-overlay').remove()">Tutup</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
-}
-
-// ============================================
-// DOWNLOAD PANDUAN SEDEKAH PDF
-// ============================================
-function downloadPanduanSedekah() {
-    const el = document.createElement('div');
-    el.style.cssText = 'padding:30px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;color:#1e293b;';
-    el.innerHTML = `
-        <h1 style="text-align:center;color:#1e293b;font-size:28px;margin-bottom:4px;">💰 Panduan Sedekah</h1>
-        <p style="text-align:center;color:#64748b;font-size:16px;">Berdasarkan Al-Qur'an dan Hadis Sahih</p>
-        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">📌 Sedekah Tidak Mengurangi Harta</h2>
-        <p style="color:#475569;font-size:15px;line-height:1.8;">Rasulullah ﷺ bersabda: <em>"Harta tidak akan berkurang karena sedekah."</em> (HR. Muslim)</p>
-        <p style="color:#475569;font-size:15px;line-height:1.8;margin-top:8px;">Maknanya, secara lahiriah harta mungkin berkurang jumlahnya, tetapi Allah menggantinya dengan keberkahan, perlindungan dari musibah, atau tambahan rezeki yang tidak disangka-sangka.</p>
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Allah Mengganti Harta yang Disedekahkan</h2>
-        <p style="color:#475569;font-size:15px;line-height:1.8;">Allah berfirman: <em>"Dan apa saja yang kamu infakkan, Allah akan menggantinya dan Dia-lah Pemberi rezeki yang terbaik."</em> (QS. Saba': 39)</p>
-        <p style="color:#475569;font-size:15px;line-height:1.8;margin-top:8px;">Ayat ini sering dijadikan dasar bahwa sedekah tidak membuat miskin, bahkan Allah menjanjikan penggantian.</p>
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Doa Malaikat Setiap Pagi</h2>
-        <p style="color:#475569;font-size:15px;line-height:1.8;">Rasulullah ﷺ bersabda: <em>"Setiap pagi dua malaikat turun. Salah satunya berdoa, 'Ya Allah, berikanlah ganti kepada orang yang berinfak.' Dan yang lainnya berdoa, 'Ya Allah, berikanlah kebinasaan kepada orang yang menahan hartanya.'"</em> (HR. Bukhari dan Muslim)</p>
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:20px 0 8px;">📌 Perumpamaan Sedekah Dilipatgandakan</h2>
-        <p style="color:#475569;font-size:15px;line-height:1.8;">Allah berfirman: <em>"Perumpamaan orang yang menginfakkan hartanya di jalan Allah seperti sebutir biji yang menumbuhkan tujuh bulir, pada setiap bulir seratus biji."</em> (QS. Al-Baqarah: 261)</p>
-        
-        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">🧾 Jenis-Jenis Sedekah</h2>
-        
-        <div style="display:grid;gap:8px;margin:12px 0;">
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">💰</span><div><strong>Sedekah Harta</strong><br><span style="font-size:13px;color:#64748b;">Memberikan sebagian harta kepada yang membutuhkan</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">😊</span><div><strong>Senyum</strong><br><span style="font-size:13px;color:#64748b;">Senyum kepada saudaramu adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">💬</span><div><strong>Kata Baik</strong><br><span style="font-size:13px;color:#64748b;">Kalimat yang baik adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🤝</span><div><strong>Menolong Orang Lain</strong><br><span style="font-size:13px;color:#64748b;">Membantu orang lain adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🧹</span><div><strong>Menyingkirkan Gangguan</strong><br><span style="font-size:13px;color:#64748b;">Menyingkirkan sesuatu yang mengganggu dari jalan adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">📢</span><div><strong>Amar Ma'ruf Nahi Munkar</strong><br><span style="font-size:13px;color:#64748b;">Menyuruh yang ma'ruf dan mencegah yang mungkar adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🕋</span><div><strong>Berdzikir</strong><br><span style="font-size:13px;color:#64748b;">Setiap tasbih, tahmid, tahlil, dan takbir adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">🍽️</span><div><strong>Memberi Makan dan Minum</strong><br><span style="font-size:13px;color:#64748b;">Memberi makan orang yang membutuhkan adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">📚</span><div><strong>Mengajarkan Ilmu yang Bermanfaat</strong><br><span style="font-size:13px;color:#64748b;">Ilmu yang bermanfaat adalah sedekah jariyah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">⚖️</span><div><strong>Berbuat Adil</strong><br><span style="font-size:13px;color:#64748b;">Berlaku adil di antara dua orang adalah sedekah</span></div></div>
-            <div style="display:flex;gap:8px;padding:8px 12px;background:#f8fafc;border-radius:8px;"><span style="font-size:18px;">👨‍👩‍👦</span><div><strong>Memberi Nafkah kepada Keluarga</strong><br><span style="font-size:13px;color:#64748b;">Memberi nafkah keluarga dengan niat karena Allah adalah sedekah</span></div></div>
-        </div>
-        
-        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">⏰ Waktu Terbaik Sedekah</h2>
-        <div style="display:grid;gap:6px;margin:8px 0;">
-            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">🌟</span><div><strong>Saat Sehat dan Masih Membutuhkan Harta</strong><br><span style="font-size:13px;color:#64748b;">Ini adalah waktu yang paling utama. Jangan menunggu tua atau menjelang meninggal.</span></div></div>
-            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">🌅</span><div><strong>Setiap Hari Pagi</strong><br><span style="font-size:13px;color:#64748b;">Malaikat mendoakan orang yang berinfak setiap pagi.</span></div></div>
-            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">📿</span><div><strong>Hari Jumat</strong><br><span style="font-size:13px;color:#64748b;">Banyak ulama menganjurkan memperbanyak sedekah pada hari Jumat.</span></div></div>
-            <div style="display:flex;gap:8px;padding:6px 8px;"><span style="font-size:16px;">🌙</span><div><strong>Bulan Ramadan</strong><br><span style="font-size:13px;color:#64748b;">Rasulullah lebih dermawan di bulan Ramadhan.</span></div></div>
-        </div>
-        
-        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
-        <h2 style="color:#1e293b;font-size:20px;margin:16px 0 8px;">💡 Sedekah Praktis Setiap Hari</h2>
-        <div style="display:grid;gap:4px;margin:8px 0;font-size:14px;color:#475569;">
-            <div>🕌 Shalat Dhuha</div>
-            <div>📿 Berdzikir</div>
-            <div>😊 Senyum kepada orang lain</div>
-            <div>👋 Mengucapkan salam</div>
-            <div>👴 Membantu orang tua</div>
-            <div>🐾 Memberi makan hewan</div>
-            <div>🧹 Menyingkirkan sampah dari jalan</div>
-            <div>📖 Mengajarkan ilmu</div>
-            <div>🍽️ Memberi makan atau minum orang lain</div>
-            <div>💰 Menyisihkan sebagian rezeki untuk yang membutuhkan</div>
-        </div>
-        
-        <div style="text-align:center;margin:20px 0 0;padding:16px;background:#f0f9ff;border-radius:12px;border:1px solid #3b82f620;">
-            <p style="font-size:14px;color:#475569;font-style:italic;">"Setiap kebaikan adalah sedekah."</p>
-            <p style="font-size:12px;color:#94a3b8;">(HR. Bukhari dan Muslim)</p>
-        </div>
-        
-        <div style="text-align:center;margin-top:30px;color:#94a3b8;font-size:12px;">
-            Dicetak: ${new Date().toLocaleString('id-ID')}
-        </div>
-    `;
-    
-    html2pdf().set({
-        margin: 10,
-        filename: 'panduan_sedekah.pdf',
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4' }
-    }).from(el).save().then(() => {
-        showToast('✅ PDF berhasil diunduh!', 2000, 'success');
-    }).catch(() => {
-        showToast('❌ Gagal membuat PDF', 2000, 'error');
-    });
-}
-
-// ============================================
-// EXPORT SEDEKAH PDF
-// ============================================
-function exportSedekahPDF() {
-    const today = new Date().toISOString().split('T')[0];
-    const completed = sedekahData.filter(d => d.completed);
-    const score = getTodayScore();
-    
-    const el = document.createElement('div');
-    el.style.cssText = 'padding:30px;background:white;font-family:Arial,sans-serif;max-width:800px;margin:0 auto;color:#1e293b;';
-    el.innerHTML = `
-        <h1 style="text-align:center;color:#1e293b;font-size:28px;">🔑 Laporan Sedekah Harian</h1>
-        <p style="text-align:center;color:#64748b;font-size:16px;">${formatDate(today)}</p>
-        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        
-        <div style="display:flex;justify-content:space-around;padding:16px;background:#f8fafc;border-radius:12px;margin:12px 0;">
-            <div><strong style="color:#fbbf24;">🌟 Poin</strong><br><span style="font-size:24px;font-weight:700;">${score}</span></div>
-            <div><strong style="color:#4ade80;">✅ Selesai</strong><br><span style="font-size:24px;font-weight:700;">${completed.length}</span></div>
-            <div><strong style="color:#94a3b8;">📋 Total</strong><br><span style="font-size:24px;font-weight:700;">${SEDEKAH_TYPES.length}</span></div>
-        </div>
-        
-        <h2 style="color:#1e293b;font-size:18px;margin:16px 0 8px;">📋 Detail Sedekah</h2>
-        ${SEDEKAH_TYPES.map(st => {
-            const data = sedekahData.find(d => d.id === st.id) || { completed: false, actions: [] };
-            const isCompleted = data.completed;
-            const actions = data.actions || [];
-            const actionLabels = actions.map(id => {
-                const a = ACTION_TYPES.find(at => at.id === id);
-                return a ? `${a.icon} ${a.label}` : id;
-            });
-            return `
-                <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #e2e8f0;background:${isCompleted ? '#f0fdf4' : '#f8fafc'};">
-                    <div>
-                        <span style="font-size:16px;">${st.icon}</span>
-                        <span style="font-weight:500;">${st.label}</span>
-                        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">${st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan'}</span>
-                    </div>
-                    <div>
-                        ${isCompleted ? 
-                            `<span style="color:#4ade80;">✅ ${actions.length} jenis · ${actions.length * 2} poin</span>` : 
-                            `<span style="color:#94a3b8;">⏳ Belum</span>`
-                        }
-                    </div>
-                </div>
-                ${isCompleted && actions.length ? `
-                    <div style="padding:4px 12px 8px 40px;font-size:12px;color:#64748b;background:#fafdfa;">
-                        ${actionLabels.join(' · ')}
-                    </div>
-                ` : ''}
-            `;
-        }).join('')}
-        
-        <hr style="margin:20px 0;border:1px solid #e2e8f0;">
-        <div style="text-align:center;color:#94a3b8;font-size:12px;">
-            Dicetak: ${new Date().toLocaleString('id-ID')}
-        </div>
-    `;
-    
-    html2pdf().set({
-        margin: 10,
-        filename: `laporan_sedekah_${today}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4' }
-    }).from(el).save().then(() => {
-        showToast('✅ Laporan PDF berhasil diunduh!', 2000, 'success');
-    }).catch(() => {
-        showToast('❌ Gagal membuat PDF', 2000, 'error');
-    });
 }
 
 // ============================================
@@ -2841,7 +2417,6 @@ async function renderHome() {
     await loadTasks();
     await loadSavings();
     await loadDebts();
-    
     const totals = { pemasukan: 0, pengeluaran: 0 };
     transactions.forEach(t => { if (t.type === 'pemasukan') totals.pemasukan += Number(t.amount)||0; else totals.pengeluaran += Number(t.amount)||0; });
     totals.saldo = totals.pemasukan - totals.pengeluaran;
@@ -2861,7 +2436,6 @@ async function renderHome() {
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'pengeluaran' && !t.description?.includes('(Ulang)');
     });
     const topExpenses = [...bulanIni].sort((a,b) => (Number(b.amount)||0) - (Number(a.amount)||0)).slice(0,5);
-    
     let html = `
         <div class="header">
             <div class="header-user"><div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div><div class="header-info"><div class="header-name">${escapeHtml(userName)}</div><div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}</div></div></div>
@@ -2908,7 +2482,6 @@ async function renderHome() {
         </div>
     `;
     document.getElementById('appContainer').innerHTML = html;
-    
     document.getElementById('tasksCard')?.addEventListener('click', () => { pushHistory(currentNav); currentNav='tasks'; updateNav(); renderTasks(); });
     document.querySelectorAll('.task-preview-item').forEach(el => { el.onclick = (e) => { e.stopPropagation(); const id = el.dataset.id; openTaskModal(id); }; });
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
@@ -2963,7 +2536,6 @@ async function renderSettings() {
         </div>
     `;
     document.getElementById('appContainer').innerHTML = html;
-    
     document.getElementById('darkModeSwitch')?.addEventListener('change', toggleTheme);
     document.getElementById('changePassBtn')?.addEventListener('click', async () => {
         const old = document.getElementById('oldPass').value;
@@ -3002,10 +2574,6 @@ async function renderSettings() {
         renderSettings();
     });
 }
-
-// ============================================
-// FAMILY FUNCTIONS
-// ============================================
 async function createFamily(name) {
     const uid = await userManager.getUserId();
     if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
@@ -3019,7 +2587,6 @@ async function createFamily(name) {
         renderSettings();
     } catch(e) { showToast('❌ Gagal: ' + e.message, 3000, 'error'); }
 }
-
 async function joinFamily(familyId) {
     const uid = await userManager.getUserId();
     if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
@@ -3034,14 +2601,13 @@ async function joinFamily(familyId) {
         renderSettings();
     } catch(e) { showToast('❌ Gagal: ' + e.message, 3000, 'error'); }
 }
-
 function copyFamilyId() {
     if (!currentFamilyId) { showToast('❌ Tidak ada keluarga', 2000, 'error'); return; }
     navigator.clipboard.writeText(currentFamilyId).then(() => showToast('✅ ID disalin!', 2000, 'success')).catch(() => { const ta = document.createElement('textarea'); ta.value = currentFamilyId; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('✅ ID disalin!', 2000, 'success'); });
 }
 
 // ============================================
-// EDIT PROFILE MODAL (PREMIUM)
+// EDIT PROFILE MODAL
 // ============================================
 async function openEditProfileModal() {
     const user = await userManager.getUserData();
@@ -3150,26 +2716,24 @@ function addBottomNav() {
         });
     });
 }
-
 function updateNav() {
     document.querySelectorAll('.nav-item[data-nav]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.nav === currentNav);
         btn.style.color = btn.dataset.nav === currentNav ? '#3b82f6' : '';
     });
 }
-
 function renderCurrentView() {
     if (!appReady) return;
-    const views = { 
-        home: renderHome, 
-        transaksi: renderTransaksi, 
-        budget: renderBudgetPage, 
-        tasks: renderTasks, 
-        settings: renderSettings, 
-        hutang: renderHutang, 
-        savings: renderSavings, 
-        reminders: renderReminders, 
-        kategori: renderKategori, 
+    const views = {
+        home: renderHome,
+        transaksi: renderTransaksi,
+        budget: renderBudgetPage,
+        tasks: renderTasks,
+        settings: renderSettings,
+        hutang: renderHutang,
+        savings: renderSavings,
+        reminders: renderReminders,
+        kategori: renderKategori,
         laporan: renderLaporan,
         'kunci-sukses': renderKunciSukses
     };
@@ -3193,7 +2757,6 @@ async function onAuthSuccess(user) {
     renderCurrentView();
     hideLoading();
 }
-
 async function logout() {
     await sb.auth.signOut();
     currentUser = null; currentCustomUser = null; appReady = false;
@@ -3207,14 +2770,12 @@ async function logout() {
     document.getElementById('switchText').innerHTML = 'Belum punya akun? Daftar';
     applyTheme(false);
 }
-
 function toggleMode() {
     isLoginMode = !isLoginMode;
     document.getElementById('modalTitle').innerHTML = isLoginMode ? '💰 Masuk ke Akun' : '💰 Daftar Akun Baru';
     document.getElementById('submitLoginBtn').innerHTML = isLoginMode ? 'Masuk' : 'Daftar';
     document.getElementById('switchText').innerHTML = isLoginMode ? 'Belum punya akun? Daftar' : 'Sudah punya akun? Masuk';
 }
-
 async function handleLogin() {
     const email = document.getElementById('emailInput').value.trim();
     const password = document.getElementById('passwordInput').value;
@@ -3233,7 +2794,6 @@ async function handleLogin() {
         if (data.user) { showToast('✅ Pendaftaran berhasil! Silakan login.', 2500, 'success'); toggleMode(); document.getElementById('emailInput').value = ''; document.getElementById('passwordInput').value = ''; clearInterval(loading); hideLoading(); }
     }
 }
-
 async function handleGuest() {
     const errorDiv = document.getElementById('loginError');
     errorDiv.textContent = '';
@@ -3244,7 +2804,6 @@ async function handleGuest() {
         if (data.user) { await onAuthSuccess(data.user); }
     } catch(e) { errorDiv.textContent = 'Gagal masuk sebagai tamu: ' + e.message; clearInterval(loading); hideLoading(); }
 }
-
 async function startApp() {
     showLoading();
     await new Promise(r => {
@@ -3271,7 +2830,6 @@ document.getElementById('toggleLoginPassword')?.addEventListener('click', () => 
     inp.type = inp.type === 'password' ? 'text' : 'password';
     inp.nextElementSibling.textContent = inp.type === 'password' ? '👁️' : '👁️‍🗨️';
 });
-
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp);
 else startApp();
 </script>
