@@ -2493,7 +2493,9 @@ async function loadSedekahSettings() {
     try {
         const { data } = await sb.from('sedekah_settings').select('*').eq('user_id', uid).maybeSingle();
         sedekahSettings = data || { notifications_enabled: true };
-    } catch(e) { sedekahSettings = { notifications_enabled: true }; }
+    } catch(e) { 
+        sedekahSettings = { notifications_enabled: true }; 
+    }
 }
 
 async function toggleSedekahNotifications() {
@@ -3066,7 +3068,8 @@ function renderCurrentView() {
         savings: renderSavings, 
         reminders: renderReminders, 
         kategori: renderKategori, 
-        laporan: renderLaporan 
+        laporan: renderLaporan,
+        'kunci-sukses': renderKunciSukses
     };
     if (views[currentNav]) views[currentNav]();
 }
