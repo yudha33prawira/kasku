@@ -12,9 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <style>
-        /* ===== RESET & VARIABEL ===== */
         * {
             margin: 0;
             padding: 0;
@@ -22,24 +21,28 @@
             -webkit-tap-highlight-color: transparent;
         }
         :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --bg-card: rgba(255, 255, 255, 0.06);
-            --bg-card-hover: rgba(255, 255, 255, 0.10);
+            --bg-primary: #0a0f1e;
+            --bg-secondary: #141b2d;
+            --bg-card: rgba(255,255,255,0.04);
+            --bg-card-hover: rgba(255,255,255,0.08);
+            --bg-card-glass: rgba(255,255,255,0.03);
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
-            --border-color: rgba(255, 255, 255, 0.06);
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --radius: 20px;
-            --radius-sm: 12px;
-            --radius-xs: 8px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --border-color: rgba(255,255,255,0.06);
+            --border-glow: rgba(59,130,246,0.15);
+            --shadow: 0 8px 40px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 40px rgba(59,130,246,0.08);
+            --radius: 24px;
+            --radius-sm: 14px;
+            --radius-xs: 10px;
+            --transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             --gradient-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
             --gradient-success: linear-gradient(135deg, #10b981, #059669);
             --gradient-danger: linear-gradient(135deg, #ef4444, #dc2626);
             --gradient-warning: linear-gradient(135deg, #f59e0b, #d97706);
-            --nav-height: 70px;
+            --gradient-premium: linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4);
+            --nav-height: 72px;
             --danger-color: #f87171;
             --warning-color: #fbbf24;
             --success-color: #4ade80;
@@ -49,19 +52,25 @@
             font-family: 'Inter', -apple-system, sans-serif;
             color: var(--text-primary);
             min-height: 100vh;
-            padding-bottom: calc(var(--nav-height) + 20px);
-            transition: background 0.3s ease;
+            padding-bottom: calc(var(--nav-height) + 24px);
+            transition: background 0.4s ease;
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.03) 0%, transparent 50%);
         }
         body.light {
-            --bg-primary: #f1f5f9;
+            --bg-primary: #f0f4ff;
             --bg-secondary: #ffffff;
-            --bg-card: rgba(0, 0, 0, 0.04);
-            --bg-card-hover: rgba(0, 0, 0, 0.08);
+            --bg-card: rgba(0,0,0,0.03);
+            --bg-card-hover: rgba(0,0,0,0.06);
+            --bg-card-glass: rgba(255,255,255,0.6);
             --text-primary: #0f172a;
             --text-secondary: #475569;
             --text-muted: #94a3b8;
-            --border-color: rgba(0, 0, 0, 0.06);
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --border-color: rgba(0,0,0,0.06);
+            --border-glow: rgba(59,130,246,0.1);
+            --shadow: 0 8px 40px rgba(0,0,0,0.06);
+            --shadow-glow: 0 0 40px rgba(59,130,246,0.04);
+            background-image: radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.05) 0%, transparent 60%);
         }
         body.light .balance-card,
         body.light .balance-card * {
@@ -69,7 +78,7 @@
         }
         body.light .balance-card .balance-label,
         body.light .balance-card .stat-label {
-            color: rgba(255, 255, 255, 0.7) !important;
+            color: rgba(255,255,255,0.7) !important;
         }
         body.light .balance-card .balance-amount {
             color: #ffffff !important;
@@ -82,12 +91,10 @@
         }
         body.light .balance-card .balance-eye {
             color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.1) !important;
+            background: rgba(255,255,255,0.15) !important;
         }
-
-        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 3px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
@@ -97,7 +104,6 @@
             border-radius: 10px;
         }
 
-        /* ===== LOADING ===== */
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -114,22 +120,23 @@
             pointer-events: none;
         }
         .loading-logo {
-            font-size: 64px;
+            font-size: 72px;
             margin-bottom: 20px;
             animation: pulse 1.5s ease-in-out infinite;
         }
         .loading-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: var(--gradient-primary);
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            background: var(--gradient-premium);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
         .loading-subtitle {
             color: var(--text-secondary);
             font-size: 14px;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
         .loading-bar {
             width: 200px;
@@ -140,7 +147,7 @@
         }
         .loading-bar-fill {
             height: 100%;
-            background: var(--gradient-primary);
+            background: var(--gradient-premium);
             border-radius: 4px;
             animation: shimmer 1.5s ease-in-out infinite;
             background-size: 200% 100%;
@@ -149,54 +156,47 @@
             color: var(--text-muted);
             font-size: 12px;
             margin-top: 12px;
+            font-weight: 500;
         }
         @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.5;
-            }
+            0%,100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.7; }
         }
         @keyframes shimmer {
-            0% {
-                background-position: -200% 0;
-            }
-            100% {
-                background-position: 200% 0;
-            }
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
 
-        /* ===== APP CONTAINER ===== */
         .app-container {
-            max-width: 420px;
+            max-width: 440px;
             margin: 0 auto;
             padding: 16px 16px 20px;
+            position: relative;
         }
 
-        /* ===== HEADER ===== */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             border-radius: var(--radius);
             border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-glow);
             margin-bottom: 16px;
         }
         .header-user {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         .header-avatar {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: var(--gradient-primary);
+            background: var(--gradient-premium);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -204,27 +204,30 @@
             font-weight: 700;
             color: white;
             flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(59,130,246,0.25);
         }
         .header-info {
             line-height: 1.3;
         }
         .header-name {
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 700;
             color: var(--text-primary);
+            letter-spacing: -0.3px;
         }
         .header-code {
             font-size: 11px;
             color: var(--text-secondary);
+            font-weight: 500;
         }
         .header-actions {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
         .header-btn {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             border: none;
             background: var(--bg-card);
@@ -236,6 +239,12 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            backdrop-filter: blur(8px);
+        }
+        .header-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            transform: scale(1.05);
         }
         .header-btn:active {
             transform: scale(0.92);
@@ -248,34 +257,37 @@
             color: white;
             font-size: 9px;
             font-weight: 700;
-            width: 18px;
+            min-width: 18px;
             height: 18px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 8px rgba(239,68,68,0.4);
         }
 
-        /* ===== RUNNING TEXT ===== */
         .running-text-container {
             border-radius: var(--radius-sm);
-            padding: 10px 16px;
+            padding: 12px 16px;
             margin-bottom: 16px;
             overflow: hidden;
             white-space: nowrap;
             transition: all 0.3s ease;
+            border: 1px solid transparent;
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
         }
         .running-text-container.danger {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.2);
         }
         .running-text-container.warning {
-            background: rgba(251, 191, 36, 0.10);
-            border: 1px solid rgba(251, 191, 36, 0.15);
+            background: rgba(251,191,36,0.08);
+            border-color: rgba(251,191,36,0.12);
         }
         .running-text {
             display: inline-block;
-            animation: scrollText 25s linear infinite;
+            animation: scrollText 28s linear infinite;
             font-size: 12px;
             font-weight: 500;
         }
@@ -288,96 +300,110 @@
             font-weight: 500;
         }
         .running-text span {
-            margin-right: 30px;
+            margin-right: 40px;
         }
         @keyframes scrollText {
-            0% {
-                transform: translateX(100%);
-            }
-            100% {
-                transform: translateX(-100%);
-            }
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
         }
 
-        /* ===== BALANCE CARD ===== */
         .balance-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
+            background: linear-gradient(145deg, #1a2332, #0f172a);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 24px 24px 20px;
             margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255,255,255,0.05);
             position: relative;
             overflow: hidden;
             color: #ffffff;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
         .balance-card::before {
             content: '';
             position: absolute;
             top: -50%;
             right: -30%;
-            width: 60%;
+            width: 70%;
             height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.10), transparent 70%);
+            background: radial-gradient(circle, rgba(59,130,246,0.12), transparent 70%);
+            pointer-events: none;
+        }
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: -20%;
+            width: 60%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(139,92,246,0.08), transparent 70%);
             pointer-events: none;
         }
         .balance-label {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
         }
         .balance-amount {
-            font-size: 32px;
+            font-size: 34px;
             font-weight: 800;
-            margin: 6px 0;
-            letter-spacing: -0.5px;
+            margin: 4px 0 8px;
+            letter-spacing: -0.8px;
             color: #ffffff;
+            position: relative;
+            z-index: 1;
         }
         .balance-stats {
             display: flex;
             gap: 24px;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 12px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,0.06);
             position: relative;
             z-index: 1;
         }
-        .stat-item {
-            flex: 1;
-        }
+        .stat-item { flex: 1; }
         .stat-label {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
         }
         .stat-value {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: 700;
             margin-top: 2px;
             color: #ffffff;
         }
-        .stat-value.income {
-            color: #4ade80;
-        }
-        .stat-value.expense {
-            color: #f87171;
-        }
+        .stat-value.income { color: #4ade80; }
+        .stat-value.expense { color: #f87171; }
         .balance-eye {
             position: absolute;
             right: 16px;
             top: 16px;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255,255,255,0.06);
             border: none;
             border-radius: 30px;
-            padding: 4px 12px;
+            padding: 4px 14px;
             color: #ffffff;
             font-size: 12px;
             cursor: pointer;
             z-index: 2;
+            backdrop-filter: blur(8px);
+            transition: var(--transition);
+        }
+        .balance-eye:hover {
+            background: rgba(255,255,255,0.12);
         }
 
-        /* ===== CARD ===== */
         .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(10px);
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: var(--radius);
             padding: 18px 16px;
             margin-bottom: 12px;
@@ -385,29 +411,34 @@
             transition: var(--transition);
             cursor: pointer;
             color: var(--text-primary);
+            box-shadow: var(--shadow-glow);
+        }
+        .card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-1px);
         }
         .card:active {
             transform: scale(0.98);
         }
         .card-title {
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: var(--text-primary);
+            letter-spacing: -0.2px;
         }
         .card-title .badge-count {
             font-size: 11px;
             font-weight: 500;
             color: var(--text-secondary);
             background: var(--bg-card);
-            padding: 2px 10px;
+            padding: 2px 12px;
             border-radius: 20px;
         }
 
-        /* ===== TASK PREVIEW ===== */
         .task-preview {
             display: flex;
             flex-direction: column;
@@ -426,15 +457,15 @@
             border-left: 3px solid var(--text-muted);
             color: var(--text-primary);
         }
+        .task-preview-item:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+        }
         .task-preview-item:active {
             transform: scale(0.98);
         }
-        .task-preview-item .icon {
-            font-size: 18px;
-        }
-        .task-preview-item .info {
-            flex: 1;
-        }
+        .task-preview-item .icon { font-size: 18px; }
+        .task-preview-item .info { flex: 1; }
         .task-preview-item .info .title {
             font-size: 13px;
             font-weight: 500;
@@ -445,29 +476,16 @@
             color: var(--text-secondary);
         }
         .task-preview-item .status {
-            font-size: 11px;
+            font-size: 10px;
             padding: 2px 10px;
             border-radius: 20px;
-            font-weight: 500;
+            font-weight: 600;
         }
-        .task-preview-item .status.danger {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-        }
-        .task-preview-item .status.warning {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
-        }
-        .task-preview-item .status.done {
-            background: rgba(16, 185, 129, 0.15);
-            color: #4ade80;
-        }
-        .task-preview-item .status.pending {
-            background: rgba(148, 163, 184, 0.15);
-            color: #94a3b8;
-        }
+        .task-preview-item .status.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+        .task-preview-item .status.warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .task-preview-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
+        .task-preview-item .status.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
 
-        /* ===== STATS ROW ===== */
         .stats-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -475,7 +493,8 @@
             margin-bottom: 16px;
         }
         .stat-card {
-            background: var(--bg-card);
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
             border-radius: var(--radius-sm);
             padding: 14px;
             text-align: center;
@@ -484,27 +503,29 @@
             cursor: pointer;
             color: var(--text-primary);
         }
+        .stat-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+        }
         .stat-card:active {
             transform: scale(0.96);
         }
         .stat-card .label {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
         }
         .stat-card .value {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 700;
             margin-top: 2px;
             color: var(--text-primary);
         }
-        .stat-card .value.income {
-            color: #10b981;
-        }
-        .stat-card .value.expense {
-            color: #ef4444;
-        }
+        .stat-card .value.income { color: #10b981; }
+        .stat-card .value.expense { color: #ef4444; }
 
-        /* ===== TRANSACTION ITEM ===== */
         .tx-item {
             display: flex;
             justify-content: space-between;
@@ -515,12 +536,15 @@
             transition: var(--transition);
             color: var(--text-primary);
         }
-        .tx-item:last-child {
-            border-bottom: none;
+        .tx-item:last-child { border-bottom: none; }
+        .tx-item:hover {
+            background: var(--bg-card);
+            margin: 0 -8px;
+            padding-left: 8px;
+            padding-right: 8px;
+            border-radius: var(--radius-xs);
         }
-        .tx-item:active {
-            opacity: 0.7;
-        }
+        .tx-item:active { opacity: 0.7; }
         .tx-item .left {
             display: flex;
             align-items: center;
@@ -547,42 +571,27 @@
             color: var(--text-secondary);
         }
         .tx-item .amount {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 14px;
             flex-shrink: 0;
         }
-        .tx-item .amount.income {
-            color: #10b981;
-        }
-        .tx-item .amount.expense {
-            color: #ef4444;
-        }
+        .tx-item .amount.income { color: #10b981; }
+        .tx-item .amount.expense { color: #ef4444; }
         .tx-item.task-item {
             border-left: 3px solid var(--text-muted);
             padding-left: 12px;
         }
 
-        /* ===== FAMILY BADGE ===== */
         .family-badge {
             font-size: 9px;
             padding: 2px 8px;
             border-radius: 20px;
-            font-weight: 500;
+            font-weight: 600;
         }
-        .family-badge.owner {
-            background: rgba(139, 92, 246, 0.2);
-            color: #a78bfa;
-        }
-        .family-badge.member {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-        }
-        .family-badge.shared {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
-        }
+        .family-badge.owner { background: rgba(139,92,246,0.2); color: #a78bfa; }
+        .family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
 
-        /* ===== CATEGORY ===== */
         .category-item {
             display: flex;
             justify-content: space-between;
@@ -593,12 +602,15 @@
             transition: var(--transition);
             color: var(--text-primary);
         }
-        .category-item:last-child {
-            border-bottom: none;
+        .category-item:last-child { border-bottom: none; }
+        .category-item:hover {
+            background: var(--bg-card);
+            margin: 0 -8px;
+            padding-left: 8px;
+            padding-right: 8px;
+            border-radius: var(--radius-xs);
         }
-        .category-item:active {
-            opacity: 0.7;
-        }
+        .category-item:active { opacity: 0.7; }
         .category-item .left {
             display: flex;
             align-items: center;
@@ -624,7 +636,6 @@
             color: var(--text-secondary);
         }
 
-        /* ===== DEBT ===== */
         .debt-group {
             padding: 14px 12px;
             background: var(--bg-card);
@@ -634,6 +645,10 @@
             cursor: pointer;
             transition: var(--transition);
             color: var(--text-primary);
+        }
+        .debt-group:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
         }
         .debt-group:active {
             transform: scale(0.98);
@@ -656,39 +671,33 @@
             font-size: 15px;
             color: var(--text-primary);
         }
-        .debt-group .header .total.income {
-            color: #10b981;
-        }
-        .debt-group .header .total.expense {
-            color: #ef4444;
-        }
+        .debt-group .header .total.income { color: #10b981; }
+        .debt-group .header .total.expense { color: #ef4444; }
         .debt-group .sub {
             font-size: 12px;
             color: var(--text-secondary);
             margin-top: 4px;
         }
-        .debt-group .sub .wa-badge {
-            color: #25D366;
-        }
+        .debt-group .sub .wa-badge { color: #25D366; }
         .debt-group-item {
             padding: 10px 0;
             border-bottom: 1px solid var(--border-color);
             color: var(--text-primary);
         }
 
-        /* ===== BOTTOM NAV ===== */
         .bottom-nav {
             position: fixed;
             bottom: 16px;
             left: 50%;
             transform: translateX(-50%);
-            max-width: 420px;
+            max-width: 440px;
             width: calc(100% - 32px);
             background: var(--bg-secondary);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             border-radius: var(--radius);
             border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.4);
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -700,7 +709,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            gap: 1px;
             background: none;
             border: none;
             color: var(--text-muted);
@@ -717,10 +726,12 @@
             transition: var(--transition);
         }
         .nav-item .nav-label {
-            font-size: 9px;
-            font-weight: 500;
+            font-size: 8px;
+            font-weight: 600;
             color: inherit;
             transition: var(--transition);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         .nav-item:active {
             transform: scale(0.92);
@@ -749,46 +760,50 @@
         }
         .nav-center {
             flex: 0 0 auto;
-            margin-top: -20px;
+            margin-top: -22px;
         }
         .nav-center-btn {
-            width: 50px;
-            height: 50px;
+            width: 54px;
+            height: 54px;
             border-radius: 50%;
-            background: var(--gradient-primary);
+            background: var(--gradient-premium);
             border: none;
             color: white;
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 300;
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 24px rgba(59,130,246,0.35);
             transition: var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        .nav-center-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 32px rgba(59,130,246,0.45);
+        }
         .nav-center-btn:active {
             transform: scale(0.92);
         }
 
-        /* ===== MORE MENU POPUP ===== */
         #moreMenuPopup {
             position: fixed;
-            bottom: calc(var(--nav-height) + 20px);
+            bottom: calc(var(--nav-height) + 24px);
             left: 50%;
             transform: translateX(-50%) scale(0.9);
-            max-width: 420px;
+            max-width: 440px;
             width: calc(100% - 32px);
             background: var(--bg-secondary);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             border-radius: var(--radius);
             border: 1px solid var(--border-color);
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 48px rgba(0,0,0,0.5);
             padding: 12px;
             z-index: 99;
             opacity: 0;
             pointer-events: none;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #moreMenuPopup.open {
             opacity: 1;
@@ -807,26 +822,27 @@
             color: var(--text-secondary);
             cursor: pointer;
             transition: var(--transition);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
-        }
-        .menu-popup-item:active {
-            transform: scale(0.95);
         }
         .menu-popup-item:hover {
             background: var(--bg-card-hover);
             color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+        .menu-popup-item:active {
+            transform: scale(0.95);
         }
         .menu-popup-item .icon {
             font-size: 24px;
         }
 
-        /* ===== MODAL ===== */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(16px);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -835,12 +851,8 @@
             animation: modalFadeIn 0.3s ease-out;
         }
         @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .modal-content {
             background: var(--bg-secondary);
@@ -851,19 +863,13 @@
             max-height: 85vh;
             overflow-y: auto;
             border: 1px solid var(--border-color);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
             color: var(--text-primary);
-            animation: modalSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         @keyframes modalSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.96);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateY(40px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .modal-content::-webkit-scrollbar {
             width: 3px;
@@ -877,13 +883,13 @@
         }
         .modal-title {
             font-size: 20px;
-            font-weight: 700;
+            font-weight: 800;
             text-align: center;
             margin-bottom: 20px;
-            background: var(--gradient-primary);
+            background: var(--gradient-premium);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.5px;
         }
         .modal-subtitle {
             text-align: center;
@@ -911,7 +917,7 @@
         .modal-textarea:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
         }
         .modal-input::placeholder,
         .modal-select::placeholder,
@@ -939,12 +945,13 @@
             padding: 12px 16px;
             border: none;
             border-radius: var(--radius-sm);
-            font-weight: 600;
+            font-weight: 700;
             font-size: 14px;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
             font-family: inherit;
+            letter-spacing: -0.2px;
         }
         .modal-btn:active {
             transform: scale(0.96);
@@ -955,10 +962,10 @@
         .modal-btn-primary {
             background: var(--gradient-primary);
             color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 16px rgba(59,130,246,0.3);
         }
         .modal-btn-primary:hover {
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 6px 24px rgba(59,130,246,0.4);
             transform: translateY(-1px);
         }
         .modal-btn-secondary {
@@ -973,37 +980,37 @@
         .modal-btn-danger {
             background: var(--gradient-danger);
             color: white;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            box-shadow: 0 4px 16px rgba(239,68,68,0.3);
         }
         .modal-btn-danger:hover {
-            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 6px 24px rgba(239,68,68,0.4);
             transform: translateY(-1px);
         }
         .modal-btn-success {
             background: var(--gradient-success);
             color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 16px rgba(16,185,129,0.3);
         }
         .modal-btn-success:hover {
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 6px 24px rgba(16,185,129,0.4);
             transform: translateY(-1px);
         }
         .modal-btn-warning {
             background: var(--gradient-warning);
             color: white;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 4px 16px rgba(245,158,11,0.3);
         }
         .modal-btn-warning:hover {
-            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+            box-shadow: 0 6px 24px rgba(245,158,11,0.4);
             transform: translateY(-1px);
         }
         .modal-btn-wa {
             background: #25D366;
             color: white;
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+            box-shadow: 0 4px 16px rgba(37,211,102,0.3);
         }
         .modal-btn-wa:hover {
-            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+            box-shadow: 0 6px 24px rgba(37,211,102,0.4);
             transform: translateY(-1px);
         }
         .modal-divider {
@@ -1018,31 +1025,17 @@
             font-size: 11px;
             font-weight: 600;
         }
-        .modal-badge.success {
-            background: rgba(16, 185, 129, 0.15);
-            color: #4ade80;
-        }
-        .modal-badge.danger {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-        }
-        .modal-badge.warning {
-            background: rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
-        }
-        .modal-badge.info {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-        }
+        .modal-badge.success { background: rgba(16,185,129,0.15); color: #4ade80; }
+        .modal-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
+        .modal-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .modal-badge.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
         .modal-detail-row {
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
             border-bottom: 1px solid var(--border-color);
         }
-        .modal-detail-row:last-child {
-            border-bottom: none;
-        }
+        .modal-detail-row:last-child { border-bottom: none; }
         .modal-detail-label {
             color: var(--text-secondary);
             font-size: 13px;
@@ -1074,7 +1067,7 @@
         }
         .modal-upload-area:hover {
             border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.05);
+            background: rgba(59,130,246,0.05);
         }
         .modal-upload-area .icon {
             font-size: 36px;
@@ -1091,10 +1084,9 @@
             margin-top: 2px;
         }
 
-        /* ===== TOAST ===== */
         .toast {
             position: fixed;
-            bottom: calc(var(--nav-height) + 30px);
+            bottom: calc(var(--nav-height) + 34px);
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-secondary);
@@ -1104,33 +1096,21 @@
             font-size: 14px;
             font-weight: 500;
             z-index: 300;
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             border: 1px solid var(--border-color);
             animation: toastIn 0.4s ease-out;
             max-width: 90%;
             text-align: center;
+            backdrop-filter: blur(16px);
         }
         @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0) scale(1);
-            }
+            from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
         }
-        .toast.success {
-            border-color: #4ade80;
-        }
-        .toast.error {
-            border-color: #f87171;
-        }
-        .toast.warning {
-            border-color: #fbbf24;
-        }
+        .toast.success { border-color: #4ade80; }
+        .toast.error { border-color: #f87171; }
+        .toast.warning { border-color: #fbbf24; }
 
-        /* ===== EMPTY STATE ===== */
         .empty-state {
             text-align: center;
             padding: 30px 20px;
@@ -1151,7 +1131,6 @@
             color: var(--text-secondary);
         }
 
-        /* ===== BUDGET ===== */
         .budget-item {
             padding: 14px 12px;
             background: var(--bg-card);
@@ -1161,6 +1140,10 @@
             cursor: pointer;
             transition: var(--transition);
             color: var(--text-primary);
+        }
+        .budget-item:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
         }
         .budget-item:active {
             transform: scale(0.98);
@@ -1205,7 +1188,6 @@
             margin-top: 4px;
         }
 
-        /* ===== FILTER ===== */
         .filter {
             display: flex;
             gap: 8px;
@@ -1214,26 +1196,30 @@
             padding-bottom: 4px;
         }
         .filter-btn {
-            padding: 8px 16px;
+            padding: 8px 18px;
             border: none;
             border-radius: 20px;
             background: var(--bg-card);
             color: var(--text-secondary);
             cursor: pointer;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 600;
             white-space: nowrap;
             transition: var(--transition);
+        }
+        .filter-btn:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
         }
         .filter-btn.active {
             background: var(--gradient-primary);
             color: white;
+            box-shadow: 0 2px 12px rgba(59,130,246,0.25);
         }
         .filter-btn:active {
             transform: scale(0.95);
         }
 
-        /* ===== PASSWORD ===== */
         .password-wrapper {
             position: relative;
         }
@@ -1252,24 +1238,19 @@
             opacity: 0.6;
             color: var(--text-secondary);
         }
+        .toggle-password:hover {
+            opacity: 1;
+        }
 
-        /* ===== RECURRING BADGE ===== */
         .recurring-badge {
             font-size: 9px;
             padding: 2px 8px;
             border-radius: 20px;
             font-weight: 600;
         }
-        .recurring-badge.active {
-            background: rgba(16, 185, 129, 0.2);
-            color: #4ade80;
-        }
-        .recurring-badge.inactive {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-        }
+        .recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
+        .recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
 
-        /* ===== SEDEKAH CARD ===== */
         .sedekah-card {
             background: var(--bg-card);
             border-radius: var(--radius-sm);
@@ -1278,9 +1259,13 @@
             transition: all 0.3s ease;
             margin-bottom: 8px;
         }
+        .sedekah-card:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
+        }
         .sedekah-card.completed {
-            border-color: rgba(16, 185, 129, 0.3);
-            background: rgba(16, 185, 129, 0.06);
+            border-color: rgba(16,185,129,0.3);
+            background: rgba(16,185,129,0.06);
         }
         .sedekah-card .top-row {
             display: flex;
@@ -1292,9 +1277,7 @@
             gap: 10px;
             align-items: center;
         }
-        .sedekah-card .icon {
-            font-size: 22px;
-        }
+        .sedekah-card .icon { font-size: 24px; }
         .sedekah-card .label {
             font-weight: 600;
             font-size: 14px;
@@ -1309,24 +1292,9 @@
             padding: 2px 8px;
             border-radius: 10px;
             font-weight: 500;
-            background: rgba(59, 130, 246, 0.12);
+            background: rgba(59,130,246,0.12);
             color: #60a5fa;
         }
-        .sedekah-card .status-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
-        .sedekah-card .status-badge.done {
-            background: rgba(16, 185, 129, 0.15);
-            color: #4ade80;
-        }
-        .sedekah-card .status-badge.pending {
-            background: rgba(148, 163, 184, 0.15);
-            color: #94a3b8;
-        }
-
         .action-select-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -1345,6 +1313,10 @@
             font-size: 13px;
             font-weight: 500;
         }
+        .action-select-btn:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
+        }
         .action-select-btn:active {
             transform: scale(0.95);
         }
@@ -1355,7 +1327,7 @@
         }
         .action-select-btn.selected {
             border-color: #4ade80;
-            background: rgba(16, 185, 129, 0.08);
+            background: rgba(16,185,129,0.08);
             color: #4ade80;
         }
         .nominal-input {
@@ -1371,6 +1343,7 @@
         .nominal-input:focus {
             outline: none;
             border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
         .reminder-toggle {
             display: flex;
@@ -1379,87 +1352,147 @@
             font-size: 12px;
             color: var(--text-secondary);
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 20px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             transition: var(--transition);
         }
+        .reminder-toggle:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
+        }
         .reminder-toggle.active {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(16,185,129,0.1);
             border-color: #4ade80;
             color: #4ade80;
         }
-        .reminder-toggle .icon {
-            font-size: 14px;
-        }
+        .reminder-toggle .icon { font-size: 14px; }
         .sedekah-chart-container {
-            background: var(--bg-card);
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
             border-radius: var(--radius-sm);
-            padding: 12px;
+            padding: 12px 16px;
             margin-bottom: 12px;
             border: 1px solid var(--border-color);
         }
+        .sedekah-family-progress {
+            background: rgba(59,130,246,0.05);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(59,130,246,0.1);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .sedekah-family-progress .highlight {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
 
-        /* ===== DOA RUNNING TEXT ===== */
-        .running-text-doa {
-            background: linear-gradient(90deg, #10b981, #34d399);
-            color: #fff;
-            padding: 10px 16px;
+        .doa-banner {
+            padding: 14px 18px;
             border-radius: var(--radius-sm);
             margin-bottom: 12px;
             font-weight: 600;
             font-size: 14px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            animation: fadeIn 0.5s ease-out;
+            animation: fadeIn 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
         }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .doa-banner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+            pointer-events: none;
+        }
+        .doa-banner.success {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05));
+            border-color: rgba(16,185,129,0.3);
+            color: #4ade80;
+        }
+        .doa-banner.success .doa-icon { color: #4ade80; }
+        .doa-banner.half {
+            background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.05));
+            border-color: rgba(251,191,36,0.3);
+            color: #fbbf24;
+        }
+        .doa-banner.half .doa-icon { color: #fbbf24; }
+        .doa-banner .doa-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+        .doa-banner .doa-text {
+            font-weight: 600;
+        }
+        .doa-banner .doa-sub {
+            font-size: 11px;
+            opacity: 0.7;
+            font-weight: 400;
+            display: block;
+            margin-top: 4px;
         }
 
-        /* ===== RESPONSIVE ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .month-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .month-selector button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            transition: var(--transition);
+            border-radius: var(--radius-xs);
+        }
+        .month-selector button:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .month-selector span {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
         @media (max-width: 420px) {
-            .app-container {
-                padding: 12px 12px 20px;
-            }
-            .balance-amount {
-                font-size: 26px;
-            }
-            .header-name {
-                font-size: 13px;
-            }
-            .nav-item .nav-label {
-                font-size: 8px;
-            }
-            .nav-center-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 24px;
-            }
-            .bottom-nav {
-                padding: 4px 6px;
-                height: 64px;
-            }
-            .modal-content {
-                padding: 20px 16px;
-            }
-            .action-select-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+            .app-container { padding: 12px 12px 20px; }
+            .balance-amount { font-size: 28px; }
+            .header-name { font-size: 13px; }
+            .nav-item .nav-label { font-size: 7px; }
+            .nav-center-btn { width: 48px; height: 48px; font-size: 24px; }
+            .bottom-nav { padding: 4px 6px; height: 66px; }
+            .modal-content { padding: 20px 16px; }
+            .action-select-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @keyframes glowPulse {
+            0%,100% { box-shadow: 0 0 20px rgba(59,130,246,0.1); }
+            50% { box-shadow: 0 0 40px rgba(59,130,246,0.2); }
+        }
+        .glow-pulse {
+            animation: glowPulse 3s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
 
-    <!-- LOADING OVERLAY -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-logo">💰</div>
         <div class="loading-title">Keuangan Keluarga</div>
@@ -1468,10 +1501,8 @@
         <div class="loading-percent" id="loadingPercent">0%</div>
     </div>
 
-    <!-- APP CONTAINER -->
     <div class="app-container" id="appContainer"></div>
 
-    <!-- LOGIN MODAL -->
     <div id="loginModal" class="modal-overlay" style="display:none;">
         <div class="modal-content">
             <div class="modal-title" id="modalTitle">💰 Keuangan Keluarga</div>
@@ -1482,16 +1513,16 @@
                 <button type="button" class="toggle-password" id="toggleLoginPassword">👁️</button>
             </div>
             <button id="submitLoginBtn" class="modal-btn modal-btn-primary modal-btn-full">Masuk</button>
-            <div id="switchText" style="text-align:center; margin:14px 0; color:#3b82f6; cursor:pointer; font-weight:500; font-size:14px;">Belum punya akun? Daftar</div>
+            <div id="switchText" style="text-align:center; margin:14px 0; color:#3b82f6; cursor:pointer; font-weight:600; font-size:14px;">Belum punya akun? Daftar</div>
             <button id="guestBtn" class="modal-btn modal-btn-secondary modal-btn-full">Lanjut sebagai Tamu</button>
             <div id="loginError" style="color:#ef4444; text-align:center; margin-top:12px; font-size:13px;"></div>
         </div>
     </div>
 
     <script>
-        // ================================================
+        // ============================================================
         // SUPABASE CONFIG
-        // ================================================
+        // ============================================================
         const SUPABASE_URL = "https://dttupsimbwsffyylfpax.supabase.co";
         const SUPABASE_ANON_KEY =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0dHVwc2ltYndzZmZ5eWxmcGF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTIyMDksImV4cCI6MjA5NjE2ODIwOX0.Fa_552HBaZmNgXdZUiMZc3jVWQqzEnAJNcKE_GgJy3g";
@@ -1546,9 +1577,9 @@
         let sedekahHistory = [];
         let sedekahChart = null;
 
-        // ================================================
+        // ============================================================
         // CUSTOM USER MANAGER
-        // ================================================
+        // ============================================================
         class CustomUserManager {
             constructor(sb) { this.sb = sb;
                 this.authUser = null;
@@ -1588,9 +1619,9 @@
         }
         const userManager = new CustomUserManager(null);
 
-        // ================================================
-        // UTILITY
-        // ================================================
+        // ============================================================
+        // UTILITY FUNCTIONS
+        // ============================================================
         function initSupabase() {
             if (typeof supabase !== 'undefined') {
                 sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1765,9 +1796,9 @@
             });
         }
 
-        // ================================================
+        // ============================================================
         // LOAD FUNCTIONS
-        // ================================================
+        // ============================================================
         async function loadFamilyData() {
             const uid = await userManager.getUserId();
             if (!uid) { currentFamilyId = null;
@@ -1927,9 +1958,9 @@
             return total;
         }
 
-        // ================================================
+        // ============================================================
         // THEME
-        // ================================================
+        // ============================================================
         function applyTheme(isDark) {
             document.body.classList.toggle('dark', isDark);
             document.body.classList.toggle('light', !isDark);
@@ -1962,9 +1993,9 @@
             showToast(isDark ? '🌙 Mode Gelap' : '☀️ Mode Terang');
         }
 
-        // ================================================
+        // ============================================================
         // SHOW REMINDERS POPUP
-        // ================================================
+        // ============================================================
         function showRemindersPopup() {
             const msgs = getRunningText();
             if (!msgs.length) { showToast('✅ Tidak ada peringatan', 2000, 'success'); return; }
@@ -1993,9 +2024,9 @@
             document.body.appendChild(modal);
         }
 
-        // ================================================
-        // CATEGORY
-        // ================================================
+        // ============================================================
+        // KATEGORI FUNCTIONS
+        // ============================================================
         async function renderKategori() {
             await loadCategories();
             const html = `
@@ -2087,9 +2118,9 @@
             document.getElementById('closeCategory').onclick = () => modal.remove();
         }
 
-        // ================================================
-        // TASK
-        // ================================================
+        // ============================================================
+        // TASK FUNCTIONS
+        // ============================================================
         function getTaskStatus(t) {
             if (t.is_completed) return { label: '✅ Selesai', cls: 'done', color: '#4ade80' };
             if (!t.due_date) return { label: '⏳ Pending', cls: 'pending', color: '#94a3b8' };
@@ -2198,9 +2229,9 @@
             });
         }
 
-        // ================================================
-        // DEBT
-        // ================================================
+        // ============================================================
+        // DEBT FUNCTIONS
+        // ============================================================
         function openDebtModal(editId = null) {
             const isEdit = !!editId;
             const debt = isEdit ? debts.find(d => d.id === editId) : null;
@@ -2437,9 +2468,9 @@
             }).join('');
         }
 
-        // ================================================
-        // SAVINGS
-        // ================================================
+        // ============================================================
+        // SAVINGS FUNCTIONS
+        // ============================================================
         async function renderSavings() {
             await loadSavings();
             const html = `
@@ -2510,9 +2541,9 @@
             document.getElementById('closeSavings').onclick = () => modal.remove();
         }
 
-        // ================================================
-        // REMINDERS
-        // ================================================
+        // ============================================================
+        // REMINDERS FUNCTIONS
+        // ============================================================
         async function renderReminders() {
             await loadReminders();
             const html = `
@@ -2582,9 +2613,9 @@
             document.getElementById('closeReminder').onclick = () => modal.remove();
         }
 
-        // ================================================
-        // BUDGET
-        // ================================================
+        // ============================================================
+        // BUDGET FUNCTIONS
+        // ============================================================
         async function renderBudgetPage() {
             await loadTransactions();
             await loadBudgets();
@@ -2594,10 +2625,10 @@
             const total = budgets.reduce((s, b) => s + Number(b.amount), 0);
             const html = `
                 <div class="header"><div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
-                <div class="month-selector" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border-radius:12px;padding:8px 12px;margin-bottom:12px;">
-                    <button id="prevBudgetMonth" style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;">◀</button>
-                    <span style="font-weight:600;">📋 ${months[currentBudgetMonth]} ${currentBudgetYear}</span>
-                    <button id="nextBudgetMonth" style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;">▶</button>
+                <div class="month-selector">
+                    <button id="prevBudgetMonth">◀</button>
+                    <span>📋 ${months[currentBudgetMonth]} ${currentBudgetYear}</span>
+                    <button id="nextBudgetMonth">▶</button>
                 </div>
                 <div class="balance-card" style="padding:16px;">
                     <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
@@ -2692,9 +2723,9 @@
             document.getElementById('closeBudget').onclick = () => modal.remove();
         }
 
-        // ================================================
-        // TRANSAKSI
-        // ================================================
+        // ============================================================
+        // TRANSAKSI FUNCTIONS
+        // ============================================================
         async function renderTransaksi() {
             await loadTransactions();
             const uid = await userManager.getUserId();
@@ -2972,9 +3003,9 @@
             } catch (e) { console.error(e); }
         }
 
-        // ================================================
+        // ============================================================
         // RECURRING TRANSACTIONS
-        // ================================================
+        // ============================================================
         async function createRecurringTransaction(original) {
             const uid = await userManager.getUserId();
             if (!uid) return null;
@@ -3096,9 +3127,9 @@
             }
         }
 
-        // ================================================
-        // LAPORAN
-        // ================================================
+        // ============================================================
+        // LAPORAN FUNCTIONS
+        // ============================================================
         async function renderLaporan() {
             await loadTransactions();
             const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September',
@@ -3138,10 +3169,10 @@
                     <div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
                     <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='transaksi';updateNav();renderTransaksi();">←</button></div>
                 </div>
-                <div class="month-selector" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border-radius:12px;padding:8px 12px;margin-bottom:12px;">
-                    <button id="prevMonth" style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;">◀</button>
-                    <span style="font-weight:600;">📅 ${months[currentMonth]} ${currentYear}</span>
-                    <button id="nextMonth" style="background:none;border:none;color:var(--text-secondary);font-size:18px;cursor:pointer;">▶</button>
+                <div class="month-selector">
+                    <button id="prevMonth">◀</button>
+                    <span>📅 ${months[currentMonth]} ${currentYear}</span>
+                    <button id="nextMonth">▶</button>
                 </div>
                 <div class="balance-card" style="padding:16px;">
                     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
@@ -3244,33 +3275,62 @@
                 renderLaporan(); };
         }
 
-        // ================================================
-        // SEDEKAH
-        // ================================================
+        // ============================================================
+        // SEDEKAH FUNCTIONS - FIXED
+        // ============================================================
         async function loadSedekahData() {
             const uid = await userManager.getUserId();
-            if (!uid) { sedekahData = [];
+            if (!uid) {
+                sedekahData = [];
                 sedekahReminders = [];
-                sedekahHistory = []; return; }
+                sedekahHistory = [];
+                return;
+            }
             try {
                 const today = new Date().toISOString().split('T')[0];
-                const { data: current } = await sb.from('sedekah_data').select('*').eq('user_id', uid).eq('date',
-                    today).maybeSingle();
-                if (current) {
+                let q = sb.from('sedekah_data').select('*');
+                if (currentFamilyId) {
+                    q = q.eq('family_id', currentFamilyId);
+                } else {
+                    q = q.eq('user_id', uid);
+                }
+                q = q.eq('tanggal', today);
+                const { data: current, error: err } = await q.maybeSingle();
+
+                if (err) {
+                    console.error('Load sedekah_data error:', err);
+                    sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
+                } else if (current) {
                     sedekahData = current.actions || [];
                 } else {
                     sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
                 }
+
                 const { data: reminders } = await sb.from('sedekah_reminders').select('*').eq('user_id', uid);
                 sedekahReminders = reminders || [];
-                const { data: history } = await sb.from('sedekah_history')
-                    .select('*')
-                    .eq('user_id', uid)
-                    .order('created_at', { ascending: false });
-                sedekahHistory = history || [];
-                console.log('Loaded sedekahHistory:', sedekahHistory.length, 'items');
+
+                let historyQuery = sb.from('sedekah_history').select('*');
+                if (currentFamilyId) {
+                    const familyMemberIds = getFamilyMemberIds();
+                    if (familyMemberIds.length > 0) {
+                        historyQuery = historyQuery.in('user_id', familyMemberIds);
+                    } else {
+                        historyQuery = historyQuery.eq('user_id', uid);
+                    }
+                } else {
+                    historyQuery = historyQuery.eq('user_id', uid);
+                }
+                const { data: history, error: historyErr } = await historyQuery.order('created_at', { ascending: false });
+                if (historyErr) {
+                    console.error('Load sedekah_history error:', historyErr);
+                    sedekahHistory = [];
+                } else {
+                    sedekahHistory = history || [];
+                }
+                console.log('✅ Loaded sedekahHistory:', sedekahHistory.length, 'items');
+                console.log('✅ Total points from history:', sedekahHistory.reduce((sum, h) => sum + (h.points || 0), 0));
             } catch (e) {
-                console.error('Load sedekah error:', e);
+                console.error('❌ Load sedekah error:', e);
                 sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
                 sedekahReminders = [];
                 sedekahHistory = [];
@@ -3279,70 +3339,117 @@
 
         async function saveSedekahData() {
             const uid = await userManager.getUserId();
-            if (!uid) return;
+            if (!uid) {
+                showToast('❌ User ID tidak ditemukan', 2000, 'error');
+                return;
+            }
             try {
                 const today = new Date().toISOString().split('T')[0];
-                const { data: existing, error: existingError } = await sb.from('sedekah_data')
-                    .select('id')
-                    .eq('user_id', uid)
-                    .eq('date', today)
-                    .maybeSingle();
 
-                if (existingError) {
-                    console.error('Error checking existing sedekah_data:', existingError);
+                // Hitung total poin dari sedekahData
+                let completedItems = [];
+                sedekahData.forEach(d => {
+                    if (d.completed && d.actions && d.actions.length > 0) {
+                        const points = d.actions.length * 2;
+                        const nominal = d.actions.reduce((sum, a) => sum + (a.nominal || 0), 0);
+                        completedItems.push({
+                            id: d.id,
+                            actions: d.actions,
+                            points: points,
+                            nominal: nominal
+                        });
+                    }
+                });
+
+                console.log('📊 Completed items to save:', completedItems.length);
+                console.log('📊 Total points from completed:', completedItems.reduce((sum, item) => sum + item.points, 0));
+
+                // Simpan ke sedekah_data
+                const payload = {
+                    user_id: uid,
+                    tanggal: today,
+                    actions: sedekahData,
+                    updated_at: new Date().toISOString()
+                };
+                if (currentFamilyId) {
+                    payload.family_id = currentFamilyId;
                 }
 
-                if (existing) {
-                    await sb.from('sedekah_data')
-                        .update({ actions: sedekahData, updated_at: new Date().toISOString() })
-                        .eq('id', existing.id);
+                let q = sb.from('sedekah_data').select('id');
+                if (currentFamilyId) {
+                    q = q.eq('family_id', currentFamilyId);
                 } else {
-                    await sb.from('sedekah_data')
-                        .insert({ user_id: uid, date: today, actions: sedekahData });
+                    q = q.eq('user_id', uid);
+                }
+                q = q.eq('tanggal', today);
+                const { data: existing, error: existingError } = await q.maybeSingle();
+
+                if (existingError && existingError.code !== 'PGRST116') {
+                    console.error('Error checking existing sedekah_data:', existingError);
+                    throw existingError;
+                } else if (existing) {
+                    await sb.from('sedekah_data').update(payload).eq('id', existing.id);
+                } else {
+                    await sb.from('sedekah_data').insert(payload);
                 }
 
-                const completedItems = sedekahData.filter(d => d.completed && d.actions && d.actions.length > 0);
-                console.log('Completed items to save:', completedItems.length);
-
+                // Simpan riwayat per jenis - PASTIKAN POIN TERSIMPAN
                 if (completedItems.length > 0) {
                     const now = new Date();
                     for (const item of completedItems) {
+                        // Cek duplikat
                         const { data: existingHistory } = await sb.from('sedekah_history')
-                            .select('id')
+                            .select('id, points')
                             .eq('user_id', uid)
-                            .eq('date', today)
+                            .eq('tanggal', today)
                             .eq('type_id', item.id)
                             .maybeSingle();
 
                         if (existingHistory) {
-                            console.log('Skipping duplicate for type:', item.id);
+                            // Update poin jika sudah ada
+                            await sb.from('sedekah_history')
+                                .update({
+                                    nominal: item.nominal,
+                                    points: item.points,
+                                    actions: item.actions.map(a => a.actionId),
+                                    updated_at: now.toISOString()
+                                })
+                                .eq('id', existingHistory.id);
+                            console.log('✅ Updated points for:', item.id, 'points:', item.points);
                             continue;
                         }
 
-                        const nominal = item.actions.reduce((sum, a) => sum + (a.nominal || 0), 0);
-                        const points = item.actions.length * 2;
                         const actionIds = item.actions.map(a => a.actionId);
 
-                        console.log('Inserting history for type:', item.id, 'nominal:', nominal, 'actions:',
-                            actionIds);
-                        const { error: insertError } = await sb.from('sedekah_history').insert({
+                        const histPayload = {
                             user_id: uid,
-                            date: today,
+                            tanggal: today,
                             type_id: item.id,
-                            nominal: nominal,
-                            points: points,
+                            nominal: item.nominal,
+                            points: item.points,
                             actions: actionIds,
                             created_at: now.toISOString()
-                        });
+                        };
+                        if (currentFamilyId) {
+                            histPayload.family_id = currentFamilyId;
+                        }
+
+                        console.log('💾 Saving history for:', item.id, 'points:', item.points);
+
+                        const { error: insertError } = await sb.from('sedekah_history').insert(histPayload);
                         if (insertError) {
                             console.error('Insert history error:', insertError);
                             showToast('❌ Gagal menyimpan riwayat: ' + insertError.message, 3000, 'error');
                         } else {
-                            console.log('Insert history success for:', item.id);
+                            console.log('✅ Insert history success for:', item.id);
                         }
                     }
 
+                    // Reload data setelah save
                     await loadSedekahData();
+                    const totalPoints = sedekahHistory.reduce((sum, h) => sum + (h.points || 0), 0);
+                    console.log('🔄 Total points after reload:', totalPoints);
+                    showToast(`✅ Poin berhasil disimpan! Total: ${totalPoints} poin`, 2000, 'success');
                 }
             } catch (e) {
                 console.error('Save sedekah error:', e);
@@ -3355,7 +3462,7 @@
             if (!st) return;
 
             const existing = sedekahReminders.find(r => r.type_id === typeId);
-            const isEnabled = existing?.enabled || false;
+            const isEnabled = existing?.is_enabled || false;
 
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
@@ -3413,10 +3520,10 @@
                     const data = {
                         user_id: uid,
                         type_id: typeId,
-                        enabled: enabled,
+                        is_enabled: enabled,
                         frequency: frequency,
-                        time: time,
-                        interval: interval,
+                        reminder_time: time,
+                        interval_days: interval,
                         updated_at: new Date().toISOString()
                     };
 
@@ -3583,46 +3690,96 @@
             document.getElementById('closeSedekahActions').onclick = () => modal.remove();
         }
 
-        // ================================================
-        // RENDER KUNCI SUKSES
-        // ================================================
+        // ============================================================
+        // RENDER KUNCI SUKSES - DENGAN POIN YANG BENAR
+        // ============================================================
         async function renderKunciSukses() {
             await loadSedekahData();
             await loadTransactions();
 
             let totalPemasukan = 0,
                 totalPengeluaran = 0;
-            transactions.forEach(t => {
+            const familyMemberIds = getFamilyMemberIds();
+            const allTx = transactions.filter(t => {
+                if (currentFamilyId && familyMemberIds.length > 0) {
+                    return familyMemberIds.includes(t.user_id);
+                }
+                return true;
+            });
+            allTx.forEach(t => {
                 if (t.type === 'pemasukan') totalPemasukan += Number(t.amount) || 0;
                 else totalPengeluaran += Number(t.amount) || 0;
             });
             const totalSaldo = totalPemasukan - totalPengeluaran;
             const targetSedekah = Math.max(0, Math.round(totalSaldo * 0.25));
 
+            // HITUNG POIN DARI SEDEKAH HISTORY
             let totalSedekahHariIni = 0;
+            let totalPointsToday = 0;
             const today = new Date().toISOString().split('T')[0];
-            const todayHistory = sedekahHistory.filter(h => h.date === today);
-            todayHistory.forEach(h => { totalSedekahHariIni += h.nominal || 0; });
-            const progress = targetSedekah > 0 ? Math.min((totalSedekahHariIni / targetSedekah) * 100, 100) : 0;
-            const targetTercapai = totalSedekahHariIni >= targetSedekah && targetSedekah > 0;
+            const todayHistory = sedekahHistory.filter(h => h.tanggal === today);
+            todayHistory.forEach(h => {
+                totalSedekahHariIni += h.nominal || 0;
+                totalPointsToday += h.points || 0;
+            });
 
-            let pointsToday = 0;
+            // HITUNG POIN DARI SEDEKAH DATA (untuk tampilan sementara)
+            let pointsFromData = 0;
             let completedCount = 0;
             sedekahData.forEach(d => {
                 if (d.completed) {
-                    pointsToday += (d.actions || []).length * 2;
+                    const actions = d.actions || [];
+                    pointsFromData += actions.length * 2;
                     completedCount++;
                 }
             });
+
+            // Gunakan poin dari history (lebih akurat) atau dari data
+            const pointsToday = totalPointsToday > 0 ? totalPointsToday : pointsFromData;
+
+            const progressTarget = targetSedekah > 0 ? Math.min((totalSedekahHariIni / targetSedekah) * 100, 100) : 0;
+            const targetTercapai = totalSedekahHariIni >= targetSedekah && targetSedekah > 0;
+
             const total = SEDEKAH_TYPES.length;
             const progressCount = Math.round((completedCount / total) * 100);
+            const isHalf = progressCount >= 50 && progressCount < 100;
+
+            console.log('📊 Points today:', pointsToday, 'from history:', totalPointsToday, 'from data:', pointsFromData);
+            console.log('📊 Completed count:', completedCount);
 
             let doaHtml = '';
             if (targetTercapai) {
-                doaHtml = `
-                    <div class="running-text-doa">
-                        🤲 "Ya Allah, berikanlah ganti kepada orang yang berinfak. Barakallah fi ma a'taita. Semoga Allah menerima sedekah kita dan melipatgandakan pahala." 
-                        <span style="font-size:12px;opacity:0.9;">— Doa untuk pemberi sedekah</span>
+                doaHtml += `
+                    <div class="doa-banner success">
+                        <span class="doa-icon">🤲</span>
+                        <span class="doa-text">"Ya Allah, berikanlah ganti kepada orang yang berinfak. Barakallah fi ma a'taita. Semoga Allah menerima sedekah kita dan melipatgandakan pahala."</span>
+                        <span class="doa-sub">— Doa untuk pemberi sedekah</span>
+                    </div>
+                `;
+            }
+            if (isHalf) {
+                doaHtml += `
+                    <div class="doa-banner half">
+                        <span class="doa-icon">🎉</span>
+                        <span class="doa-text">Yey... selamat kamu sudah lebih dari 50%! Semoga diganti Allah dengan berlipat ganda.</span>
+                        <span class="doa-sub">— Semangat terus!</span>
+                    </div>
+                `;
+            }
+
+            let familyInfoText = '';
+            if (currentFamilyId && familyInfo) {
+                const memberCount = familyMembers.length;
+                familyInfoText = `
+                    <div class="sedekah-family-progress">
+                        👨‍👩‍👧‍👦 <strong style="color:var(--text-primary);">${escapeHtml(familyInfo.name)}</strong> · ${memberCount} anggota
+                        <div style="margin-top:4px;font-size:11px;">💰 Total sedekah hari ini dari keluarga: <strong style="color:#4ade80;">Rp ${formatRupiah(totalSedekahHariIni)}</strong></div>
+                    </div>
+                `;
+            } else {
+                familyInfoText = `
+                    <div style="background:rgba(251,191,36,0.08);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;border:1px solid rgba(251,191,36,0.12);text-align:center;font-size:12px;color:#fbbf24;">
+                        💡 Gabung ke keluarga di Pengaturan untuk berbagi sedekah dengan anggota lain
                     </div>
                 `;
             }
@@ -3641,6 +3798,7 @@
                         <button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button>
                     </div>
                 </div>
+                ${familyInfoText}
                 ${doaHtml}
                 <div class="sedekah-chart-container">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -3648,15 +3806,15 @@
                         <span style="font-size:12px;color:var(--text-secondary);">Saldo: Rp ${formatRupiah(totalSaldo)}</span>
                     </div>
                     <div style="height:8px;background:var(--bg-card);border-radius:4px;overflow:hidden;">
-                        <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:4px;transition:width 0.5s;"></div>
+                        <div style="height:100%;width:${progressTarget}%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:4px;transition:width 0.5s;"></div>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-top:4px;">
                         <span>Rp ${formatRupiah(totalSedekahHariIni)}</span>
                         <span>Target: Rp ${formatRupiah(targetSedekah)}</span>
                     </div>
-                    ${targetTercapai ? `<div style="text-align:center;font-size:12px;color:#4ade80;font-weight:600;margin-top:6px;">✅ Target Sedekah Hari Ini Tercapai! 🎉</div>` : ''}
+                    ${targetTercapai ? `<div style="text-align:center;font-size:12px;color:#4ade80;font-weight:600;margin-top:6px;">✅ Target Sedekah Keluarga Hari Ini Tercapai! 🎉</div>` : `<div style="text-align:center;font-size:11px;color:var(--text-secondary);margin-top:4px;">💡 Ajak keluarga untuk bersedekah agar target tercapai</div>`}
                 </div>
-                <div class="balance-card" style="background:linear-gradient(135deg,#1e293b,#0f172a);">
+                <div class="balance-card" style="background:linear-gradient(145deg,#1a2332,#0f172a);">
                     <div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;">
                         <div>
                             <div class="balance-label">🌟 Poin Hari Ini</div>
@@ -3668,7 +3826,7 @@
                             <div style="font-size:28px;font-weight:700;color:#fbbf24;">${progressCount}%</div>
                         </div>
                     </div>
-                    <div style="margin-top:12px;background:rgba(255,255,255,0.1);border-radius:8px;height:6px;overflow:hidden;position:relative;z-index:1;">
+                    <div style="margin-top:12px;background:rgba(255,255,255,0.08);border-radius:8px;height:6px;overflow:hidden;position:relative;z-index:1;">
                         <div style="height:100%;width:${progressCount}%;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:8px;transition:width 0.5s ease;"></div>
                     </div>
                 </div>
@@ -3684,7 +3842,7 @@
                             const actions = data.actions || [];
                             const actionPoints = actions.length * 2;
                             const reminder = sedekahReminders.find(r => r.type_id === st.id);
-                            const reminderEnabled = reminder?.enabled || false;
+                            const reminderEnabled = reminder?.is_enabled || false;
                             const freqLabel = st.frequency === 'daily' ? 'Harian' : st.frequency === 'weekly' ? 'Mingguan' : 'Bulanan';
                             const freqColor = st.frequency === 'daily' ? '#4ade80' : st.frequency === 'weekly' ? '#fbbf24' : '#f87171';
                             return `
@@ -3711,7 +3869,7 @@
                                             <span class="icon">${reminderEnabled ? '🔔' : '🔕'}</span>
                                             <span>${reminderEnabled ? 'Reminder Aktif' : 'Atur Reminder'}</span>
                                         </div>
-                                        ${isCompleted ? `<span style="font-size:11px;color:var(--text-secondary);">${new Date().toISOString().split('T')[0] === new Date().toISOString().split('T')[0] ? 'Hari ini' : ''}</span>` : ''}
+                                        ${isCompleted ? `<span style="font-size:11px;color:var(--text-secondary);">${today === new Date().toISOString().split('T')[0] ? 'Hari ini' : ''}</span>` : ''}
                                     </div>
                                 </div>
                             `;
@@ -3719,7 +3877,7 @@
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-title"><span>📜 Riwayat Sedekah</span></div>
+                    <div class="card-title"><span>📜 Riwayat Sedekah ${currentFamilyId ? 'Keluarga' : ''}</span></div>
                     ${sedekahHistory.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada riwayat</div></div>' :
                         sedekahHistory.slice(0, 20).map(h => {
                             const st = SEDEKAH_TYPES.find(t => t.id === h.type_id);
@@ -3732,17 +3890,18 @@
                                 }).join(' ');
                             }
                             const nominalText = h.nominal > 0 ? `💰 Rp ${formatRupiah(h.nominal)}` : '';
+                            const userInfo = h.user_id !== currentCustomUser?.id ? ` · 👤 ${getUserEmail(h.user_id)}` : '';
                             return `
                                 <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);align-items:center;">
                                     <div>
                                         <span style="font-weight:600;">${label}</span>
-                                        <div style="font-size:11px;color:var(--text-secondary);">📌 ${formatDate(h.date)}</div>
+                                        <div style="font-size:11px;color:var(--text-secondary);">📌 ${formatDate(h.tanggal)}${userInfo}</div>
                                         ${actionsText ? `<div style="font-size:12px;color:var(--text-secondary);">${actionsText}</div>` : ''}
                                         ${nominalText ? `<div style="font-size:12px;color:#10b981;">${nominalText}</div>` : ''}
                                     </div>
                                     <div style="display:flex;align-items:center;gap:12px;">
                                         <span style="color:#fbbf24;font-weight:600;">${h.points || 0} poin</span>
-                                        <button onclick="deleteSedekahHistory('${h.id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;">🗑️</button>
+                                        ${h.user_id === currentCustomUser?.id ? `<button onclick="deleteSedekahHistory('${h.id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;">🗑️</button>` : ''}
                                     </div>
                                 </div>
                             `;
@@ -3793,9 +3952,9 @@
             document.body.appendChild(modal);
         }
 
-        // ================================================
+        // ============================================================
         // RENDER HOME
-        // ================================================
+        // ============================================================
         async function renderHome() {
             await loadTransactions();
             await loadTasks();
@@ -3914,9 +4073,9 @@
             });
         }
 
-        // ================================================
+        // ============================================================
         // RENDER SETTINGS
-        // ================================================
+        // ============================================================
         async function renderSettings() {
             await loadFamilyData();
             const user = await userManager.getUserData();
@@ -3960,6 +4119,7 @@
                 </div>
             `;
             document.getElementById('appContainer').innerHTML = html;
+
             document.getElementById('darkModeSwitch')?.addEventListener('change', toggleTheme);
             document.getElementById('changePassBtn')?.addEventListener('click', async () => {
                 const old = document.getElementById('oldPass').value;
@@ -3975,6 +4135,7 @@
                     document.getElementById('newPass').value = '';
                     document.getElementById('confirmPass').value = ''; }
             });
+
             document.querySelectorAll('.toggle-password').forEach(btn => {
                 btn.onclick = () => {
                     const inp = document.getElementById(btn.dataset.target);
@@ -3984,6 +4145,7 @@
                     }
                 };
             });
+
             document.getElementById('processRecurringBtn')?.addEventListener('click', async () => {
                 showToast('🔄 Memproses transaksi berulang...', 1000);
                 await processRecurringTransactions();
@@ -3991,16 +4153,19 @@
                 await loadTransactions();
                 renderCurrentView();
             });
+
             document.getElementById('createFamilyBtn')?.addEventListener('click', async () => {
                 const name = document.getElementById('familyNameInput').value.trim();
                 if (!name) { showToast('❌ Masukkan nama', 2000, 'error'); return; }
                 await createFamily(name);
             });
+
             document.getElementById('joinFamilyBtn')?.addEventListener('click', async () => {
                 const id = document.getElementById('joinFamilyInput').value.trim();
                 if (!id) { showToast('❌ Masukkan ID', 2000, 'error'); return; }
                 await joinFamily(id);
             });
+
             document.getElementById('inviteMemberBtn')?.addEventListener('click', async () => {
                 const email = document.getElementById('inviteEmail').value.trim();
                 if (!email) { showToast('❌ Masukkan email', 2000, 'error'); return; }
@@ -4016,6 +4181,7 @@
                 await loadFamilyData();
                 renderSettings();
             });
+
             document.getElementById('leaveFamilyBtn')?.addEventListener('click', async () => {
                 if (!confirm('Yakin keluar?')) return;
                 const uid = await userManager.getUserId();
@@ -4077,9 +4243,6 @@
             });
         }
 
-        // ================================================
-        // EDIT PROFILE MODAL
-        // ================================================
         async function openEditProfileModal() {
             const user = await userManager.getUserData();
             if (!user) { showToast('❌ Data user tidak ditemukan', 2000, 'error'); return; }
@@ -4115,9 +4278,9 @@
             document.getElementById('closeProfileModal').onclick = () => modal.remove();
         }
 
-        // ================================================
-        // BOTTOM NAV
-        // ================================================
+        // ============================================================
+        // BOTTOM NAV, UPDATE NAV, RENDER CURRENT VIEW
+        // ============================================================
         function addBottomNav() {
             const navHtml = `
                 <div class="bottom-nav">
@@ -4213,9 +4376,9 @@
             if (views[currentNav]) views[currentNav]();
         }
 
-        // ================================================
-        // RECURRING CHECKER
-        // ================================================
+        // ============================================================
+        // AUTO-RECURRING CHECKER
+        // ============================================================
         let recurringInterval = null;
 
         function startRecurringChecker() {
@@ -4232,9 +4395,9 @@
             });
         }
 
-        // ================================================
-        // AUTH
-        // ================================================
+        // ============================================================
+        // AUTH FUNCTIONS
+        // ============================================================
         async function onAuthSuccess(user) {
             currentUser = user;
             document.getElementById('loginModal').style.display = 'none';
@@ -4363,9 +4526,9 @@
                 hideLoading(); }
         }
 
-        // ================================================
+        // ============================================================
         // EVENT LISTENERS
-        // ================================================
+        // ============================================================
         document.getElementById('submitLoginBtn')?.addEventListener('click', handleLogin);
         document.getElementById('guestBtn')?.addEventListener('click', handleGuest);
         document.getElementById('switchText')?.addEventListener('click', toggleMode);
