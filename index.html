@@ -159,12 +159,23 @@
             font-weight: 500;
         }
         @keyframes pulse {
-            0%,100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.7; }
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.7;
+            }
         }
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         .app-container {
@@ -303,8 +314,12 @@
             margin-right: 40px;
         }
         @keyframes scrollText {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
         }
 
         .balance-card {
@@ -365,7 +380,9 @@
             position: relative;
             z-index: 1;
         }
-        .stat-item { flex: 1; }
+        .stat-item {
+            flex: 1;
+        }
         .stat-label {
             font-size: 10px;
             color: rgba(255,255,255,0.5);
@@ -379,8 +396,12 @@
             margin-top: 2px;
             color: #ffffff;
         }
-        .stat-value.income { color: #4ade80; }
-        .stat-value.expense { color: #f87171; }
+        .stat-value.income {
+            color: #4ade80;
+        }
+        .stat-value.expense {
+            color: #f87171;
+        }
         .balance-eye {
             position: absolute;
             right: 16px;
@@ -464,8 +485,12 @@
         .task-preview-item:active {
             transform: scale(0.98);
         }
-        .task-preview-item .icon { font-size: 18px; }
-        .task-preview-item .info { flex: 1; }
+        .task-preview-item .icon {
+            font-size: 18px;
+        }
+        .task-preview-item .info {
+            flex: 1;
+        }
         .task-preview-item .info .title {
             font-size: 13px;
             font-weight: 500;
@@ -481,10 +506,22 @@
             border-radius: 20px;
             font-weight: 600;
         }
-        .task-preview-item .status.danger { background: rgba(239,68,68,0.15); color: #f87171; }
-        .task-preview-item .status.warning { background: rgba(251,191,36,0.15); color: #fbbf24; }
-        .task-preview-item .status.done { background: rgba(16,185,129,0.15); color: #4ade80; }
-        .task-preview-item .status.pending { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .task-preview-item .status.danger {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+        .task-preview-item .status.warning {
+            background: rgba(251,191,36,0.15);
+            color: #fbbf24;
+        }
+        .task-preview-item .status.done {
+            background: rgba(16,185,129,0.15);
+            color: #4ade80;
+        }
+        .task-preview-item .status.pending {
+            background: rgba(148,163,184,0.15);
+            color: #94a3b8;
+        }
 
         .stats-row {
             display: grid;
@@ -523,8 +560,12 @@
             margin-top: 2px;
             color: var(--text-primary);
         }
-        .stat-card .value.income { color: #10b981; }
-        .stat-card .value.expense { color: #ef4444; }
+        .stat-card .value.income {
+            color: #10b981;
+        }
+        .stat-card .value.expense {
+            color: #ef4444;
+        }
 
         .tx-item {
             display: flex;
@@ -536,7 +577,9 @@
             transition: var(--transition);
             color: var(--text-primary);
         }
-        .tx-item:last-child { border-bottom: none; }
+        .tx-item:last-child {
+            border-bottom: none;
+        }
         .tx-item:hover {
             background: var(--bg-card);
             margin: 0 -8px;
@@ -544,7 +587,9 @@
             padding-right: 8px;
             border-radius: var(--radius-xs);
         }
-        .tx-item:active { opacity: 0.7; }
+        .tx-item:active {
+            opacity: 0.7;
+        }
         .tx-item .left {
             display: flex;
             align-items: center;
@@ -575,11 +620,29 @@
             font-size: 14px;
             flex-shrink: 0;
         }
-        .tx-item .amount.income { color: #10b981; }
-        .tx-item .amount.expense { color: #ef4444; }
+        .tx-item .amount.income {
+            color: #10b981;
+        }
+        .tx-item .amount.expense {
+            color: #ef4444;
+        }
         .tx-item.task-item {
             border-left: 3px solid var(--text-muted);
             padding-left: 12px;
+        }
+        .tx-item .recurring-tag {
+            display: inline-block;
+            background: rgba(139,92,246,0.2);
+            color: #a78bfa;
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+        .tx-item .recurring-tag.active {
+            background: rgba(16,185,129,0.2);
+            color: #4ade80;
         }
 
         .family-badge {
@@ -588,9 +651,18 @@
             border-radius: 20px;
             font-weight: 600;
         }
-        .family-badge.owner { background: rgba(139,92,246,0.2); color: #a78bfa; }
-        .family-badge.member { background: rgba(59,130,246,0.15); color: #60a5fa; }
-        .family-badge.shared { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .family-badge.owner {
+            background: rgba(139,92,246,0.2);
+            color: #a78bfa;
+        }
+        .family-badge.member {
+            background: rgba(59,130,246,0.15);
+            color: #60a5fa;
+        }
+        .family-badge.shared {
+            background: rgba(251,191,36,0.15);
+            color: #fbbf24;
+        }
 
         .category-item {
             display: flex;
@@ -602,7 +674,9 @@
             transition: var(--transition);
             color: var(--text-primary);
         }
-        .category-item:last-child { border-bottom: none; }
+        .category-item:last-child {
+            border-bottom: none;
+        }
         .category-item:hover {
             background: var(--bg-card);
             margin: 0 -8px;
@@ -610,7 +684,9 @@
             padding-right: 8px;
             border-radius: var(--radius-xs);
         }
-        .category-item:active { opacity: 0.7; }
+        .category-item:active {
+            opacity: 0.7;
+        }
         .category-item .left {
             display: flex;
             align-items: center;
@@ -671,14 +747,20 @@
             font-size: 15px;
             color: var(--text-primary);
         }
-        .debt-group .header .total.income { color: #10b981; }
-        .debt-group .header .total.expense { color: #ef4444; }
+        .debt-group .header .total.income {
+            color: #10b981;
+        }
+        .debt-group .header .total.expense {
+            color: #ef4444;
+        }
         .debt-group .sub {
             font-size: 12px;
             color: var(--text-secondary);
             margin-top: 4px;
         }
-        .debt-group .sub .wa-badge { color: #25D366; }
+        .debt-group .sub .wa-badge {
+            color: #25D366;
+        }
         .debt-group-item {
             padding: 10px 0;
             border-bottom: 1px solid var(--border-color);
@@ -851,8 +933,12 @@
             animation: modalFadeIn 0.3s ease-out;
         }
         @keyframes modalFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
         .modal-content {
             background: var(--bg-secondary);
@@ -868,8 +954,14 @@
             animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         @keyframes modalSlideUp {
-            from { opacity: 0; transform: translateY(40px) scale(0.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
         .modal-content::-webkit-scrollbar {
             width: 3px;
@@ -1025,17 +1117,31 @@
             font-size: 11px;
             font-weight: 600;
         }
-        .modal-badge.success { background: rgba(16,185,129,0.15); color: #4ade80; }
-        .modal-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; }
-        .modal-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; }
-        .modal-badge.info { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .modal-badge.success {
+            background: rgba(16,185,129,0.15);
+            color: #4ade80;
+        }
+        .modal-badge.danger {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+        .modal-badge.warning {
+            background: rgba(245,158,11,0.15);
+            color: #fbbf24;
+        }
+        .modal-badge.info {
+            background: rgba(59,130,246,0.15);
+            color: #60a5fa;
+        }
         .modal-detail-row {
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
             border-bottom: 1px solid var(--border-color);
         }
-        .modal-detail-row:last-child { border-bottom: none; }
+        .modal-detail-row:last-child {
+            border-bottom: none;
+        }
         .modal-detail-label {
             color: var(--text-secondary);
             font-size: 13px;
@@ -1104,12 +1210,24 @@
             backdrop-filter: blur(16px);
         }
         @keyframes toastIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.95); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
         }
-        .toast.success { border-color: #4ade80; }
-        .toast.error { border-color: #f87171; }
-        .toast.warning { border-color: #fbbf24; }
+        .toast.success {
+            border-color: #4ade80;
+        }
+        .toast.error {
+            border-color: #f87171;
+        }
+        .toast.warning {
+            border-color: #fbbf24;
+        }
 
         .empty-state {
             text-align: center;
@@ -1248,8 +1366,14 @@
             border-radius: 20px;
             font-weight: 600;
         }
-        .recurring-badge.active { background: rgba(16,185,129,0.2); color: #4ade80; }
-        .recurring-badge.inactive { background: rgba(239,68,68,0.2); color: #f87171; }
+        .recurring-badge.active {
+            background: rgba(16,185,129,0.2);
+            color: #4ade80;
+        }
+        .recurring-badge.inactive {
+            background: rgba(239,68,68,0.2);
+            color: #f87171;
+        }
 
         .sedekah-card {
             background: var(--bg-card);
@@ -1277,7 +1401,9 @@
             gap: 10px;
             align-items: center;
         }
-        .sedekah-card .icon { font-size: 24px; }
+        .sedekah-card .icon {
+            font-size: 24px;
+        }
         .sedekah-card .label {
             font-weight: 600;
             font-size: 14px;
@@ -1367,7 +1493,9 @@
             border-color: #4ade80;
             color: #4ade80;
         }
-        .reminder-toggle .icon { font-size: 14px; }
+        .reminder-toggle .icon {
+            font-size: 14px;
+        }
         .sedekah-chart-container {
             background: var(--bg-card-glass);
             backdrop-filter: blur(12px);
@@ -1414,13 +1542,17 @@
             border-color: rgba(16,185,129,0.3);
             color: #4ade80;
         }
-        .doa-banner.success .doa-icon { color: #4ade80; }
+        .doa-banner.success .doa-icon {
+            color: #4ade80;
+        }
         .doa-banner.half {
             background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(251,191,36,0.05));
             border-color: rgba(251,191,36,0.3);
             color: #fbbf24;
         }
-        .doa-banner.half .doa-icon { color: #fbbf24; }
+        .doa-banner.half .doa-icon {
+            color: #fbbf24;
+        }
         .doa-banner .doa-icon {
             font-size: 20px;
             margin-right: 8px;
@@ -1437,8 +1569,14 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .month-selector {
@@ -1472,22 +1610,112 @@
         }
 
         @media (max-width: 420px) {
-            .app-container { padding: 12px 12px 20px; }
-            .balance-amount { font-size: 28px; }
-            .header-name { font-size: 13px; }
-            .nav-item .nav-label { font-size: 7px; }
-            .nav-center-btn { width: 48px; height: 48px; font-size: 24px; }
-            .bottom-nav { padding: 4px 6px; height: 66px; }
-            .modal-content { padding: 20px 16px; }
-            .action-select-grid { grid-template-columns: 1fr 1fr; }
+            .app-container {
+                padding: 12px 12px 20px;
+            }
+            .balance-amount {
+                font-size: 28px;
+            }
+            .header-name {
+                font-size: 13px;
+            }
+            .nav-item .nav-label {
+                font-size: 7px;
+            }
+            .nav-center-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 24px;
+            }
+            .bottom-nav {
+                padding: 4px 6px;
+                height: 66px;
+            }
+            .modal-content {
+                padding: 20px 16px;
+            }
+            .action-select-grid {
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         @keyframes glowPulse {
-            0%,100% { box-shadow: 0 0 20px rgba(59,130,246,0.1); }
-            50% { box-shadow: 0 0 40px rgba(59,130,246,0.2); }
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(59,130,246,0.1);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(59,130,246,0.2);
+            }
         }
         .glow-pulse {
             animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        .debt-lunas-btn {
+            background: var(--gradient-success);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .debt-lunas-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+        }
+        .debt-lunas-btn:active {
+            transform: scale(0.95);
+        }
+        .debt-lunas-btn.batal {
+            background: var(--gradient-warning);
+        }
+        .debt-lunas-btn.batal:hover {
+            box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+        }
+
+        .recurring-tag {
+            display: inline-block;
+            background: rgba(139,92,246,0.2);
+            color: #a78bfa;
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+        .recurring-tag.active {
+            background: rgba(16,185,129,0.2);
+            color: #4ade80;
+        }
+
+        .recurring-action-section {
+            margin: 8px 0 12px;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+        .recurring-action-section .btn-full {
+            width: 100%;
+        }
+
+        .recurring-badge-dash {
+            font-size: 9px;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            background: rgba(139,92,246,0.2);
+            color: #a78bfa;
+            margin-left: 4px;
+            display: inline-block;
+        }
+        .recurring-badge-dash.active {
+            background: rgba(16,185,129,0.2);
+            color: #4ade80;
         }
     </style>
 </head>
@@ -1514,7 +1742,7 @@
             </div>
             <button id="submitLoginBtn" class="modal-btn modal-btn-primary modal-btn-full">Masuk</button>
             <div id="switchText" style="text-align:center; margin:14px 0; color:#3b82f6; cursor:pointer; font-weight:600; font-size:14px;">Belum punya akun? Daftar</div>
-            <button id="guestBtn" class="modal-btn modal-btn-secondary modal-btn-full">Lanjut sebagai Tamu</button>
+            <button id="guestBtn" class="modal-btn modal-btn-secondary modal-btn-full">👤 Lanjut sebagai Tamu</button>
             <div id="loginError" style="color:#ef4444; text-align:center; margin-top:12px; font-size:13px;"></div>
         </div>
     </div>
@@ -1553,6 +1781,7 @@
         let currentFamilyId = null;
         let familyMembers = [];
         let familyInfo = null;
+        let isGuestMode = false;
 
         // Sedekah
         const SEDEKAH_TYPES = [
@@ -1578,32 +1807,118 @@
         let sedekahChart = null;
 
         // ============================================================
+        // RECURRING MAP - GLOBAL UNTUK SEMUA USER (KELUARGA)
+        // ============================================================
+        let recurringMap = {}; // key: transaction_id (master), value: true
+
+        function isRecurringTransaction(t) {
+            if (!t) return false;
+            if (t.description && t.description.includes('(Ulang)')) return true;
+            return recurringMap[t.id] === true;
+        }
+
+        async function loadRecurringMap() {
+            const uid = await userManager.getUserId();
+            if (!uid) { recurringMap = {}; return; }
+            try {
+                let userIds = [uid];
+                if (currentFamilyId && familyMembers.length > 0) {
+                    userIds = familyMembers.map(m => m.user_id);
+                }
+                const { data, error } = await sb.from('recurring_transactions')
+                    .select('original_transaction_id')
+                    .in('user_id', userIds);
+                if (error) throw error;
+                recurringMap = {};
+                if (data) {
+                    data.forEach(r => {
+                        recurringMap[r.original_transaction_id] = true;
+                    });
+                }
+                console.log('✅ Recurring map loaded:', Object.keys(recurringMap).length);
+            } catch (e) {
+                console.error('Error loading recurring map:', e);
+                recurringMap = {};
+            }
+        }
+
+        // ============================================================
         // CUSTOM USER MANAGER
         // ============================================================
         class CustomUserManager {
-            constructor(sb) { this.sb = sb;
+            constructor(sb) {
+                this.sb = sb;
                 this.authUser = null;
-                this.customUser = null; }
+                this.customUser = null;
+                this.isGuest = false;
+            }
+
             async setupCustomUser(authUser) {
+                if (authUser && authUser.id && authUser.id.startsWith('guest_')) {
+                    this.authUser = authUser;
+                    this.customUser = {
+                        id: 0,
+                        auth_id: authUser.id,
+                        email: authUser.email || 'guest@tamu.com',
+                        username: 'Tamu',
+                        user_code: 'TAMU-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0'),
+                        display_name: 'Pengunjung'
+                    };
+                    this.isGuest = true;
+                    return this.customUser;
+                }
                 if (!authUser) return null;
                 try {
                     const { data: existing } = await this.sb.from('users').select('*').eq('auth_id', authUser.id)
                         .maybeSingle();
-                    if (existing) { this.customUser = existing;
-                        this.authUser = authUser; return this.customUser; }
+                    if (existing) {
+                        this.customUser = existing;
+                        this.authUser = authUser;
+                        return this.customUser;
+                    }
                     const username = authUser.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
-                    const { data: inserted } = await this.sb.from('users').insert({ auth_id: authUser.id,
-                            email: authUser.email, username }).select().maybeSingle();
-                    if (inserted) { this.customUser = inserted;
-                        this.authUser = authUser; return this.customUser; }
+                    const userCode = 'USR-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+                    const { data: inserted } = await this.sb.from('users').insert({
+                        auth_id: authUser.id,
+                        email: authUser.email,
+                        username: username,
+                        user_code: userCode
+                    }).select().maybeSingle();
+                    if (inserted) {
+                        this.customUser = inserted;
+                        this.authUser = authUser;
+                        return this.customUser;
+                    }
                     throw new Error('Failed to create user');
-                } catch (e) { console.error(e); return null; }
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
             }
-            async getUserId() { return this.customUser?.id || 0; }
-            async getUserCode() { return this.customUser?.user_code || 'USR-???'; }
-            async getUsername() { return this.customUser?.username || 'User'; }
-            async getUserData() { return this.customUser; }
+
+            async getUserId() {
+                return this.customUser?.id || 0;
+            }
+
+            async getUserCode() {
+                return this.customUser?.user_code || 'USR-???';
+            }
+
+            async getUsername() {
+                return this.customUser?.username || 'User';
+            }
+
+            async getUserData() {
+                return this.customUser;
+            }
+
             async updateProfile(data) {
+                if (this.isGuest) {
+                    if (data.username) this.customUser.username = data.username;
+                    if (data.display_name) this.customUser.display_name = data.display_name;
+                    saveGuestData();
+                    return this.customUser;
+                }
                 if (!this.customUser) throw new Error('No user');
                 await this.sb.from('users').update({ ...data, updated_at: new Date().toISOString() }).eq('id', this
                     .customUser.id);
@@ -1612,12 +1927,68 @@
                 this.customUser = updated;
                 return updated;
             }
+
             async getUserById(id) {
+                if (this.isGuest) {
+                    if (id === 0 || id === this.customUser?.id) return this.customUser;
+                    return null;
+                }
                 const { data } = await this.sb.from('users').select('*').eq('id', id).maybeSingle();
                 return data;
             }
         }
         const userManager = new CustomUserManager(null);
+
+        // ============================================================
+        // GUEST DATA FUNCTIONS
+        // ============================================================
+        function saveGuestData() {
+            if (isGuestMode || currentCustomUser?.id?.startsWith('guest_')) {
+                const data = {
+                    categories: categories,
+                    transactions: transactions,
+                    debts: debts,
+                    savings: savings,
+                    tasks: tasks,
+                    reminders: reminders,
+                    budgets: budgets,
+                    sedekahData: sedekahData,
+                    sedekahHistory: sedekahHistory,
+                    sedekahReminders: sedekahReminders,
+                    savedAt: new Date().toISOString()
+                };
+                try {
+                    localStorage.setItem('guest_data', JSON.stringify(data));
+                    console.log('✅ Guest data saved to localStorage');
+                } catch (e) {
+                    console.error('Error saving guest data:', e);
+                }
+            }
+        }
+
+        function loadGuestData() {
+            try {
+                const saved = localStorage.getItem('guest_data');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.categories) categories = data.categories;
+                    if (data.transactions) transactions = data.transactions;
+                    if (data.debts) debts = data.debts;
+                    if (data.savings) savings = data.savings;
+                    if (data.tasks) tasks = data.tasks;
+                    if (data.reminders) reminders = data.reminders;
+                    if (data.budgets) budgets = data.budgets;
+                    if (data.sedekahData) sedekahData = data.sedekahData;
+                    if (data.sedekahHistory) sedekahHistory = data.sedekahHistory;
+                    if (data.sedekahReminders) sedekahReminders = data.sedekahReminders;
+                    console.log('✅ Loaded guest data from localStorage');
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error loading guest data:', e);
+            }
+            return false;
+        }
 
         // ============================================================
         // UTILITY FUNCTIONS
@@ -1800,6 +2171,12 @@
         // LOAD FUNCTIONS
         // ============================================================
         async function loadFamilyData() {
+            if (isGuestMode) {
+                currentFamilyId = null;
+                familyMembers = [];
+                familyInfo = null;
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { currentFamilyId = null;
                 familyMembers = [];
@@ -1826,6 +2203,18 @@
         }
 
         async function loadCategories() {
+            if (isGuestMode) {
+                if (!categories.length) {
+                    categories = [
+                        { id: 'cat1', name: 'Makanan', icon: '🍔', type: 'pengeluaran', color: '#ef4444' },
+                        { id: 'cat2', name: 'Transportasi', icon: '🚗', type: 'pengeluaran', color: '#f59e0b' },
+                        { id: 'cat3', name: 'Belanja', icon: '🛍️', type: 'pengeluaran', color: '#8b5cf6' },
+                        { id: 'cat4', name: 'Gaji', icon: '💰', type: 'pemasukan', color: '#10b981' },
+                        { id: 'cat5', name: 'Bonus', icon: '🎁', type: 'pemasukan', color: '#3b82f6' }
+                    ];
+                }
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { categories = []; return; }
             try {
@@ -1841,6 +2230,14 @@
         }
 
         async function loadTransactions() {
+            if (isGuestMode) {
+                if (!transactions.length) {
+                    transactions = [];
+                }
+                // Untuk guest, tidak ada recurring map
+                recurringMap = {};
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { transactions = []; return; }
             try {
@@ -1852,10 +2249,16 @@
                 } else { q = q.eq('user_id', uid); }
                 const { data } = await q;
                 transactions = (data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                // Load recurring map setelah transaksi diambil
+                await loadRecurringMap();
             } catch (e) { transactions = []; }
         }
 
         async function loadDebts() {
+            if (isGuestMode) {
+                if (!debts.length) debts = [];
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { debts = []; return; }
             try {
@@ -1876,6 +2279,10 @@
         }
 
         async function loadSavings() {
+            if (isGuestMode) {
+                if (!savings.length) savings = [];
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { savings = []; return; }
             try {
@@ -1885,6 +2292,10 @@
         }
 
         async function loadTasks() {
+            if (isGuestMode) {
+                if (!tasks.length) tasks = [];
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { tasks = []; return; }
             try {
@@ -1905,6 +2316,10 @@
         }
 
         async function loadReminders() {
+            if (isGuestMode) {
+                if (!reminders.length) reminders = [];
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { reminders = []; return; }
             try {
@@ -1925,6 +2340,10 @@
         }
 
         async function loadBudgets() {
+            if (isGuestMode) {
+                if (!budgets.length) budgets = [];
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { budgets = []; return; }
             try {
@@ -1937,13 +2356,23 @@
         async function loadAllData() {
             await loadFamilyData();
             await loadCategories();
-            await loadTransactions();
+            await loadTransactions(); // di dalamnya sudah panggil loadRecurringMap
             await loadDebts();
             await loadSavings();
             await loadTasks();
             await loadReminders();
             await loadBudgets();
             await loadSedekahData();
+        }
+
+        async function loadAllDataForGuest() {
+            isGuestMode = true;
+            loadGuestData();
+            await loadAllData();
+            if (!sedekahData.length) {
+                sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
+            }
+            recurringMap = {};
         }
 
         function getSpentByCategory(catId) {
@@ -2096,23 +2525,44 @@
                 const color = document.getElementById('catColor').value;
                 if (!name) { showToast('❌ Nama harus diisi', 2000, 'error'); return; }
                 const uid = await userManager.getUserId();
-                if (isEdit) { await sb.from('categories').update({ name, icon, type, color }).eq('id',
-                    editId);
-                    showToast('✅ Kategori diupdate', 2000, 'success'); } else { await sb.from('categories')
-                        .insert({ user_id: uid, name, icon, type, color });
-                    showToast('✅ Kategori ditambahkan', 2000, 'success'); }
+                if (isEdit) {
+                    if (isGuestMode) {
+                        const idx = categories.findIndex(c => c.id === editId);
+                        if (idx > -1) { categories[idx] = { ...categories[idx], name, icon, type, color };
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('categories').update({ name, icon, type, color }).eq('id', editId);
+                    }
+                    showToast('✅ Kategori diupdate', 2000, 'success');
+                } else {
+                    if (isGuestMode) {
+                        const newCat = { id: 'cat_' + Date.now(), user_id: uid, name, icon, type, color };
+                        categories.push(newCat);
+                        saveGuestData();
+                        showToast('✅ Kategori ditambahkan (lokal)', 2000, 'success');
+                    } else {
+                        await sb.from('categories').insert({ user_id: uid, name, icon, type, color });
+                        showToast('✅ Kategori ditambahkan', 2000, 'success');
+                    }
+                }
                 modal.remove();
                 await loadCategories();
                 renderKategori();
             };
             if (isEdit) {
                 document.getElementById('deleteCategory').onclick = async () => {
-                    if (confirm('Hapus kategori?')) { await sb.from('categories').delete().eq('id',
-                        editId);
+                    if (confirm('Hapus kategori?')) {
+                        if (isGuestMode) {
+                            categories = categories.filter(c => c.id !== editId);
+                            saveGuestData();
+                        } else {
+                            await sb.from('categories').delete().eq('id', editId);
+                        }
                         showToast('✅ Kategori dihapus', 2000, 'success');
                         modal.remove();
                         await loadCategories();
-                        renderKategori(); }
+                        renderKategori();
+                    }
                 };
             }
             document.getElementById('closeCategory').onclick = () => modal.remove();
@@ -2161,21 +2611,47 @@
                 const due = document.getElementById('taskDue').value;
                 if (!title) { showToast('❌ Judul harus diisi', 2000, 'error'); return; }
                 const uid = await userManager.getUserId();
-                if (isEdit) { await sb.from('tasks').update({ title, description: desc, due_date: due || null })
-                        .eq('id', editId); } else { await sb.from('tasks').insert({ user_id: uid, title,
-                        description: desc, due_date: due || null }); }
-                showToast(isEdit ? '✅ Tugas diupdate' : '✅ Tugas ditambahkan', 2000, 'success');
+                if (isEdit) {
+                    if (isGuestMode) {
+                        const idx = tasks.findIndex(t => t.id === editId);
+                        if (idx > -1) { tasks[idx] = { ...tasks[idx], title, description: desc, due_date: due ||
+                            null };
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('tasks').update({ title, description: desc, due_date: due || null }).eq(
+                        'id', editId);
+                    }
+                    showToast('✅ Tugas diupdate', 2000, 'success');
+                } else {
+                    const newTask = { id: 'task_' + Date.now(), user_id: uid, title, description: desc,
+                        due_date: due || null, is_completed: false };
+                    if (isGuestMode) {
+                        tasks.push(newTask);
+                        saveGuestData();
+                    } else {
+                        await sb.from('tasks').insert({ user_id: uid, title, description: desc, due_date: due ||
+                            null });
+                    }
+                    showToast('✅ Tugas ditambahkan', 2000, 'success');
+                }
                 modal.remove();
                 await loadTasks();
                 renderCurrentView();
             };
             if (isEdit) {
                 document.getElementById('deleteTask').onclick = async () => {
-                    if (confirm('Hapus tugas?')) { await sb.from('tasks').delete().eq('id', editId);
+                    if (confirm('Hapus tugas?')) {
+                        if (isGuestMode) {
+                            tasks = tasks.filter(t => t.id !== editId);
+                            saveGuestData();
+                        } else {
+                            await sb.from('tasks').delete().eq('id', editId);
+                        }
                         showToast('✅ Tugas dihapus', 2000, 'success');
                         modal.remove();
                         await loadTasks();
-                        renderCurrentView(); }
+                        renderCurrentView();
+                    }
                 };
             }
             document.getElementById('closeTask').onclick = () => modal.remove();
@@ -2215,7 +2691,13 @@
             document.querySelectorAll('.task-check').forEach(cb => {
                 cb.onclick = async e => {
                     e.stopPropagation();
-                    await sb.from('tasks').update({ is_completed: cb.checked }).eq('id', cb.dataset.id);
+                    if (isGuestMode) {
+                        const idx = tasks.findIndex(t => t.id === cb.dataset.id);
+                        if (idx > -1) { tasks[idx].is_completed = cb.checked;
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('tasks').update({ is_completed: cb.checked }).eq('id', cb.dataset.id);
+                    }
                     await loadTasks();
                     renderTasks();
                 };
@@ -2245,8 +2727,8 @@
                     <input type="text" id="debtName" class="modal-input" placeholder="Nama orang" value="${isEdit ? escapeHtml(debt.contact_name) : ''}">
                     <input type="text" id="debtAmount" class="modal-input" placeholder="Jumlah" value="${isEdit ? formatRupiah(debt.amount) : ''}">
                     <select id="debtType" class="modal-select">
-                        <option value="piutang" ${isEdit && debt.type === 'piutang' ? 'selected' : ''}>💰 Piutang</option>
-                        <option value="hutang" ${isEdit && debt.type === 'hutang' ? 'selected' : ''}>💸 Hutang</option>
+                        <option value="piutang" ${isEdit && debt.type === 'piutang' ? 'selected' : ''}>💰 Piutang (bertambah saldo)</option>
+                        <option value="hutang" ${isEdit && debt.type === 'hutang' ? 'selected' : ''}>💸 Hutang (berkurang saldo)</option>
                     </select>
                     <input type="date" id="debtDate" class="modal-input" placeholder="Tanggal" value="${isEdit ? formatDateInput(debt.created_at) : today}">
                     <input type="date" id="debtDue" class="modal-input" placeholder="Jatuh tempo" value="${isEdit ? formatDateInput(debt.due_date) : ''}">
@@ -2255,6 +2737,9 @@
                         <span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);">+62</span>
                     </div>
                     <textarea id="debtDesc" class="modal-textarea" placeholder="Catatan">${isEdit ? escapeHtml(debt.description || '') : ''}</textarea>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;padding:8px 12px;background:rgba(59,130,246,0.06);border-radius:8px;border:1px solid rgba(59,130,246,0.1);">
+                        💡 Saat ditandai lunas: <strong>Piutang</strong> akan menambah saldo, <strong>Hutang</strong> akan mengurangi saldo
+                    </div>
                     <div class="modal-button-grid">
                         <button id="saveDebt" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                         <button id="closeDebt" class="modal-btn modal-btn-secondary">Batal</button>
@@ -2302,14 +2787,24 @@
                 const data = { contact_name: name, amount, type, description: desc, due_date: due || null,
                     wa_number: wa || null, created_at: new Date(date).toISOString() };
                 if (isEdit) {
-                    const { error } = await sb.from('debts').update(data).eq('id', editId);
-                    if (error) { showToast('❌ ' + error.message, 3000, 'error'); return; }
+                    if (isGuestMode) {
+                        const idx = debts.findIndex(d => d.id === editId);
+                        if (idx > -1) { debts[idx] = { ...debts[idx], ...data };
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('debts').update(data).eq('id', editId);
+                    }
                     showToast('✅ Data diupdate', 2000, 'success');
                 } else {
                     data.user_id = uid;
                     data.status = 'belum_lunas';
-                    const { error } = await sb.from('debts').insert(data);
-                    if (error) { showToast('❌ ' + error.message, 3000, 'error'); return; }
+                    if (isGuestMode) {
+                        const newDebt = { id: 'debt_' + Date.now(), ...data };
+                        debts.push(newDebt);
+                        saveGuestData();
+                    } else {
+                        await sb.from('debts').insert(data);
+                    }
                     showToast('✅ Ditambahkan', 2000, 'success');
                 }
                 modal.remove();
@@ -2318,38 +2813,175 @@
             };
             if (isEdit) {
                 document.getElementById('deleteDebt').onclick = async () => {
-                    if (confirm('Hapus data ini?')) { await sb.from('debts').delete().eq('id', editId);
+                    if (confirm('Hapus data ini?')) {
+                        if (debt && debt.status === 'lunas') {
+                            await batalkanEfekSaldoDebt(debt);
+                        }
+                        if (isGuestMode) {
+                            debts = debts.filter(d => d.id !== editId);
+                            saveGuestData();
+                        } else {
+                            await sb.from('debts').delete().eq('id', editId);
+                        }
                         showToast('✅ Data dihapus', 2000, 'success');
                         modal.remove();
                         await loadDebts();
-                        renderCurrentView(); }
+                        await loadTransactions();
+                        renderCurrentView();
+                    }
                 };
             }
             document.getElementById('closeDebt').onclick = () => modal.remove();
+        }
+
+        async function prosesSaldoDebt(debt, isLunas) {
+            if (!debt) return;
+            const uid = await userManager.getUserId();
+            if (!uid) return;
+
+            let catHutang = categories.find(c => c.name.toLowerCase() === 'hutang' && c.type === 'pengeluaran');
+            let catPiutang = categories.find(c => c.name.toLowerCase() === 'piutang' && c.type === 'pemasukan');
+
+            if (!catHutang && !isGuestMode) {
+                const { data: newCat } = await sb.from('categories').insert({
+                    user_id: uid,
+                    name: 'Hutang',
+                    icon: '💸',
+                    type: 'pengeluaran',
+                    color: '#ef4444'
+                }).select().single();
+                catHutang = newCat;
+                await loadCategories();
+            }
+            if (!catPiutang && !isGuestMode) {
+                const { data: newCat } = await sb.from('categories').insert({
+                    user_id: uid,
+                    name: 'Piutang',
+                    icon: '💰',
+                    type: 'pemasukan',
+                    color: '#10b981'
+                }).select().single();
+                catPiutang = newCat;
+                await loadCategories();
+            }
+
+            if (isGuestMode) {
+                if (!catHutang) {
+                    catHutang = { id: 'cat_hutang', name: 'Hutang', icon: '💸', type: 'pengeluaran', color: '#ef4444' };
+                    categories.push(catHutang);
+                }
+                if (!catPiutang) {
+                    catPiutang = { id: 'cat_piutang', name: 'Piutang', icon: '💰', type: 'pemasukan', color: '#10b981' };
+                    categories.push(catPiutang);
+                }
+                saveGuestData();
+            }
+
+            const now = new Date().toISOString();
+            const desc = `Pelunasan ${debt.type === 'piutang' ? 'piutang' : 'hutang'} dari ${debt.contact_name} (Rp ${formatRupiah(debt.amount)})`;
+
+            if (debt.type === 'piutang') {
+                if (isLunas) {
+                    const txData = {
+                        user_id: uid,
+                        description: desc,
+                        amount: debt.amount,
+                        type: 'pemasukan',
+                        category_id: catPiutang.id,
+                        created_at: now
+                    };
+                    if (isGuestMode) {
+                        const newTx = { id: 'tx_' + Date.now(), ...txData };
+                        transactions.push(newTx);
+                        saveGuestData();
+                    } else {
+                        await sb.from('transactions').insert(txData);
+                    }
+                    showToast(`💰 Piutang Rp ${formatRupiah(debt.amount)} lunas! Saldo bertambah`, 2500, 'success');
+                } else {
+                    await hapusTransaksiPelunasan(debt, desc);
+                }
+            } else {
+                if (isLunas) {
+                    const txData = {
+                        user_id: uid,
+                        description: desc,
+                        amount: debt.amount,
+                        type: 'pengeluaran',
+                        category_id: catHutang.id,
+                        created_at: now
+                    };
+                    if (isGuestMode) {
+                        const newTx = { id: 'tx_' + Date.now(), ...txData };
+                        transactions.push(newTx);
+                        saveGuestData();
+                    } else {
+                        await sb.from('transactions').insert(txData);
+                    }
+                    showToast(`💸 Hutang Rp ${formatRupiah(debt.amount)} lunas! Saldo berkurang`, 2500, 'warning');
+                } else {
+                    await hapusTransaksiPelunasan(debt, desc);
+                }
+            }
+            await loadTransactions();
+        }
+
+        async function hapusTransaksiPelunasan(debt, desc) {
+            if (isGuestMode) {
+                const idx = transactions.findIndex(t =>
+                    t.description === desc &&
+                    t.amount === debt.amount &&
+                    ((debt.type === 'piutang' && t.type === 'pemasukan') ||
+                        (debt.type === 'hutang' && t.type === 'pengeluaran'))
+                );
+                if (idx > -1) {
+                    transactions.splice(idx, 1);
+                    saveGuestData();
+                }
+            } else {
+                const { data: tx } = await sb.from('transactions')
+                    .select('id')
+                    .eq('description', desc)
+                    .eq('amount', debt.amount)
+                    .eq('type', debt.type === 'piutang' ? 'pemasukan' : 'pengeluaran')
+                    .maybeSingle();
+                if (tx) {
+                    await sb.from('transactions').delete().eq('id', tx.id);
+                }
+            }
+            showToast(`↩️ Transaksi pelunasan dibatalkan`, 2000, 'warning');
+        }
+
+        async function batalkanEfekSaldoDebt(debt) {
+            const desc = `Pelunasan ${debt.type === 'piutang' ? 'piutang' : 'hutang'} dari ${debt.contact_name} (Rp ${formatRupiah(debt.amount)})`;
+            await hapusTransaksiPelunasan(debt, desc);
         }
 
         function showDebtDetail(debt) {
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
             const isOverdue = debt.due_date && new Date(debt.due_date) < new Date() && debt.status !== 'lunas';
+            const isLunas = debt.status === 'lunas';
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-title">📋 Detail ${debt.type === 'piutang' ? 'Piutang' : 'Hutang'}</div>
                     <div style="display:grid;gap:4px;padding:4px 0;">
                         <div class="modal-detail-row"><span class="modal-detail-label">Nama</span><span class="modal-detail-value">${escapeHtml(debt.contact_name)}</span></div>
                         <div class="modal-detail-row"><span class="modal-detail-label">Jumlah</span><span class="modal-detail-value" style="color:${debt.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(debt.amount)}</span></div>
-                        <div class="modal-detail-row"><span class="modal-detail-label">Tipe</span><span class="modal-detail-value">${debt.type === 'piutang' ? '💰 Piutang' : '💸 Hutang'}</span></div>
+                        <div class="modal-detail-row"><span class="modal-detail-label">Tipe</span><span class="modal-detail-value">${debt.type === 'piutang' ? '💰 Piutang (tambah saldo)' : '💸 Hutang (kurangi saldo)'}</span></div>
                         <div class="modal-detail-row"><span class="modal-detail-label">Tanggal</span><span class="modal-detail-value">${formatDate(debt.created_at)}</span></div>
                         ${debt.due_date ? `<div class="modal-detail-row"><span class="modal-detail-label">Jatuh Tempo</span><span class="modal-detail-value" style="color:${isOverdue ? '#f87171' : '#fbbf24'};font-weight:600;">${formatDate(debt.due_date)} ${isOverdue ? '⚠️' : ''}</span></div>` : ''}
                         ${debt.wa_number ? `<div class="modal-detail-row"><span class="modal-detail-label">WhatsApp</span><span class="modal-detail-value">${escapeHtml(debt.wa_number)}</span></div>` : ''}
                         ${debt.description ? `<div class="modal-detail-row"><span class="modal-detail-label">Catatan</span><span class="modal-detail-value" style="font-size:13px;">${escapeHtml(debt.description)}</span></div>` : ''}
-                        <div class="modal-detail-row"><span class="modal-detail-label">Status</span><span class="modal-detail-value"><span class="modal-badge ${debt.status === 'lunas' ? 'success' : 'danger'}">${debt.status === 'lunas' ? '✅ Lunas' : '⏳ Belum Lunas'}</span></span></div>
+                        <div class="modal-detail-row"><span class="modal-detail-label">Status</span><span class="modal-detail-value"><span class="modal-badge ${isLunas ? 'success' : 'danger'}">${isLunas ? '✅ Lunas' : '⏳ Belum Lunas'}</span></span></div>
                         ${debt.user_id !== currentCustomUser?.id ? `<div class="modal-detail-row"><span class="modal-detail-label">Dibuat Oleh</span><span class="modal-detail-value">${getUserEmail(debt.user_id)}</span></div>` : ''}
                     </div>
                     <hr class="modal-divider">
                     <div class="modal-button-grid">
                         <button id="editDebtBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
-                        <button id="toggleDebtStatus" class="modal-btn ${debt.status === 'lunas' ? 'modal-btn-warning' : 'modal-btn-success'}">${debt.status === 'lunas' ? '↩️ Batal Lunas' : '✅ Tandai Lunas'}</button>
+                        <button id="toggleDebtStatus" class="modal-btn ${isLunas ? 'modal-btn-warning' : 'modal-btn-success'}">
+                            ${isLunas ? '↩️ Batal Lunas' : '✅ Tandai Lunas'}
+                        </button>
                         ${debt.wa_number ? `<button id="waDebtBtn" class="modal-btn modal-btn-wa">💬 WA</button>` : ''}
                         <button id="closeDebtDetail" class="modal-btn modal-btn-secondary">Tutup</button>
                     </div>
@@ -2360,10 +2992,25 @@
                 openDebtModal(debt.id); };
             document.getElementById('toggleDebtStatus').onclick = async () => {
                 const ns = debt.status === 'lunas' ? 'belum_lunas' : 'lunas';
-                await sb.from('debts').update({ status: ns }).eq('id', debt.id);
+
+                if (ns === 'lunas') {
+                    await prosesSaldoDebt(debt, true);
+                } else {
+                    await batalkanEfekSaldoDebt(debt);
+                }
+
+                if (isGuestMode) {
+                    const idx = debts.findIndex(d => d.id === debt.id);
+                    if (idx > -1) { debts[idx].status = ns;
+                        saveGuestData(); }
+                } else {
+                    await sb.from('debts').update({ status: ns }).eq('id', debt.id);
+                }
+
                 showToast(ns === 'lunas' ? '✅ Ditandai lunas' : '↩️ Dibatalkan lunas', 2000, 'success');
                 modal.remove();
                 await loadDebts();
+                await loadTransactions();
                 renderCurrentView();
             };
             if (debt.wa_number) {
@@ -2444,6 +3091,9 @@
             const html = `
                 <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div><div class="header-code">${debts.length} transaksi</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
                 <div class="stats-row"><div class="stat-card"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div><div class="stat-card"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div></div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;padding:8px 12px;background:rgba(16,185,129,0.06);border-radius:8px;border:1px solid rgba(16,185,129,0.1);text-align:center;">
+                    💡 <strong>Piutang lunas</strong> → Saldo bertambah &nbsp;|&nbsp; <strong>Hutang lunas</strong> → Saldo berkurang
+                </div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openDebtModal()">+ Tambah</button>
                 <div class="card"><div id="debtList"></div></div>
             `;
@@ -2461,9 +3111,10 @@
                 const hasWa = items.some(d => d.wa_number);
                 const overdue = items.filter(d => d.status !== 'lunas' && d.due_date && new Date(d.due_date) <
                     new Date()).length;
+                const lunasCount = items.filter(d => d.status === 'lunas').length;
                 return `<div class="debt-group" onclick="showDebtGroupDetail('${escapeHtml(name)}')">
                     <div class="header"><span class="name">${escapeHtml(name)} ${overdue ? `⚠️${overdue}` : ''}</span><span class="total ${isPiutang ? 'income' : 'expense'}">${isPiutang ? '+' : '-'}Rp ${formatRupiah(abs)}</span></div>
-                    <div class="sub">${items.length} transaksi ${hasWa ? '· 📱 WA' : ''}${items.some(d => d.status === 'lunas') ? '· ✅ Lunas' : ''}</div>
+                    <div class="sub">${items.length} transaksi ${hasWa ? '· 📱 WA' : ''}${lunasCount > 0 ? `· ✅ ${lunasCount} lunas` : ''}</div>
                 </div>`;
             }).join('');
         }
@@ -2520,22 +3171,47 @@
                 const current = parseRupiah(document.getElementById('savingsCurrent').value);
                 if (!name) { showToast('❌ Nama harus diisi', 2000, 'error'); return; }
                 const uid = await userManager.getUserId();
-                if (isEdit) await sb.from('savings').update({ name, target_amount: target, current_amount: current })
-                    .eq('id', editId);
-                else await sb.from('savings').insert({ user_id: uid, name, target_amount: target,
-                    current_amount: current });
-                showToast(isEdit ? '✅ Tabungan diupdate' : '✅ Tabungan ditambahkan', 2000, 'success');
+                if (isEdit) {
+                    if (isGuestMode) {
+                        const idx = savings.findIndex(s => s.id === editId);
+                        if (idx > -1) { savings[idx] = { ...savings[idx], name, target_amount: target,
+                                current_amount: current };
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('savings').update({ name, target_amount: target, current_amount: current })
+                            .eq('id', editId);
+                    }
+                    showToast('✅ Tabungan diupdate', 2000, 'success');
+                } else {
+                    if (isGuestMode) {
+                        const newSaving = { id: 'save_' + Date.now(), user_id: uid, name, target_amount: target,
+                            current_amount: current };
+                        savings.push(newSaving);
+                        saveGuestData();
+                    } else {
+                        await sb.from('savings').insert({ user_id: uid, name, target_amount: target,
+                            current_amount: current });
+                    }
+                    showToast('✅ Tabungan ditambahkan', 2000, 'success');
+                }
                 modal.remove();
                 await loadSavings();
                 renderCurrentView();
             };
             if (isEdit) {
                 document.getElementById('deleteSavings').onclick = async () => {
-                    if (confirm('Hapus tabungan?')) { await sb.from('savings').delete().eq('id', editId);
+                    if (confirm('Hapus tabungan?')) {
+                        if (isGuestMode) {
+                            savings = savings.filter(s => s.id !== editId);
+                            saveGuestData();
+                        } else {
+                            await sb.from('savings').delete().eq('id', editId);
+                        }
                         showToast('✅ Tabungan dihapus', 2000, 'success');
                         modal.remove();
                         await loadSavings();
-                        renderCurrentView(); }
+                        renderCurrentView();
+                    }
                 };
             }
             document.getElementById('closeSavings').onclick = () => modal.remove();
@@ -2592,22 +3268,47 @@
                 const amount = parseRupiah(document.getElementById('reminderAmount').value);
                 if (!title || !due) { showToast('❌ Judul dan tanggal harus diisi', 2000, 'error'); return; }
                 const uid = await userManager.getUserId();
-                if (isEdit) await sb.from('reminders').update({ title, description: desc, due_date: due, amount })
-                    .eq('id', editId);
-                else await sb.from('reminders').insert({ user_id: uid, title, description: desc, due_date: due,
-                    amount });
-                showToast(isEdit ? '✅ Pengingat diupdate' : '✅ Pengingat ditambahkan', 2000, 'success');
+                if (isEdit) {
+                    if (isGuestMode) {
+                        const idx = reminders.findIndex(rem => rem.id === editId);
+                        if (idx > -1) { reminders[idx] = { ...reminders[idx], title, description: desc,
+                                due_date: due, amount };
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('reminders').update({ title, description: desc, due_date: due, amount })
+                            .eq('id', editId);
+                    }
+                    showToast('✅ Pengingat diupdate', 2000, 'success');
+                } else {
+                    if (isGuestMode) {
+                        const newReminder = { id: 'rem_' + Date.now(), user_id: uid, title, description: desc,
+                            due_date: due, amount, is_done: false };
+                        reminders.push(newReminder);
+                        saveGuestData();
+                    } else {
+                        await sb.from('reminders').insert({ user_id: uid, title, description: desc, due_date: due,
+                            amount });
+                    }
+                    showToast('✅ Pengingat ditambahkan', 2000, 'success');
+                }
                 modal.remove();
                 await loadReminders();
                 renderCurrentView();
             };
             if (isEdit) {
                 document.getElementById('deleteReminder').onclick = async () => {
-                    if (confirm('Hapus pengingat?')) { await sb.from('reminders').delete().eq('id', editId);
+                    if (confirm('Hapus pengingat?')) {
+                        if (isGuestMode) {
+                            reminders = reminders.filter(rem => rem.id !== editId);
+                            saveGuestData();
+                        } else {
+                            await sb.from('reminders').delete().eq('id', editId);
+                        }
                         showToast('✅ Pengingat dihapus', 2000, 'success');
                         modal.remove();
                         await loadReminders();
-                        renderCurrentView(); }
+                        renderCurrentView();
+                    }
                 };
             }
             document.getElementById('closeReminder').onclick = () => modal.remove();
@@ -2701,23 +3402,47 @@
                 if (!catId) { showToast('❌ Pilih kategori', 2000, 'error'); return; }
                 if (!amount || amount <= 0) { showToast('❌ Masukkan jumlah', 2000, 'error'); return; }
                 const uid = await userManager.getUserId();
-                if (isEdit) { await sb.from('budgets').update({ amount }).eq('id', editId);
-                    showToast('✅ Anggaran diupdate', 2000, 'success'); } else { const existing = budgets.find(b =>
-                        b.category_id === catId); if (existing) { showToast('⚠️ Kategori sudah punya anggaran',
-                            2000, 'warning'); return; } await sb.from('budgets').insert({ user_id: uid,
-                            category_id: catId, amount, month: currentBudgetMonth, year: currentBudgetYear });
-                    showToast('✅ Anggaran ditambahkan', 2000, 'success'); }
+                if (isEdit) {
+                    if (isGuestMode) {
+                        const idx = budgets.findIndex(b => b.id === editId);
+                        if (idx > -1) { budgets[idx].amount = amount;
+                            saveGuestData(); }
+                    } else {
+                        await sb.from('budgets').update({ amount }).eq('id', editId);
+                    }
+                    showToast('✅ Anggaran diupdate', 2000, 'success');
+                } else {
+                    const existing = budgets.find(b => b.category_id === catId);
+                    if (existing) { showToast('⚠️ Kategori sudah punya anggaran', 2000, 'warning'); return; }
+                    if (isGuestMode) {
+                        const newBudget = { id: 'bud_' + Date.now(), user_id: uid, category_id: catId, amount,
+                            month: currentBudgetMonth, year: currentBudgetYear };
+                        budgets.push(newBudget);
+                        saveGuestData();
+                    } else {
+                        await sb.from('budgets').insert({ user_id: uid, category_id: catId, amount,
+                            month: currentBudgetMonth, year: currentBudgetYear });
+                    }
+                    showToast('✅ Anggaran ditambahkan', 2000, 'success');
+                }
                 modal.remove();
                 await loadBudgets();
                 renderBudgetPage();
             };
             if (isEdit) {
                 document.getElementById('deleteBudget').onclick = async () => {
-                    if (confirm('Hapus anggaran?')) { await sb.from('budgets').delete().eq('id', editId);
+                    if (confirm('Hapus anggaran?')) {
+                        if (isGuestMode) {
+                            budgets = budgets.filter(b => b.id !== editId);
+                            saveGuestData();
+                        } else {
+                            await sb.from('budgets').delete().eq('id', editId);
+                        }
                         showToast('✅ Anggaran dihapus', 2000, 'success');
                         modal.remove();
                         await loadBudgets();
-                        renderBudgetPage(); }
+                        renderBudgetPage();
+                    }
                 };
             }
             document.getElementById('closeBudget').onclick = () => modal.remove();
@@ -2727,16 +3452,7 @@
         // TRANSAKSI FUNCTIONS
         // ============================================================
         async function renderTransaksi() {
-            await loadTransactions();
-            const uid = await userManager.getUserId();
-            let recurringIds = new Set();
-            if (uid) {
-                try {
-                    const { data: recurringList } = await sb.from('recurring_transactions').select(
-                        'original_transaction_id').eq('user_id', uid).eq('is_active', true);
-                    if (recurringList) { recurringIds = new Set(recurringList.map(r => r.original_transaction_id)); }
-                } catch (e) {}
-            }
+            await loadTransactions(); // sudah load recurring map
             const html = `
                 <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
                 <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="pushHistory(currentNav);currentNav='laporan';updateNav();renderLaporan();">📊 Laporan</button></div>
@@ -2752,13 +3468,13 @@
                     '<div class="empty-state"><div class="icon">📋</div><div class="title">Tidak ada transaksi</div></div>'; return; }
             container.innerHTML = data.map(t => {
                 const cat = getCategoryById(t.category_id);
-                const isRecurring = t.description?.includes('(Ulang)');
-                const isOriginalRecurring = !isRecurring && recurringIds.has(t.id);
-                return `<div class="tx-item" data-id="${t.id}" style="${isOriginalRecurring ? 'border-left:3px solid #10b981;' : ''}">
+                const isRecur = isRecurringTransaction(t);
+                const recurringTag = isRecur ? `<span class="recurring-tag">🔄</span>` : '';
+                return `<div class="tx-item" data-id="${t.id}">
                     <div class="left">
                         <span class="dot" style="background:${cat?.color || '#64748b'}"></span>
                         <div>
-                            <div class="desc">${escapeHtml(t.description)}${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}${isOriginalRecurring ? ' <span style="font-size:10px;color:#10b981;font-weight:600;">🔁</span>' : ''}${isOriginalRecurring ? ' <span class="recurring-badge active">R</span>' : ''}</div>
+                            <div class="desc">${escapeHtml(t.description)} ${recurringTag}</div>
                             <div class="meta">${formatDate(t.created_at)}${t.user_id !== currentCustomUser?.id ? ' · ' + getUserEmail(t.user_id) : ''}</div>
                         </div>
                     </div>
@@ -2778,13 +3494,17 @@
             });
         }
 
+        // ============================================================
+        // SHOW TRANSACTION DETAIL - tombol recurring di atas tombol aksi
+        // ============================================================
         async function showTransactionDetail(tx) {
             const cat = getCategoryById(tx.category_id);
-            const isRecurring = tx.description?.includes('(Ulang)');
+            const isRecur = isRecurringTransaction(tx);
             const uid = await userManager.getUserId();
             let recurringData = null;
             let isOriginalRecurring = false;
-            if (uid) {
+            // Ambil data recurring tanpa filter user agar semua anggota bisa lihat
+            if (uid && !isGuestMode) {
                 try {
                     const { data: recurring } = await sb.from('recurring_transactions').select('*').eq(
                         'original_transaction_id', tx.id).maybeSingle();
@@ -2792,25 +3512,77 @@
                         isOriginalRecurring = true; }
                 } catch (e) {}
             }
+
+            let recurringInfo = '';
+            let recurringActionsHtml = '';
+
+            // Tentukan status
+            if (isRecur) {
+                const statusText = isOriginalRecurring ?
+                    (recurringData.is_active ? '✅ Aktif (Berulang)' : '❌ Nonaktif (Berulang)') :
+                    '🔄 Otomatis (Ulang)';
+                const badgeClass = isOriginalRecurring ?
+                    (recurringData.is_active ? 'success' : 'danger') :
+                    'info';
+                recurringInfo = `
+                    <div class="modal-detail-row"><span class="modal-detail-label">🔄 Status</span><span class="modal-detail-value"><span class="modal-badge ${badgeClass}">${statusText}</span></span></div>
+                `;
+                if (isOriginalRecurring && recurringData) {
+                    recurringInfo += `
+                        <div class="modal-detail-row"><span class="modal-detail-label">📅 Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
+                    `;
+                    // Tampilkan toggle hanya jika pemilik transaksi
+                    if (tx.user_id === currentCustomUser?.id) {
+                        recurringActionsHtml = `
+                            <div class="recurring-action-section">
+                                <button id="toggleRecurringBtn" class="modal-btn ${recurringData.is_active ? 'modal-btn-warning' : 'modal-btn-success'} btn-full">
+                                    ${recurringData.is_active ? '⏸️ Nonaktifkan Berulang' : '▶️ Aktifkan Berulang'}
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        recurringActionsHtml = `
+                            <div class="recurring-action-section" style="border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
+                                <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:4px 0;">🔒 Pengaturan berulang oleh pemilik transaksi</div>
+                            </div>
+                        `;
+                    }
+                } else if (tx.description && tx.description.includes('(Ulang)')) {
+                    recurringActionsHtml = `
+                        <div class="recurring-action-section" style="border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05);">
+                            <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:4px 0;">🔄 Transaksi ini dihasilkan otomatis</div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Transaksi biasa
+                recurringInfo = `
+                    <div class="modal-detail-row"><span class="modal-detail-label">🔄 Recurring</span><span class="modal-detail-value"><span class="modal-badge warning">Belum Diaktifkan</span></span></div>
+                `;
+                // Hanya tampilkan tombol aktivasi jika pemilik transaksi
+                if (tx.user_id === currentCustomUser?.id) {
+                    recurringActionsHtml = `
+                        <div class="recurring-action-section" style="border-color: rgba(139,92,246,0.2); background: rgba(139,92,246,0.05);">
+                            <button id="activateRecurringBtn" class="modal-btn modal-btn-success btn-full">🔁 Aktifkan Berulang</button>
+                            <div style="font-size:10px;color:var(--text-secondary);text-align:center;margin-top:6px;">Transaksi ini akan muncul otomatis setiap bulan</div>
+                        </div>
+                    `;
+                } else {
+                    recurringActionsHtml = `
+                        <div class="recurring-action-section" style="border-color: rgba(148,163,184,0.2); background: rgba(148,163,184,0.05);">
+                            <div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:4px 0;">🔒 Hanya pemilik yang dapat mengaktifkan berulang</div>
+                        </div>
+                    `;
+                }
+            }
+
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
-            let recurringInfo = '';
-            if (isRecurring) {
-                recurringInfo =
-                    `<div class="modal-detail-row"><span class="modal-detail-label">🔄 Status</span><span class="modal-detail-value"><span class="modal-badge info">Transaksi Berulang</span></span></div>`;
-            } else if (isOriginalRecurring && recurringData) {
-                const statusText = recurringData.is_active ? '✅ Aktif' : '❌ Nonaktif';
-                const statusColor = recurringData.is_active ? '#4ade80' : '#f87171';
-                recurringInfo = `
-                    <div class="modal-detail-row"><span class="modal-detail-label">🔄 Recurring</span><span class="modal-detail-value"><span class="modal-badge ${recurringData.is_active ? 'success' : 'danger'}">${statusText}</span></span></div>
-                    <div class="modal-detail-row"><span class="modal-detail-label">📅 Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
-                `;
-            }
             modal.innerHTML = `
                 <div class="modal-content">
                     <div class="modal-title">📋 Detail Transaksi</div>
                     <div style="display:grid;gap:4px;padding:4px 0;">
-                        <div class="modal-detail-row"><span class="modal-detail-label">Deskripsi</span><span class="modal-detail-value">${escapeHtml(tx.description)}${isRecurring ? ' <span style="color:#8b5cf6;">🔄</span>' : ''}${isOriginalRecurring ? ' <span style="color:#10b981;">🔁</span>' : ''}</span></div>
+                        <div class="modal-detail-row"><span class="modal-detail-label">Deskripsi</span><span class="modal-detail-value">${escapeHtml(tx.description)}</span></div>
                         <div class="modal-detail-row"><span class="modal-detail-label">Jumlah</span><span class="modal-detail-value" style="color:${tx.type==='pemasukan'?'#4ade80':'#f87171'}">${tx.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(tx.amount)}</span></div>
                         <div class="modal-detail-row"><span class="modal-detail-label">Tanggal</span><span class="modal-detail-value">${formatDate(tx.created_at)}</span></div>
                         ${cat ? `<div class="modal-detail-row"><span class="modal-detail-label">Kategori</span><span class="modal-detail-value">${cat.icon} ${cat.name}</span></div>` : ''}
@@ -2818,30 +3590,61 @@
                     </div>
                     ${tx.proof_url ? `<hr class="modal-divider"><div style="margin:8px 0;"><div style="font-weight:600;margin-bottom:8px;font-size:13px;">📸 Bukti</div><img src="${tx.proof_url}" class="modal-proof-img" onclick="window.open('${tx.proof_url}','_blank')"></div>` : ''}
                     <hr class="modal-divider">
+                    ${recurringActionsHtml}
                     <div class="modal-button-grid">
                         <button id="editTxBtn" class="modal-btn modal-btn-primary">✏️ Edit</button>
-                        ${isOriginalRecurring && recurringData ? `<button id="toggleRecurringBtn" class="modal-btn ${recurringData.is_active ? 'modal-btn-warning' : 'modal-btn-success'}">${recurringData.is_active ? '⏸️ Nonaktifkan' : '▶️ Aktifkan'}</button>` : ''}
                         <button id="deleteTxBtn" class="modal-btn modal-btn-danger">🗑️ Hapus</button>
                         <button id="closeDetailBtn" class="modal-btn modal-btn-secondary">Tutup</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
-            document.getElementById('editTxBtn').onclick = () => { modal.remove();
-                openTransaksiModal(null, tx.id); };
-            if (isOriginalRecurring && recurringData) {
-                document.getElementById('toggleRecurringBtn').onclick = async () => {
-                    const newStatus = !recurringData.is_active;
-                    await sb.from('recurring_transactions').update({ is_active: newStatus,
-                        updated_at: new Date().toISOString() }).eq('id', recurringData.id);
-                    showToast(newStatus ? '✅ Transaksi berulang diaktifkan' :
-                        '⏸️ Transaksi berulang dinonaktifkan', 2000, 'success');
-                    modal.remove();
-                    await loadTransactions();
-                    renderCurrentView();
-                };
+
+            document.getElementById('editTxBtn').onclick = () => {
+                if (tx.user_id !== currentCustomUser?.id) {
+                    showToast('❌ Anda tidak dapat mengedit transaksi milik orang lain', 2000, 'error');
+                    return;
+                }
+                modal.remove();
+                openTransaksiModal(null, tx.id);
+            };
+
+            if (isOriginalRecurring && recurringData && tx.user_id === currentCustomUser?.id) {
+                const toggleBtn = document.getElementById('toggleRecurringBtn');
+                if (toggleBtn) {
+                    toggleBtn.onclick = async () => {
+                        const newStatus = !recurringData.is_active;
+                        await sb.from('recurring_transactions').update({ is_active: newStatus,
+                            updated_at: new Date().toISOString() }).eq('id', recurringData.id);
+                        showToast(newStatus ? '✅ Transaksi berulang diaktifkan' :
+                            '⏸️ Transaksi berulang dinonaktifkan', 2000, 'success');
+                        modal.remove();
+                        await loadTransactions();
+                        renderCurrentView();
+                    };
+                }
             }
+
+            if (!isRecur && tx.user_id === currentCustomUser?.id) {
+                const activateBtn = document.getElementById('activateRecurringBtn');
+                if (activateBtn) {
+                    activateBtn.onclick = async () => {
+                        if (!confirm('Aktifkan transaksi berulang untuk transaksi ini? Akan muncul otomatis setiap bulan.'))
+                            return;
+                        await createRecurringTransaction(tx);
+                        showToast('✅ Transaksi berulang diaktifkan!', 2000, 'success');
+                        modal.remove();
+                        await loadTransactions();
+                        renderCurrentView();
+                    };
+                }
+            }
+
             document.getElementById('deleteTxBtn').onclick = async () => {
+                if (tx.user_id !== currentCustomUser?.id) {
+                    showToast('❌ Anda tidak dapat menghapus transaksi milik orang lain', 2000, 'error');
+                    return;
+                }
                 if (confirm('Hapus transaksi ini?')) {
                     if (isOriginalRecurring && recurringData) { await sb.from('recurring_transactions').delete()
                             .eq('id', recurringData.id); }
@@ -2850,7 +3653,12 @@
                         const path = parts.slice(parts.indexOf('transaction-proofs') + 1).join('/');
                         await sb.storage.from('transaction-proofs').remove([path]);
                     }
-                    await sb.from('transactions').delete().eq('id', tx.id);
+                    if (isGuestMode) {
+                        transactions = transactions.filter(t => t.id !== tx.id);
+                        saveGuestData();
+                    } else {
+                        await sb.from('transactions').delete().eq('id', tx.id);
+                    }
                     showToast('✅ Transaksi dihapus', 2000, 'success');
                     modal.remove();
                     await loadTransactions();
@@ -2888,7 +3696,7 @@
                             <div id="proofPreview" style="display:none;margin-top:8px;"><img id="proofPreviewImg" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid var(--border-color);"><div style="display:flex;gap:8px;margin-top:8px;"><button id="removeProofBtn" style="background:#ef4444;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">🗑️ Hapus</button><button id="changeProofBtn" style="background:#3b82f6;border:none;border-radius:20px;padding:4px 12px;color:white;font-size:11px;cursor:pointer;">📸 Ganti</button></div></div>
                         `}
                     </div>
-                    ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Transaksi akan muncul otomatis bulan depan</div></div>` : ''}
+                    ${!isEdit ? `<div style="background:rgba(139,92,246,0.05);padding:12px;border-radius:12px;margin:12px 0;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" id="modalRecurring"> <span>🔄 Ulangi setiap bulan</span></label><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Transaksi akan muncul otomatis bulan depan dengan tanda 🔄</div></div>` : ''}
                     <div class="modal-button-grid">
                         <button id="saveTransaksi" class="modal-btn modal-btn-primary">${isEdit ? 'Update' : 'Simpan'}</button>
                         <button id="closeModal" class="modal-btn modal-btn-secondary">Batal</button>
@@ -2941,10 +3749,16 @@
                 if (catId) data.category_id = catId;
                 try {
                     if (isEdit) {
-                        await sb.from('transactions').update(data).eq('id', editId);
-                        if (selectedFile) {
-                            if (window._removeOldProof && tx?.proof_url) await deleteProof(editId);
-                            await uploadProof(selectedFile, editId);
+                        if (isGuestMode) {
+                            const idx = transactions.findIndex(t => t.id === editId);
+                            if (idx > -1) { transactions[idx] = { ...transactions[idx], ...data };
+                                saveGuestData(); }
+                        } else {
+                            await sb.from('transactions').update(data).eq('id', editId);
+                            if (selectedFile) {
+                                if (window._removeOldProof && tx?.proof_url) await deleteProof(editId);
+                                await uploadProof(selectedFile, editId);
+                            }
                         }
                         showToast('✅ Transaksi diupdate', 2000, 'success');
                         modal.remove();
@@ -2952,22 +3766,29 @@
                         renderCurrentView();
                     } else {
                         data.user_id = uid;
-                        const { data: newTx, error } = await sb.from('transactions').insert(data)
-                            .select();
-                        if (error) throw error;
-                        if (newTx?.length) {
-                            const txId = newTx[0].id;
-                            if (selectedFile) await uploadProof(selectedFile, txId);
-                            if (isRecurring) {
-                                showToast('🔄 Menyimpan transaksi berulang...', 2000);
-                                await createRecurringTransaction(newTx[0]);
-                                await processRecurringTransactions();
-                                await loadTransactions();
-                                showToast('✅ Transaksi berulang siap! (Mulai bulan depan)', 2500,
-                                    'success');
+                        if (isGuestMode) {
+                            const newTx = { id: 'tx_' + Date.now(), ...data };
+                            transactions.push(newTx);
+                            saveGuestData();
+                            showToast('✅ Transaksi ditambahkan (lokal)', 2000, 'success');
+                        } else {
+                            const { data: newTx, error } = await sb.from('transactions').insert(data)
+                                .select();
+                            if (error) throw error;
+                            if (newTx?.length) {
+                                const txId = newTx[0].id;
+                                if (selectedFile) await uploadProof(selectedFile, txId);
+                                if (isRecurring) {
+                                    showToast('🔄 Menyimpan transaksi berulang...', 2000);
+                                    await createRecurringTransaction(newTx[0]);
+                                    await loadRecurringMap(); // update map
+                                    await loadTransactions();
+                                    showToast('✅ Transaksi berulang siap! (Mulai bulan depan dengan tanda 🔄)',
+                                        2500, 'success');
+                                }
                             }
+                            showToast('✅ Transaksi ditambahkan', 2000, 'success');
                         }
-                        showToast('✅ Transaksi ditambahkan', 2000, 'success');
                         modal.remove();
                         await loadTransactions();
                         renderCurrentView();
@@ -2978,6 +3799,7 @@
         }
 
         async function uploadProof(file, txId) {
+            if (isGuestMode) return null;
             if (!file) return null;
             try {
                 const ext = file.name.split('.').pop();
@@ -2992,6 +3814,7 @@
         }
 
         async function deleteProof(txId) {
+            if (isGuestMode) return;
             try {
                 const { data: tx } = await sb.from('transactions').select('proof_url').eq('id', txId)
                 .single();
@@ -3007,6 +3830,7 @@
         // RECURRING TRANSACTIONS
         // ============================================================
         async function createRecurringTransaction(original) {
+            if (isGuestMode) return null;
             const uid = await userManager.getUserId();
             if (!uid) return null;
             try {
@@ -3025,11 +3849,13 @@
                     last_generated: new Date().toISOString().split('T')[0]
                 }).select().single();
                 if (error) throw error;
+                await loadRecurringMap(); // update map
                 return recurring;
             } catch (e) { console.error('Create recurring error:', e); return null; }
         }
 
         async function generateRecurringTransaction(id) {
+            if (isGuestMode) return null;
             try {
                 const { data: r, error } = await sb.from('recurring_transactions').select('*').eq('id', id)
                     .single();
@@ -3097,6 +3923,7 @@
         }
 
         async function processRecurringTransactions() {
+            if (isGuestMode) return;
             const uid = await userManager.getUserId();
             if (!uid) return;
             try {
@@ -3118,7 +3945,7 @@
                 }
 
                 if (generated) {
-                    await loadTransactions();
+                    await loadTransactions(); // reload transaksi dan map
                     if (currentNav === 'transaksi') renderTransaksi();
                     else if (currentNav === 'home') renderHome();
                 }
@@ -3157,8 +3984,12 @@
                         colors.push('#64748b'); } }
                 data.push(val);
             });
-            const monthFiltered = transactions.filter(t => { const d = new Date(t.created_at); return d.getMonth() ===
-                    currentMonth && d.getFullYear() === currentYear; });
+            const monthFiltered = transactions.filter(t => {
+                const d = new Date(t.created_at);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            // FILTER: Hapus transaksi berulang dari pengeluaran teratas
+            const nonRecurringMonth = monthFiltered.filter(t => !isRecurringTransaction(t));
             monthFiltered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             let bulanPemasukan = 0,
                 bulanPengeluaran = 0;
@@ -3239,14 +4070,16 @@
                     items.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                     items.forEach(i => {
                         const cat = getCategoryById(i.category_id);
-                        const isRecurring = i.description?.includes('(Ulang)');
+                        const isRecur = isRecurringTransaction(i);
                         const isPemasukan = i.type === 'pemasukan';
+                        const recurringTag = isRecur ?
+                            ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : '';
                         detail += `
                             <div class="tx-item" style="padding:8px 0 8px 16px;cursor:pointer;border-left:3px solid ${isPemasukan ? '#4ade80' : (cat?.color || '#64748b')};margin-left:8px;color:var(--text-primary);" data-id="${i.id}">
                                 <div class="left">
                                     <div>
                                         <div class="desc" style="font-size:13px;font-weight:500;color:var(--text-primary);">
-                                            ${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${isRecurring ? ' <span style="font-size:10px;color:#8b5cf6;font-weight:600;">🔄</span>' : ''}
+                                            ${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${recurringTag}
                                         </div>
                                         <div style="font-size:11px;color:var(--text-secondary);">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'}</div>
                                     </div>
@@ -3276,7 +4109,7 @@
         }
 
         // ============================================================
-        // SEDEKAH FUNCTIONS - FIXED
+        // SEDEKAH FUNCTIONS (dengan perubahan support guest)
         // ============================================================
         async function loadSedekahData() {
             const uid = await userManager.getUserId();
@@ -3288,6 +4121,26 @@
             }
             try {
                 const today = new Date().toISOString().split('T')[0];
+
+                if (isGuestMode) {
+                    const savedData = localStorage.getItem('guest_sedekah_' + today);
+                    if (savedData) {
+                        try {
+                            const data = JSON.parse(savedData);
+                            sedekahData = data.sedekahData || SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false,
+                                actions: [] }));
+                            sedekahHistory = data.sedekahHistory || [];
+                            sedekahReminders = data.sedekahReminders || [];
+                            console.log('✅ Loaded guest sedekah data for', today);
+                            return;
+                        } catch (e) {}
+                    }
+                    sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
+                    sedekahHistory = [];
+                    sedekahReminders = [];
+                    return;
+                }
+
                 let q = sb.from('sedekah_data').select('*');
                 if (currentFamilyId) {
                     q = q.eq('family_id', currentFamilyId);
@@ -3346,7 +4199,18 @@
             try {
                 const today = new Date().toISOString().split('T')[0];
 
-                // Hitung total poin dari sedekahData
+                if (isGuestMode) {
+                    const data = {
+                        sedekahData: sedekahData,
+                        sedekahHistory: sedekahHistory,
+                        sedekahReminders: sedekahReminders,
+                        savedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('guest_sedekah_' + today, JSON.stringify(data));
+                    showToast('✅ Data sedekah disimpan (lokal)', 1500, 'success');
+                    return;
+                }
+
                 let completedItems = [];
                 sedekahData.forEach(d => {
                     if (d.completed && d.actions && d.actions.length > 0) {
@@ -3362,9 +4226,7 @@
                 });
 
                 console.log('📊 Completed items to save:', completedItems.length);
-                console.log('📊 Total points from completed:', completedItems.reduce((sum, item) => sum + item.points, 0));
 
-                // Simpan ke sedekah_data
                 const payload = {
                     user_id: uid,
                     tanggal: today,
@@ -3393,11 +4255,9 @@
                     await sb.from('sedekah_data').insert(payload);
                 }
 
-                // Simpan riwayat per jenis - PASTIKAN POIN TERSIMPAN
                 if (completedItems.length > 0) {
                     const now = new Date();
                     for (const item of completedItems) {
-                        // Cek duplikat
                         const { data: existingHistory } = await sb.from('sedekah_history')
                             .select('id, points')
                             .eq('user_id', uid)
@@ -3406,7 +4266,6 @@
                             .maybeSingle();
 
                         if (existingHistory) {
-                            // Update poin jika sudah ada
                             await sb.from('sedekah_history')
                                 .update({
                                     nominal: item.nominal,
@@ -3434,18 +4293,14 @@
                             histPayload.family_id = currentFamilyId;
                         }
 
-                        console.log('💾 Saving history for:', item.id, 'points:', item.points);
-
                         const { error: insertError } = await sb.from('sedekah_history').insert(histPayload);
                         if (insertError) {
                             console.error('Insert history error:', insertError);
-                            showToast('❌ Gagal menyimpan riwayat: ' + insertError.message, 3000, 'error');
                         } else {
                             console.log('✅ Insert history success for:', item.id);
                         }
                     }
 
-                    // Reload data setelah save
                     await loadSedekahData();
                     const totalPoints = sedekahHistory.reduce((sum, h) => sum + (h.points || 0), 0);
                     console.log('🔄 Total points after reload:', totalPoints);
@@ -3457,6 +4312,9 @@
             }
         }
 
+        // ============================================================
+        // SEDEKAH: REMINDER & ACTION MODALS
+        // ============================================================
         function openReminderSedekahModal(typeId) {
             const st = SEDEKAH_TYPES.find(t => t.id === typeId);
             if (!st) return;
@@ -3511,6 +4369,29 @@
                 if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
 
                 try {
+                    if (isGuestMode) {
+                        const existingIdx = sedekahReminders.findIndex(r => r.type_id === typeId);
+                        const reminderData = {
+                            user_id: uid,
+                            type_id: typeId,
+                            is_enabled: enabled,
+                            frequency: frequency,
+                            reminder_time: time,
+                            interval_days: interval
+                        };
+                        if (existingIdx > -1) {
+                            sedekahReminders[existingIdx] = { ...sedekahReminders[existingIdx], ...reminderData };
+                        } else {
+                            sedekahReminders.push({ id: 'rem_sed_' + Date.now(), ...reminderData });
+                        }
+                        saveGuestData();
+                        showToast(enabled ? `🔔 Reminder Sedekah ${st.label} diaktifkan (lokal)` :
+                            `🔕 Reminder Sedekah ${st.label} dinonaktifkan (lokal)`, 2000, 'success');
+                        modal.remove();
+                        renderKunciSukses();
+                        return;
+                    }
+
                     const { data: existing } = await sb.from('sedekah_reminders')
                         .select('id')
                         .eq('user_id', uid)
@@ -3553,7 +4434,12 @@
         async function deleteSedekahHistory(historyId) {
             if (!confirm('Hapus riwayat ini?')) return;
             try {
-                await sb.from('sedekah_history').delete().eq('id', historyId);
+                if (isGuestMode) {
+                    sedekahHistory = sedekahHistory.filter(h => h.id !== historyId);
+                    saveGuestData();
+                } else {
+                    await sb.from('sedekah_history').delete().eq('id', historyId);
+                }
                 showToast('✅ Riwayat dihapus', 2000, 'success');
                 await loadSedekahData();
                 renderKunciSukses();
@@ -3646,28 +4532,49 @@
                     let sedekahCat = categories.find(c => c.name.toLowerCase() === 'sedekah' && c.type ===
                         'pengeluaran');
                     if (!sedekahCat) {
-                        const { data: newCat } = await sb.from('categories').insert({
-                            user_id: uid,
-                            name: 'Sedekah',
-                            icon: '🕌',
-                            type: 'pengeluaran',
-                            color: '#10b981'
-                        }).select().single();
-                        sedekahCat = newCat;
-                        await loadCategories();
+                        if (isGuestMode) {
+                            sedekahCat = { id: 'cat_sedekah', name: 'Sedekah', icon: '🕌', type: 'pengeluaran',
+                                color: '#10b981' };
+                            categories.push(sedekahCat);
+                            saveGuestData();
+                        } else {
+                            const { data: newCat } = await sb.from('categories').insert({
+                                user_id: uid,
+                                name: 'Sedekah',
+                                icon: '🕌',
+                                type: 'pengeluaran',
+                                color: '#10b981'
+                            }).select().single();
+                            sedekahCat = newCat;
+                            await loadCategories();
+                        }
                     }
                     const desc = `Sedekah ${st.label}`;
-                    await sb.from('transactions').insert({
-                        user_id: uid,
-                        description: desc,
-                        amount: uangAction.nominal,
-                        type: 'pengeluaran',
-                        category_id: sedekahCat.id,
-                        created_at: new Date().toISOString()
-                    });
+                    if (isGuestMode) {
+                        const newTx = {
+                            id: 'tx_' + Date.now(),
+                            user_id: uid,
+                            description: desc,
+                            amount: uangAction.nominal,
+                            type: 'pengeluaran',
+                            category_id: sedekahCat.id,
+                            created_at: new Date().toISOString()
+                        };
+                        transactions.push(newTx);
+                        saveGuestData();
+                    } else {
+                        await sb.from('transactions').insert({
+                            user_id: uid,
+                            description: desc,
+                            amount: uangAction.nominal,
+                            type: 'pengeluaran',
+                            category_id: sedekahCat.id,
+                            created_at: new Date().toISOString()
+                        });
+                        await loadTransactions();
+                    }
                     showToast(`💰 Sedekah uang Rp ${formatRupiah(uangAction.nominal)} dicatat`, 2000,
                     'success');
-                    await loadTransactions();
                 }
                 await saveSedekahData();
                 modal.remove();
@@ -3691,7 +4598,7 @@
         }
 
         // ============================================================
-        // RENDER KUNCI SUKSES - DENGAN POIN YANG BENAR
+        // RENDER KUNCI SUKSES
         // ============================================================
         async function renderKunciSukses() {
             await loadSedekahData();
@@ -3713,7 +4620,6 @@
             const totalSaldo = totalPemasukan - totalPengeluaran;
             const targetSedekah = Math.max(0, Math.round(totalSaldo * 0.25));
 
-            // HITUNG POIN DARI SEDEKAH HISTORY
             let totalSedekahHariIni = 0;
             let totalPointsToday = 0;
             const today = new Date().toISOString().split('T')[0];
@@ -3723,7 +4629,6 @@
                 totalPointsToday += h.points || 0;
             });
 
-            // HITUNG POIN DARI SEDEKAH DATA (untuk tampilan sementara)
             let pointsFromData = 0;
             let completedCount = 0;
             sedekahData.forEach(d => {
@@ -3734,7 +4639,6 @@
                 }
             });
 
-            // Gunakan poin dari history (lebih akurat) atau dari data
             const pointsToday = totalPointsToday > 0 ? totalPointsToday : pointsFromData;
 
             const progressTarget = targetSedekah > 0 ? Math.min((totalSedekahHariIni / targetSedekah) * 100, 100) : 0;
@@ -3743,9 +4647,6 @@
             const total = SEDEKAH_TYPES.length;
             const progressCount = Math.round((completedCount / total) * 100);
             const isHalf = progressCount >= 50 && progressCount < 100;
-
-            console.log('📊 Points today:', pointsToday, 'from history:', totalPointsToday, 'from data:', pointsFromData);
-            console.log('📊 Completed count:', completedCount);
 
             let doaHtml = '';
             if (targetTercapai) {
@@ -3953,13 +4854,14 @@
         }
 
         // ============================================================
-        // RENDER HOME
+        // RENDER HOME - FIXED: Transaksi berulang tidak masuk pengeluaran teratas
         // ============================================================
         async function renderHome() {
             await loadTransactions();
             await loadTasks();
             await loadSavings();
             await loadDebts();
+
             const totals = { pemasukan: 0, pengeluaran: 0 };
             transactions.forEach(t => { if (t.type === 'pemasukan') totals.pemasukan += Number(t.amount) || 0;
                 else totals.pengeluaran += Number(t.amount) || 0; });
@@ -3978,16 +4880,21 @@
             const userCode = await userManager.getUserCode();
             const userName = await userManager.getUsername();
             const now = new Date();
+
+            // EXCLUDE SEMUA transaksi berulang (master + generated) dari pengeluaran teratas
             const bulanIni = transactions.filter(t => {
                 const d = new Date(t.created_at);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type ===
-                    'pengeluaran' && !t.description?.includes('(Ulang)');
+                return d.getMonth() === now.getMonth() &&
+                    d.getFullYear() === now.getFullYear() &&
+                    t.type === 'pengeluaran' &&
+                    !isRecurringTransaction(t);
             });
             const topExpenses = [...bulanIni].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0)).slice(
             0, 5);
+
             let html = `
                 <div class="header">
-                    <div class="header-user"><div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div><div class="header-info"><div class="header-name">${escapeHtml(userName)}</div><div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}</div></div></div>
+                    <div class="header-user"><div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div><div class="header-info"><div class="header-name">${escapeHtml(userName)}</div><div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}${isGuestMode ? ' 👤 Tamu' : ''}</div></div></div>
                     <div class="header-actions"><button class="header-btn" id="reminderBtn">🔔${overdue > 0 ? `<span class="badge">${overdue}</span>` : ''}</button><button class="header-btn" id="openSettingsBtn">⚙️</button><button class="header-btn" id="logoutBtn" style="font-size:14px;">🚪</button></div>
                 </div>
                 ${renderRunningText()}
@@ -4011,22 +4918,23 @@
                 </div>
                 <div class="card">
                     <div class="card-title"><span>📊 Pengeluaran Teratas</span><span class="badge-count">non-rutin</span></div>
-                    ${topExpenses.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">✅ Tidak ada pengeluaran non-rutin</div></div>' : topExpenses.map((t,i) => {
+                    ${topExpenses.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">✅ Tidak ada pengeluaran non-rutin bulan ini</div></div>' : topExpenses.map((t,i) => {
                         const cat = getCategoryById(t.category_id);
                         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);">
                             <div><span style="font-weight:500;">${i+1}. ${escapeHtml(t.description)}</span>${cat ? `<span style="font-size:10px;color:var(--text-secondary);margin-left:6px;">${cat.icon}</span>` : ''}${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:6px;">📤</span>` : ''}<div style="font-size:11px;color:var(--text-secondary);">${formatDate(t.created_at)}</div></div>
                             <span style="color:#f87171;font-weight:600;">-Rp ${formatRupiah(t.amount)}</span>
                         </div>`;
                     }).join('')}
-                    ${topExpenses.length > 0 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--border-color);margin-top:4px;">💡 Pengeluaran rutin tidak ditampilkan</div>` : ''}
+                    ${topExpenses.length > 0 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);padding-top:8px;border-top:1px solid var(--border-color);margin-top:4px;">💡 Transaksi berulang (🔄) tidak ditampilkan</div>` : ''}
                 </div>
                 <div class="card">
                     <div class="card-title">📋 Transaksi Terbaru</div>
                     ${recent.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada transaksi</div></div>' : recent.map(t => {
                         const cat = getCategoryById(t.category_id);
                         const isShared = t.user_id !== currentCustomUser?.id;
-                        const isRecurring = t.description?.includes('(Ulang)');
-                        return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${isRecurring ? ' 🔄' : ''}</div><div class="meta">${formatDate(t.created_at)}${isShared ? ' · ' + getUserEmail(t.user_id) : ''}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
+                        const isRecur = isRecurringTransaction(t);
+                        const recurringTag = isRecur ? ' <span class="recurring-badge-dash">🔄</span>' : '';
+                        return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${recurringTag}</div><div class="meta">${formatDate(t.created_at)}${isShared ? ' · ' + getUserEmail(t.user_id) : ''}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
                     }).join('')}
                 </div>
             `;
@@ -4074,7 +4982,7 @@
         }
 
         // ============================================================
-        // RENDER SETTINGS
+        // RENDER SETTINGS (dengan semua fungsi yang diperlukan)
         // ============================================================
         async function renderSettings() {
             await loadFamilyData();
@@ -4086,10 +4994,12 @@
                         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Kode</span><span style="font-weight:600;color:#3b82f6;">${user?.user_code || 'USR-???'}</span></div>
                         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Username</span><span>${escapeHtml(user?.username || '-')}</span></div>
                         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Email</span><span>${escapeHtml(user?.email || '-')}</span></div>
+                        ${isGuestMode ? '<div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:var(--text-secondary);">Mode</span><span style="color:#fbbf24;">👤 Tamu (Lokal)</span></div>' : ''}
                         ${currentFamilyId ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;background:rgba(59,130,246,0.05);border-radius:8px;padding:8px 12px;"><span style="color:var(--text-secondary);">🔑 ID Keluarga</span><div style="display:flex;align-items:center;gap:8px;"><span style="font-family:monospace;font-size:12px;color:#60a5fa;">${currentFamilyId}</span><button onclick="copyFamilyId()" style="background:#3b82f6;border:none;border-radius:20px;padding:2px 12px;color:white;font-size:11px;cursor:pointer;">Copy</button></div></div>` : '<div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="color:var(--text-secondary);">🔑 Keluarga</span><span style="color:var(--text-secondary);">Belum punya</span></div>'}
                     </div>
                     <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-top:12px;" onclick="openEditProfileModal()">✏️ Edit</button>
                 </div>
+                ${!isGuestMode ? `
                 <div class="card"><div class="card-title">🔄 Transaksi Berulang</div>
                     <button id="processRecurringBtn" class="modal-btn modal-btn-primary modal-btn-full">🔄 Proses Sekarang</button>
                     <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;text-align:center;">Jalankan manual untuk mengecek dan menambahkan transaksi berulang</div>
@@ -4105,99 +5015,137 @@
                         <div style="display:flex;gap:8px;flex-wrap:wrap;"><input type="text" id="joinFamilyInput" class="modal-input" placeholder="ID" style="flex:1;margin:0;"><button id="joinFamilyBtn" class="modal-btn modal-btn-primary" style="padding:8px 16px;background:var(--gradient-success);">Gabung</button></div>
                     `}
                 </div>
+                ` : `
+                <div class="card"><div class="card-title">💾 Data Tamu</div>
+                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Data disimpan di browser Anda (localStorage).</div>
+                    <button id="clearGuestDataBtn" class="modal-btn modal-btn-danger modal-btn-full">🗑️ Hapus Data Tamu</button>
+                </div>
+                `}
                 <div class="card"><div class="card-title">🎨 Tampilan</div>
                     <div class="theme-toggle" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleTheme()">
                         <span>🌙 Mode Gelap</span>
                         <label class="theme-switch" style="position:relative;display:inline-block;width:48px;height:26px;"><input type="checkbox" id="darkModeSwitch" ${document.body.classList.contains('dark') ? 'checked' : ''} style="opacity:0;width:0;height:0;"><span class="slider" style="position:absolute;cursor:pointer;inset:0;background:#ccc;transition:0.3s;border-radius:34px;"><span style="position:absolute;content:'';height:20px;width:20px;left:3px;bottom:3px;background:white;transition:0.3s;border-radius:50%;${document.body.classList.contains('dark') ? 'transform:translateX(22px);' : ''}"></span></span></label>
                     </div>
                 </div>
+                ${!isGuestMode ? `
                 <div class="card"><div class="card-title">🔐 Password</div>
                     <div class="password-wrapper"><input type="password" id="oldPass" class="modal-input" placeholder="Lama"><button class="toggle-password" data-target="oldPass" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;opacity:0.6;">👁️</button></div>
                     <div class="password-wrapper"><input type="password" id="newPass" class="modal-input" placeholder="Baru (min 6)"><button class="toggle-password" data-target="newPass" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;opacity:0.6;">👁️</button></div>
                     <div class="password-wrapper"><input type="password" id="confirmPass" class="modal-input" placeholder="Konfirmasi"><button class="toggle-password" data-target="confirmPass" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;opacity:0.6;">👁️</button></div>
                     <button id="changePassBtn" class="modal-btn modal-btn-primary modal-btn-full">Update</button>
                 </div>
+                ` : ''}
             `;
             document.getElementById('appContainer').innerHTML = html;
 
             document.getElementById('darkModeSwitch')?.addEventListener('change', toggleTheme);
-            document.getElementById('changePassBtn')?.addEventListener('click', async () => {
-                const old = document.getElementById('oldPass').value;
-                const np = document.getElementById('newPass').value;
-                const conf = document.getElementById('confirmPass').value;
-                if (!old || !np) { showToast('❌ Isi semua field', 2000, 'error'); return; }
-                if (np.length < 6) { showToast('❌ Password min 6 karakter', 2000, 'error'); return; }
-                if (np !== conf) { showToast('❌ Konfirmasi tidak cocok', 2000, 'error'); return; }
-                const { error } = await sb.auth.updateUser({ password: np });
-                if (error) showToast('❌ ' + error.message, 3000, 'error');
-                else { showToast('✅ Password diubah', 2000, 'success');
-                    document.getElementById('oldPass').value = '';
-                    document.getElementById('newPass').value = '';
-                    document.getElementById('confirmPass').value = ''; }
-            });
 
-            document.querySelectorAll('.toggle-password').forEach(btn => {
-                btn.onclick = () => {
-                    const inp = document.getElementById(btn.dataset.target);
-                    if (inp) {
-                        inp.type = inp.type === 'password' ? 'text' : 'password';
-                        btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+            if (!isGuestMode) {
+                document.getElementById('changePassBtn')?.addEventListener('click', async () => {
+                    const old = document.getElementById('oldPass').value;
+                    const np = document.getElementById('newPass').value;
+                    const conf = document.getElementById('confirmPass').value;
+                    if (!old || !np) { showToast('❌ Isi semua field', 2000, 'error'); return; }
+                    if (np.length < 6) { showToast('❌ Password min 6 karakter', 2000, 'error'); return; }
+                    if (np !== conf) { showToast('❌ Konfirmasi tidak cocok', 2000, 'error'); return; }
+                    const { error } = await sb.auth.updateUser({ password: np });
+                    if (error) showToast('❌ ' + error.message, 3000, 'error');
+                    else { showToast('✅ Password diubah', 2000, 'success');
+                        document.getElementById('oldPass').value = '';
+                        document.getElementById('newPass').value = '';
+                        document.getElementById('confirmPass').value = ''; }
+                });
+
+                document.querySelectorAll('.toggle-password').forEach(btn => {
+                    btn.onclick = () => {
+                        const inp = document.getElementById(btn.dataset.target);
+                        if (inp) {
+                            inp.type = inp.type === 'password' ? 'text' : 'password';
+                            btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+                        }
+                    };
+                });
+
+                document.getElementById('processRecurringBtn')?.addEventListener('click', async () => {
+                    showToast('🔄 Memproses transaksi berulang...', 1000);
+                    await processRecurringTransactions();
+                    showToast('✅ Selesai diproses!', 2000, 'success');
+                    await loadTransactions();
+                    renderCurrentView();
+                });
+
+                document.getElementById('createFamilyBtn')?.addEventListener('click', async () => {
+                    const name = document.getElementById('familyNameInput').value.trim();
+                    if (!name) { showToast('❌ Masukkan nama', 2000, 'error'); return; }
+                    await createFamily(name);
+                });
+
+                document.getElementById('joinFamilyBtn')?.addEventListener('click', async () => {
+                    const id = document.getElementById('joinFamilyInput').value.trim();
+                    if (!id) { showToast('❌ Masukkan ID', 2000, 'error'); return; }
+                    await joinFamily(id);
+                });
+
+                document.getElementById('inviteMemberBtn')?.addEventListener('click', async () => {
+                    const email = document.getElementById('inviteEmail').value.trim();
+                    if (!email) { showToast('❌ Masukkan email', 2000, 'error'); return; }
+                    const { data: user } = await sb.from('users').select('id').eq('email', email)
+                        .maybeSingle();
+                    if (!user) { showToast('❌ User tidak ditemukan', 2000, 'error'); return; }
+                    const { data: existing } = await sb.from('family_members').select('id').eq('family_id',
+                            currentFamilyId).eq('user_id', user.id).maybeSingle();
+                    if (existing) { showToast('⚠️ Sudah menjadi anggota', 2000, 'warning'); return; }
+                    await sb.from('family_members').insert({ family_id: currentFamilyId, user_id: user.id,
+                        role: 'member' });
+                    showToast('✅ Anggota ditambahkan', 2000, 'success');
+                    await loadFamilyData();
+                    renderSettings();
+                });
+
+                document.getElementById('leaveFamilyBtn')?.addEventListener('click', async () => {
+                    if (!confirm('Yakin keluar?')) return;
+                    const uid = await userManager.getUserId();
+                    await sb.from('family_members').delete().eq('family_id', currentFamilyId).eq('user_id',
+                        uid);
+                    await sb.from('user_settings').update({ family_id: null }).eq('user_id', uid);
+                    currentFamilyId = null;
+                    familyMembers = [];
+                    familyInfo = null;
+                    showToast('✅ Keluar dari keluarga', 2000, 'success');
+                    await loadAllData();
+                    renderSettings();
+                });
+            }
+
+            if (isGuestMode) {
+                document.getElementById('clearGuestDataBtn')?.addEventListener('click', () => {
+                    if (confirm('Hapus semua data tamu? Data akan hilang permanen.')) {
+                        localStorage.removeItem('guest_data');
+                        const today = new Date().toISOString().split('T')[0];
+                        localStorage.removeItem('guest_sedekah_' + today);
+                        showToast('✅ Data tamu dihapus', 2000, 'success');
+                        categories = [];
+                        transactions = [];
+                        debts = [];
+                        savings = [];
+                        tasks = [];
+                        reminders = [];
+                        budgets = [];
+                        sedekahData = [];
+                        sedekahHistory = [];
+                        sedekahReminders = [];
+                        loadAllDataForGuest();
+                        renderHome();
                     }
-                };
-            });
-
-            document.getElementById('processRecurringBtn')?.addEventListener('click', async () => {
-                showToast('🔄 Memproses transaksi berulang...', 1000);
-                await processRecurringTransactions();
-                showToast('✅ Selesai diproses!', 2000, 'success');
-                await loadTransactions();
-                renderCurrentView();
-            });
-
-            document.getElementById('createFamilyBtn')?.addEventListener('click', async () => {
-                const name = document.getElementById('familyNameInput').value.trim();
-                if (!name) { showToast('❌ Masukkan nama', 2000, 'error'); return; }
-                await createFamily(name);
-            });
-
-            document.getElementById('joinFamilyBtn')?.addEventListener('click', async () => {
-                const id = document.getElementById('joinFamilyInput').value.trim();
-                if (!id) { showToast('❌ Masukkan ID', 2000, 'error'); return; }
-                await joinFamily(id);
-            });
-
-            document.getElementById('inviteMemberBtn')?.addEventListener('click', async () => {
-                const email = document.getElementById('inviteEmail').value.trim();
-                if (!email) { showToast('❌ Masukkan email', 2000, 'error'); return; }
-                const { data: user } = await sb.from('users').select('id').eq('email', email)
-                    .maybeSingle();
-                if (!user) { showToast('❌ User tidak ditemukan', 2000, 'error'); return; }
-                const { data: existing } = await sb.from('family_members').select('id').eq('family_id',
-                        currentFamilyId).eq('user_id', user.id).maybeSingle();
-                if (existing) { showToast('⚠️ Sudah menjadi anggota', 2000, 'warning'); return; }
-                await sb.from('family_members').insert({ family_id: currentFamilyId, user_id: user.id,
-                    role: 'member' });
-                showToast('✅ Anggota ditambahkan', 2000, 'success');
-                await loadFamilyData();
-                renderSettings();
-            });
-
-            document.getElementById('leaveFamilyBtn')?.addEventListener('click', async () => {
-                if (!confirm('Yakin keluar?')) return;
-                const uid = await userManager.getUserId();
-                await sb.from('family_members').delete().eq('family_id', currentFamilyId).eq('user_id',
-                    uid);
-                await sb.from('user_settings').update({ family_id: null }).eq('user_id', uid);
-                currentFamilyId = null;
-                familyMembers = [];
-                familyInfo = null;
-                showToast('✅ Keluar dari keluarga', 2000, 'success');
-                await loadAllData();
-                renderSettings();
-            });
+                });
+            }
         }
 
         async function createFamily(name) {
+            if (isGuestMode) {
+                showToast('❌ Fitur keluarga tidak tersedia di mode tamu', 2000, 'error');
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
             try {
@@ -4214,6 +5162,10 @@
         }
 
         async function joinFamily(familyId) {
+            if (isGuestMode) {
+                showToast('❌ Fitur keluarga tidak tersedia di mode tamu', 2000, 'error');
+                return;
+            }
             const uid = await userManager.getUserId();
             if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
             try {
@@ -4255,6 +5207,7 @@
                     <div style="text-align:center;padding:12px;background:rgba(59,130,246,0.08);border-radius:12px;margin-bottom:16px;">
                         <span style="font-size:12px;color:var(--text-secondary);">🆔 Kode User</span>
                         <div style="font-size:24px;font-weight:700;color:#3b82f6;">${user.user_code}</div>
+                        ${isGuestMode ? '<div style="font-size:12px;color:#fbbf24;margin-top:4px;">👤 Mode Tamu - Data disimpan lokal</div>' : ''}
                     </div>
                     <input type="text" id="editUsername" class="modal-input" placeholder="Username" value="${escapeHtml(user.username || '')}">
                     <input type="text" id="editDisplayName" class="modal-input" placeholder="Nama Tampilan" value="${escapeHtml(user.display_name || '')}">
@@ -4384,12 +5337,12 @@
         function startRecurringChecker() {
             if (recurringInterval) clearInterval(recurringInterval);
             recurringInterval = setInterval(async () => {
-                if (currentUser) {
+                if (currentUser && !isGuestMode) {
                     await processRecurringTransactions();
                 }
             }, 3600000);
             document.addEventListener('visibilitychange', async () => {
-                if (!document.hidden && currentUser) {
+                if (!document.hidden && currentUser && !isGuestMode) {
                     await processRecurringTransactions();
                 }
             });
@@ -4408,6 +5361,7 @@
                 userManager.authUser = user;
             }
             currentCustomUser = customUser;
+            isGuestMode = false;
             await loadAllData();
             try { await processRecurringTransactions(); } catch (e) { console.log('⚠️ Recurring skipped'); }
             await initTheme();
@@ -4418,12 +5372,69 @@
             hideLoading();
         }
 
+        async function handleGuest() {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = '';
+            errorDiv.style.color = '#fbbf24';
+            errorDiv.textContent = '⏳ Memproses login tamu...';
+
+            const loading = showLoading();
+            try {
+                const guestId = 'guest_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+                const guestUser = {
+                    id: guestId,
+                    email: 'guest@tamu.com',
+                    user_metadata: { username: 'Tamu' }
+                };
+
+                currentUser = guestUser;
+                currentCustomUser = {
+                    id: 0,
+                    auth_id: guestId,
+                    email: 'guest@tamu.com',
+                    username: 'Tamu',
+                    user_code: 'TAMU-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0'),
+                    display_name: 'Pengunjung'
+                };
+
+                userManager.customUser = currentCustomUser;
+                userManager.authUser = currentUser;
+                userManager.isGuest = true;
+                isGuestMode = true;
+
+                document.getElementById('loginModal').style.display = 'none';
+                await loadAllDataForGuest();
+                await initTheme();
+
+                appReady = true;
+                addBottomNav();
+                startRecurringChecker();
+                renderCurrentView();
+                hideLoading();
+
+                showToast('👤 Masuk sebagai Tamu (data lokal)', 2000, 'success');
+            } catch (e) {
+                console.error('Guest login error:', e);
+                errorDiv.textContent = '❌ Gagal masuk sebagai tamu: ' + e.message;
+                errorDiv.style.color = '#ef4444';
+                clearInterval(loading);
+                hideLoading();
+            }
+        }
+
         async function logout() {
             if (recurringInterval) clearInterval(recurringInterval);
-            await sb.auth.signOut();
+            if (isGuestMode) {
+                isGuestMode = false;
+                userManager.isGuest = false;
+            }
+            if (sb) {
+                await sb.auth.signOut();
+            }
             currentUser = null;
             currentCustomUser = null;
             appReady = false;
+            isGuestMode = false;
             document.querySelector('.bottom-nav')?.remove();
             document.getElementById('appContainer').innerHTML = '';
             document.getElementById('loginModal').style.display = 'flex';
@@ -4433,6 +5444,7 @@
             document.getElementById('modalTitle').innerHTML = '💰 Keuangan Keluarga';
             document.getElementById('submitLoginBtn').innerHTML = 'Masuk';
             document.getElementById('switchText').innerHTML = 'Belum punya akun? Daftar';
+            document.getElementById('loginError').textContent = '';
             applyTheme(false);
         }
 
@@ -4475,21 +5487,6 @@
                     hideLoading();
                 }
             }
-        }
-
-        async function handleGuest() {
-            const errorDiv = document.getElementById('loginError');
-            errorDiv.textContent = '';
-            const loading = showLoading();
-            try {
-                const { data, error } = await sb.auth.signInAnonymously();
-                if (error) { errorDiv.textContent = error.message;
-                    clearInterval(loading);
-                    hideLoading(); return; }
-                if (data.user) { await onAuthSuccess(data.user); }
-            } catch (e) { errorDiv.textContent = 'Gagal masuk sebagai tamu: ' + e.message;
-                clearInterval(loading);
-                hideLoading(); }
         }
 
         async function startApp() {
