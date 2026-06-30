@@ -3678,7 +3678,7 @@ async function uploadAvatar(file) {
                                     ${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:4px;flex-shrink:0;">📤</span>` : ''}
                                 </div>
                                 <div class="task-meta">
-                                    <span>${t.due_date ? `📅 ${formatDate(t.due_date)}` : 'Tanpa deadline'}</span>
+                                    <span>${t.due_date ? `🗓️ ${formatDate(t.due_date)}` : 'Tanpa deadline'}</span>
                                     <span class="status-badge ${status.cls}">${status.label}</span>
                                     ${isOverdue ? '<span style="color:#f87171;">⚠️</span>' : ''}
                                 </div>
@@ -4068,7 +4068,7 @@ async function uploadAvatar(file) {
                                     <div>
                                         <span style="font-weight:500;">${d.type === 'piutang' ? '💰' : '💸'} ${d.type === 'piutang' ? 'Piutang' : 'Hutang'}</span>
                                         <span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">${formatDate(d.created_at)}</span>
-                                        ${d.due_date ? `<span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">📅 ${formatDate(d.due_date)}</span>` : ''}
+                                        ${d.due_date ? `<span style="font-size:12px;color:var(--text-secondary);margin-left:8px;">🗓️ ${formatDate(d.due_date)}</span>` : ''}
                                     </div>
                                     <div style="font-weight:600;color:${d.type === 'piutang' ? '#4ade80' : '#f87171'};">Rp ${formatRupiah(d.amount)}</div>
                                 </div>
@@ -4166,7 +4166,7 @@ async function uploadAvatar(file) {
         async function renderSavings() {
             await loadSavings();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Tabungan Pribadi</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">🏦</div><div class="header-info"><div class="header-name">Tabungan Pribadi</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <div style="background:rgba(59,130,246,0.05);padding:12px;border-radius:12px;text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:12px;">💡 Tabungan bersifat pribadi</div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openSavingsModal()">+ Tambah</button>
                 <div id="savingsPremiumList"></div>
@@ -4307,7 +4307,7 @@ async function uploadAvatar(file) {
                                     ${r.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:4px;flex-shrink:0;">📤</span>` : ''}
                                 </div>
                                 <div class="task-meta">
-                                    <span>📅 ${formatDate(r.due_date)}</span>
+                                    <span>🗓️ ${formatDate(r.due_date)}</span>
                                     <span class="status-badge ${status.cls}">${status.label}</span>
                                     ${isOverdue ? '<span style="color:#f87171;">⚠️</span>' : ''}
                                     ${r.amount ? `<span>💰 Rp ${formatRupiah(r.amount)}</span>` : ''}
@@ -4429,7 +4429,7 @@ async function uploadAvatar(file) {
             ];
             const total = budgets.reduce((s, b) => s + Number(b.amount), 0);
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">✍🏻</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <div class="month-selector">
                     <button id="prevBudgetMonth">◀</button>
                     <span>📋 ${months[currentBudgetMonth]} ${currentBudgetYear}</span>
@@ -4453,7 +4453,7 @@ async function uploadAvatar(file) {
             renderView('budget', html);
             const container = document.getElementById('budgetList');
             if (!budgets.length) { container.innerHTML =
-                    '<div class="empty-state"><div class="icon">📊</div><div class="title">Belum ada anggaran</div></div>'; return; }
+                    '<div class="empty-state"><div class="icon">✍🏻</div><div class="title">Belum ada anggaran</div></div>'; return; }
             container.innerHTML = budgets.map(b => {
                 const spent = getSpentByCategory(b.category_id);
                 const pct = b.amount > 0 ? Math.min((spent / b.amount) * 100, 100) : 0;
@@ -4643,7 +4643,7 @@ async function uploadAvatar(file) {
                 `;
                 if (isOriginalRecurring && recurringData) {
                     recurringInfo += `
-                        <div class="modal-detail-row"><span class="modal-detail-label">📅 Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
+                        <div class="modal-detail-row"><span class="modal-detail-label">🗓️ Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
                     `;
                     if (tx.user_id === currentCustomUser?.id) {
                         recurringActionsHtml = `
@@ -5101,12 +5101,12 @@ async function uploadAvatar(file) {
                 
             let html = `
                 <div class="header">
-                    <div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
+                    <div class="header-user"><div class="header-avatar">📆</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
                     <div class="header-actions"><button class="header-btn" onclick="navigateTo('transaksi')">←</button></div>
                 </div>
                 <div class="month-selector">
                     <button id="prevMonth">◀</button>
-                    <span>📅 ${months[currentMonth]} ${currentYear}</span>
+                    <span>🗓️ ${months[currentMonth]} ${currentYear}</span>
                     <button id="nextMonth">▶</button>
                 </div>
                 <div class="balance-card" style="padding:16px;">
@@ -5124,7 +5124,7 @@ async function uploadAvatar(file) {
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-title"><span>📊 Statistik Kategori (Semua)</span></div>
+                    <div class="card-title"><span>📆 Statistik Kategori (Semua)</span></div>
                     <canvas id="laporanChart" style="max-height:200px;width:100%;"></canvas>
                     ${sortedCats.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">Belum ada data</div></div>' : ''}
                 </div>
@@ -6621,7 +6621,7 @@ async function uploadAvatar(file) {
                     <button class="nav-item ${currentNav === 'home' ? 'active' : ''}" data-nav="home"><span class="nav-icon">🏠</span><span class="nav-label">Beranda</span></button>
                     <button class="nav-item ${currentNav === 'transaksi' ? 'active' : ''}" data-nav="transaksi"><span class="nav-icon">📋</span><span class="nav-label">Transaksi</span></button>
                     <div class="nav-center"><button class="nav-center-btn" id="centerAddBtn">+</button></div>
-                    <button class="nav-item ${currentNav === 'budget' ? 'active' : ''}" data-nav="budget"><span class="nav-icon">📊</span><span class="nav-label">Anggaran</span></button>
+                    <button class="nav-item ${currentNav === 'budget' ? 'active' : ''}" data-nav="budget"><span class="nav-icon">✍🏻</span><span class="nav-label">Anggaran</span></button>
                     <button class="nav-item" id="moreMenuBtn"><span class="nav-icon">📂</span><span class="nav-label">Lainnya</span></button>
                 </div>
                 <div id="moreMenuPopup">
@@ -6631,7 +6631,7 @@ async function uploadAvatar(file) {
                         <button class="menu-popup-item" data-nav="savings"><span class="icon">🏦</span>Tabungan</button>
                         <button class="menu-popup-item" data-nav="reminders"><span class="icon">⏰</span>Pengingat</button>
                         <button class="menu-popup-item" data-nav="kategori"><span class="icon">🏷️</span>Kategori</button>
-                        <button class="menu-popup-item" data-nav="laporan"><span class="icon">📊</span>Laporan</button>
+                        <button class="menu-popup-item" data-nav="laporan"><span class="icon">📆</span>Laporan</button>
                         <button class="menu-popup-item" data-nav="kunci-sukses"><span class="icon">🔑</span>Kunci Sukses</button>
                         <button class="menu-popup-item" data-nav="guide"><span class="icon">📖</span>Panduan</button>
                         <button class="menu-popup-item" data-nav="settings"><span class="icon">⚙️</span>Settings</button>
