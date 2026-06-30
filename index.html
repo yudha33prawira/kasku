@@ -3024,43 +3024,93 @@
         // ============================================================
         // UPLOAD AVATAR - DENGAN RLS YANG BENAR
         // ============================================================
-        async function uploadAvatar(file) {
-            if (!currentUser) return null;
-            if (isGuestMode) {
-                showToast('❌ Mode tamu tidak bisa upload foto', 2000, 'error');
-                return null;
-            }
+async function uploadAvatar(file) {
+    if (!currentUser) return null;
+    if (isGuestMode) {
+        showToast('❌ Mode tamu tidak bisa upload foto', 2000, 'error');
+        return null;
+    }
+    try {
+        const uid = await userManager.getUserId();
+        if (!uid) return null;
+        
+        // ============================================================
+        // 1. HAPUS FOTO LAMA (jika ada)
+        // ============================================================
+        const oldAvatarUrl = await userManager.getAvatarUrl();
+        if (oldAvatarUrl) {
             try {
-                const uid = await userManager.getUserId();
-                if (!uid) return null;
-                const ext = file.name.split('.').pop();
-                const path = `avatars/${uid}_${Date.now()}.${ext}`;
-                
-                const { data: uploadData, error: uploadError } = await sb.storage
-                    .from('user-avatars')
-                    .upload(path, file, { cacheControl: '3600', upsert: true });
-                    
-                if (uploadError) {
-                    if (uploadError.message && uploadError.message.includes('row-level security')) {
-                        showToast('⚠️ Perlu setting RLS di Supabase Storage. Baca panduan.', 4000, 'warning');
-                        console.error('RLS Error:', uploadError);
-                        return null;
-                    }
-                    throw uploadError;
+                // Extract path dari URL
+                const parts = oldAvatarUrl.split('/');
+                const fileName = parts[parts.length - 1];
+                // Cari folder 'avatars/' atau langsung file
+                const avatarsIndex = parts.indexOf('avatars');
+                let oldPath;
+                if (avatarsIndex !== -1) {
+                    oldPath = parts.slice(avatarsIndex).join('/');
+                } else {
+                    oldPath = `avatars/${fileName}`;
                 }
                 
-                const { data: publicUrl } = sb.storage.from('user-avatars').getPublicUrl(path);
-                const url = publicUrl.publicUrl;
-                await userManager.updateProfile({ avatar_url: url });
-                currentCustomUser = await userManager.getUserData();
-                showToast('✅ Foto profil diupdate!', 2000, 'success');
-                renderCurrentView();
-                return url;
+                console.log('🗑️ Menghapus foto lama:', oldPath);
+                const { error: deleteError } = await sb.storage
+                    .from('user-avatars')
+                    .remove([oldPath]);
+                
+                if (deleteError) {
+                    console.warn('⚠️ Gagal hapus foto lama:', deleteError);
+                    // Lanjutkan upload meskipun gagal hapus
+                } else {
+                    console.log('✅ Foto lama berhasil dihapus');
+                }
             } catch (e) {
-                showToast('❌ Gagal upload foto: ' + e.message, 3000, 'error');
-                return null;
+                console.warn('⚠️ Error saat menghapus foto lama:', e);
+                // Lanjutkan upload
             }
         }
+        
+        // ============================================================
+        // 2. UPLOAD FOTO BARU
+        // ============================================================
+        const ext = file.name.split('.').pop();
+        const path = `avatars/${uid}_${Date.now()}.${ext}`;
+        
+        console.log('📤 Uploading to:', path);
+        
+        const { data: uploadData, error: uploadError } = await sb.storage
+            .from('user-avatars')
+            .upload(path, file, {
+                cacheControl: '3600',
+                upsert: true
+            });
+        
+        if (uploadError) {
+            console.error('Upload error:', uploadError);
+            if (uploadError.message && uploadError.message.includes('row-level security')) {
+                showToast('⚠️ Perlu setting RLS di Supabase Storage. Baca panduan.', 4000, 'warning');
+                return null;
+            }
+            throw uploadError;
+        }
+        
+        const { data: publicUrl } = sb.storage.from('user-avatars').getPublicUrl(path);
+        const url = publicUrl.publicUrl;
+        
+        // ============================================================
+        // 3. UPDATE DATABASE
+        // ============================================================
+        await userManager.updateProfile({ avatar_url: url });
+        currentCustomUser = await userManager.getUserData();
+        
+        showToast('✅ Foto profil diupdate! Foto lama otomatis dihapus.', 2000, 'success');
+        renderCurrentView();
+        return url;
+    } catch (e) {
+        console.error('Upload error:', e);
+        showToast('❌ Gagal upload foto: ' + e.message, 3000, 'error');
+        return null;
+    }
+}
 
         function triggerAvatarUpload() {
             if (isGuestMode) {
@@ -6192,7 +6242,9 @@
                             <div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}${isGuestMode ? ' 👤 Tamu' : ''}</div>
                         </div>
                     </div>
-                    <div class="header-actions"><button class="header-btn" id="reminderBtn">🔔${overdue > 0 ? `<span class="badge">${overdue}</span>` : ''}</button><button class="header-btn" id="openSettingsBtn">⚙️</button><button class="header-btn" id="logoutBtn" style="font-size:14px;">🚪</button></div>
+                    <div class="header-actions"><button class="header-btn" id="reminderBtn">🔔${overdue > 0 ? `<span class="badge">${overdue}</span>` : ''}</button><button class="header-btn" id="openSettingsBtn">⚙️</button><button class="header-btn" id="logoutBtn">
+    <img src="https://dttupsimbwsffyylfpax.supabase.co/storage/v1/object/public/user-avatars/icon/computer-icons-login-logo-logout-b01ee7d09e99cf6f55595525eaebda9d.png" alt="Logout" style="width:30px;height:30px;" />
+</button></div>
                 </div>
                 ${renderRunningText()}
                 <div class="balance-card">
