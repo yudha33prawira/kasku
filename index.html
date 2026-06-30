@@ -4175,7 +4175,7 @@ async function uploadAvatar(file) {
             const container = document.getElementById('savingsPremiumList');
             if (!savings.length) {
                 container.innerHTML =
-                    '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada tabungan</div></div>';
+                    '<div class="empty-state"><div class="icon">🏦</div><div class="title">Belum ada tabungan</div></div>';
                 return;
             }
             container.innerHTML = savings.map(s => {
@@ -6257,7 +6257,7 @@ async function uploadAvatar(file) {
                 <!-- TABUNGAN - di atas -->
                 <div class="card" id="savingsCard">
                     <div class="card-title">
-                        <span>💰 Tabungan</span>
+                        <span>🏦 Tabungan</span>
                         <span style="color:#4ade80;">Rp ${formatRupiah(totalSavings)}</span>
                     </div>
                     ${savings.length === 0 ? '<div class="empty-state" style="padding:8px 0;"><div class="desc">Belum ada tabungan</div></div>' : 
@@ -6938,4 +6938,3 @@ async function uploadAvatar(file) {
         else startApp();
     </script>
 </body>
-</html>
