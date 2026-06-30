@@ -202,6 +202,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            cursor: pointer;
         }
         .header-avatar {
             width: 44px;
@@ -216,6 +217,25 @@
             color: white;
             flex-shrink: 0;
             box-shadow: 0 4px 16px rgba(59,130,246,0.25);
+            overflow: hidden;
+            position: relative;
+        }
+        .header-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .header-avatar .initials {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            background: var(--gradient-premium);
         }
         .header-info {
             line-height: 1.3;
@@ -460,6 +480,111 @@
             border-radius: 20px;
         }
 
+        /* ===== TUGAS & PENGINGAT PREMIUM ===== */
+        .task-premium-card {
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        .task-premium-card:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        .task-premium-card .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .task-premium-card .task-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .task-premium-card .task-title .task-icon {
+            font-size: 20px;
+        }
+        .task-premium-card .task-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .task-premium-card .task-meta .status-badge {
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .task-premium-card .task-meta .status-badge.danger {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+        .task-premium-card .task-meta .status-badge.warning {
+            background: rgba(251,191,36,0.15);
+            color: #fbbf24;
+        }
+        .task-premium-card .task-meta .status-badge.done {
+            background: rgba(16,185,129,0.15);
+            color: #4ade80;
+        }
+        .task-premium-card .task-meta .status-badge.pending {
+            background: rgba(148,163,184,0.15);
+            color: #94a3b8;
+        }
+        .task-premium-card .task-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #3b82f6;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .task-premium-card .task-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .task-premium-card .task-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        .task-premium-card .task-actions .btn-small {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .task-premium-card .task-actions .btn-small.edit {
+            background: var(--gradient-primary);
+            color: white;
+        }
+        .task-premium-card .task-actions .btn-small.delete {
+            background: var(--gradient-danger);
+            color: white;
+        }
+
         .task-preview {
             display: flex;
             flex-direction: column;
@@ -614,6 +739,9 @@
         .tx-item .left .meta {
             font-size: 11px;
             color: var(--text-secondary);
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
         }
         .tx-item .amount {
             font-weight: 700;
@@ -712,59 +840,152 @@
             color: var(--text-secondary);
         }
 
-        .debt-group {
-            padding: 14px 12px;
-            background: var(--bg-card);
+        .debt-premium-card {
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
             border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 10px;
             border: 1px solid var(--border-color);
-            margin-bottom: 8px;
-            cursor: pointer;
             transition: var(--transition);
-            color: var(--text-primary);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
-        .debt-group:hover {
+        .debt-premium-card:hover {
             border-color: var(--border-glow);
             background: var(--bg-card-hover);
+            transform: translateY(-2px);
         }
-        .debt-group:active {
-            transform: scale(0.98);
-        }
-        .debt-group .header {
+        .debt-premium-card .top-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 0;
-            background: none;
-            border: none;
+            align-items: flex-start;
         }
-        .debt-group .header .name {
+        .debt-premium-card .debt-name {
             font-weight: 600;
             font-size: 15px;
             color: var(--text-primary);
         }
-        .debt-group .header .total {
+        .debt-premium-card .debt-amount {
             font-weight: 700;
-            font-size: 15px;
-            color: var(--text-primary);
+            font-size: 16px;
         }
-        .debt-group .header .total.income {
-            color: #10b981;
+        .debt-premium-card .debt-amount.income {
+            color: #4ade80;
         }
-        .debt-group .header .total.expense {
-            color: #ef4444;
+        .debt-premium-card .debt-amount.expense {
+            color: #f87171;
         }
-        .debt-group .sub {
+        .debt-premium-card .debt-meta {
             font-size: 12px;
             color: var(--text-secondary);
             margin-top: 4px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
         }
-        .debt-group .sub .wa-badge {
-            color: #25D366;
+        .debt-premium-card .debt-meta .due {
+            background: rgba(251,191,36,0.12);
+            padding: 2px 10px;
+            border-radius: 20px;
+            color: #fbbf24;
         }
-        .debt-group-item {
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
+        .debt-premium-card .debt-meta .overdue {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+        }
+        .debt-premium-card .debt-meta .lunas {
+            background: rgba(16,185,129,0.15);
+            color: #4ade80;
+        }
+        .debt-premium-card .progress-bar {
+            height: 4px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .debt-premium-card .progress-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .debt-premium-card .debt-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        .debt-premium-card .debt-actions .btn-small {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .debt-premium-card .debt-actions .btn-small.wa {
+            background: #25D366;
+            color: white;
+        }
+        .debt-premium-card .debt-actions .btn-small.lunas {
+            background: var(--gradient-success);
+            color: white;
+        }
+        .debt-premium-card .debt-actions .btn-small.batal {
+            background: var(--gradient-warning);
+            color: white;
+        }
+
+        .saving-premium-card {
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .saving-premium-card:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        .saving-premium-card .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .saving-premium-card .saving-name {
+            font-weight: 600;
+            font-size: 15px;
             color: var(--text-primary);
+        }
+        .saving-premium-card .saving-amount {
+            font-weight: 700;
+            font-size: 16px;
+            color: #4ade80;
+        }
+        .saving-premium-card .saving-target {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .saving-premium-card .progress-bar {
+            height: 6px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .saving-premium-card .progress-bar .fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            transition: width 0.6s ease;
         }
 
         .bottom-nav {
@@ -965,9 +1186,6 @@
         }
         .modal-content::-webkit-scrollbar {
             width: 3px;
-        }
-        .modal-content::-webkit-scrollbar-track {
-            background: transparent;
         }
         .modal-content::-webkit-scrollbar-thumb {
             background: var(--text-muted);
@@ -1717,6 +1935,143 @@
             background: rgba(16,185,129,0.2);
             color: #4ade80;
         }
+
+        .notif-banner {
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .notif-banner .notif-btn {
+            background: var(--gradient-primary);
+            border: none;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .notif-banner .notif-btn:hover {
+            transform: scale(1.05);
+        }
+        .notif-banner .notif-btn:active {
+            transform: scale(0.95);
+        }
+        .notif-banner .notif-btn.done {
+            background: rgba(16,185,129,0.2);
+            color: #4ade80;
+            cursor: default;
+        }
+
+        .guide-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-primary);
+            margin-top: 8px;
+        }
+        .guide-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+        }
+        .guide-btn:active {
+            transform: scale(0.97);
+        }
+        .guide-btn .g-icon {
+            font-size: 28px;
+        }
+        .guide-btn .g-text {
+            flex: 1;
+        }
+        .guide-btn .g-title {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .guide-btn .g-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .guide-btn .g-arrow {
+            font-size: 20px;
+            color: var(--text-secondary);
+        }
+        .guide-card {
+            background: var(--bg-card-glass);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+        .guide-card .gc-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .guide-card .gc-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+        .guide-card .gc-features {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            padding-left: 16px;
+            line-height: 1.7;
+        }
+        .gc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .gc-grid .gc-item {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+        .gc-grid .gc-item .gci-icon {
+            font-size: 18px;
+        }
+        .gc-grid .gc-item .gci-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 2px;
+        }
+        .gc-grid .gc-item .gci-desc {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+        @media (max-width: 420px) {
+            .gc-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1782,34 +2137,219 @@
         let familyMembers = [];
         let familyInfo = null;
         let isGuestMode = false;
-
-        // Sedekah
-        const SEDEKAH_TYPES = [
-            { id: 'pagi', label: 'Pagi', icon: '🌅', frequency: 'daily' },
-            { id: 'saudara', label: 'ke Saudara', icon: '👨‍👩‍👧', frequency: 'daily' },
-            { id: 'kerabat', label: 'ke Kerabat', icon: '👪', frequency: 'daily' },
-            { id: 'fakir', label: 'Fakir/Miskin', icon: '🤲', frequency: 'daily' },
-            { id: 'yatim', label: 'Yatim', icon: '🧒', frequency: 'daily' },
-            { id: 'masjid', label: 'Masjid', icon: '🕌', frequency: 'daily' },
-            { id: 'jumatan', label: 'Jum\'at', icon: '📿', frequency: 'weekly' },
-            { id: 'ramadhan', label: 'Ramadhan', icon: '🌙', frequency: 'monthly' }
-        ];
-        const ACTION_TYPES = [
-            { id: 'uang', label: 'Uang', icon: '💰' },
-            { id: 'makanan', label: 'Makanan', icon: '🍚' },
-            { id: 'pakaian', label: 'Pakaian', icon: '👕' },
-            { id: 'tenaga', label: 'Tenaga', icon: '💪' },
-            { id: 'fikiran', label: 'Fikiran', icon: '🧠' }
-        ];
-        let sedekahData = [];
-        let sedekahReminders = [];
-        let sedekahHistory = [];
-        let sedekahChart = null;
+        let realtimeSubscriptions = [];
+        let isRefreshing = false;
 
         // ============================================================
-        // RECURRING MAP - GLOBAL UNTUK SEMUA USER (KELUARGA)
+        // DEFAULT CATEGORIES FOR NEW USERS
         // ============================================================
-        let recurringMap = {}; // key: transaction_id (master), value: true
+        const DEFAULT_CATEGORIES = [
+            { name: 'Belanja', icon: '🛒', type: 'pengeluaran', color: '#8b5cf6' },
+            { name: 'Dandan', icon: '🪞', type: 'pengeluaran', color: '#ec4899' },
+            { name: 'Keperluan Pribadi', icon: '📦', type: 'pengeluaran', color: '#f59e0b' },
+            { name: 'Peralatan Rumah Tangga', icon: '🧺', type: 'pengeluaran', color: '#14b8a6' },
+            { name: 'Sedekah', icon: '🗳️', type: 'pengeluaran', color: '#10b981' },
+            { name: 'Kesehatan', icon: '🧑‍⚕️', type: 'pengeluaran', color: '#ef4444' },
+            { name: 'Olahraga', icon: '🏆', type: 'pengeluaran', color: '#f97316' },
+            { name: 'Makanan dan Minuman', icon: '🍽️', type: 'pengeluaran', color: '#eab308' },
+            { name: 'Modal Usaha', icon: '⚖️', type: 'pengeluaran', color: '#8b5cf6' },
+            { name: 'Pendidikan', icon: '🎓', type: 'pengeluaran', color: '#3b82f6' },
+            { name: 'Tagihan RT', icon: '📝', type: 'pengeluaran', color: '#64748b' },
+            { name: 'Tagihan Listrik', icon: '💡', type: 'pengeluaran', color: '#f59e0b' },
+            { name: 'Tagihan Internet', icon: '🌐', type: 'pengeluaran', color: '#3b82f6' },
+            { name: 'Transfer Keluar', icon: '🏧', type: 'pengeluaran', color: '#ef4444' },
+            { name: 'Perawatan Kendaraan', icon: '🛵', type: 'pengeluaran', color: '#8b5cf6' },
+            { name: 'Bensin Kendaraan', icon: '⛽', type: 'pengeluaran', color: '#f59e0b' },
+            { name: 'Hiburan', icon: '🎡', type: 'pengeluaran', color: '#ec4899' },
+            { name: 'Hadiah', icon: '🎁', type: 'pengeluaran', color: '#f97316' },
+            { name: 'Jajanan', icon: '🍫', type: 'pengeluaran', color: '#eab308' },
+            { name: 'Taksi Online', icon: '🚕', type: 'pengeluaran', color: '#10b981' },
+            { name: 'Zakat', icon: '☪️', type: 'pengeluaran', color: '#8b5cf6' },
+            { name: 'Kurban', icon: '🐏', type: 'pengeluaran', color: '#ef4444' },
+            { name: 'Untuk Orang Tua', icon: '🧓', type: 'pengeluaran', color: '#f59e0b' },
+            { name: 'Sewa', icon: '🧾', type: 'pengeluaran', color: '#3b82f6' },
+            { name: 'Bayar Hutang', icon: '🫂', type: 'pengeluaran', color: '#ef4444' },
+            { name: 'Hutang', icon: '💸', type: 'pengeluaran', color: '#dc2626' },
+            { name: 'Ambil Uang', icon: '🏧', type: 'pengeluaran', color: '#64748b' },
+            { name: 'Pemasukan', icon: '💵', type: 'pemasukan', color: '#10b981' },
+            { name: 'Gajih', icon: '💰', type: 'pemasukan', color: '#10b981' },
+            { name: 'Pemasukan Lainnya', icon: '📥', type: 'pemasukan', color: '#3b82f6' },
+            { name: 'Pendapatan Usaha', icon: '📊', type: 'pemasukan', color: '#8b5cf6' },
+            { name: 'Transfer Masuk', icon: '🔄', type: 'pemasukan', color: '#06b6d4' },
+            { name: 'Terima Piutang', icon: '🫂', type: 'pemasukan', color: '#10b981' },
+            { name: 'Piutang', icon: '💰', type: 'pemasukan', color: '#f59e0b' }
+        ];
+
+        // ============================================================
+        // NOTIFICATION
+        // ============================================================
+        let notificationPermission = false;
+        let audioContext = null;
+
+        function isNotificationSupported() {
+            return typeof Notification !== 'undefined' && 'Notification' in window;
+        }
+
+        function initAudioContext() {
+            try {
+                audioContext = new(window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+            } catch (e) {}
+        }
+
+        function playNotificationSound() {
+            try {
+                if (!audioContext) initAudioContext();
+                if (!audioContext) return;
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.type = 'sine';
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.3);
+                setTimeout(() => {
+                    try {
+                        const osc2 = audioContext.createOscillator();
+                        const gain2 = audioContext.createGain();
+                        osc2.connect(gain2);
+                        gain2.connect(audioContext.destination);
+                        osc2.type = 'sine';
+                        osc2.frequency.value = 1100;
+                        gain2.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+                        osc2.start(audioContext.currentTime);
+                        osc2.stop(audioContext.currentTime + 0.25);
+                    } catch (e2) {}
+                }, 200);
+            } catch (e) {}
+        }
+
+        function vibrateAndroid() {
+            try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+        }
+
+        function showSystemNotification(title, body, tag = null) {
+            if (!isNotificationSupported()) return;
+            if (Notification.permission !== 'granted') return;
+            try {
+                const options = {
+                    body: body,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💰</text></svg>',
+                    vibrate: [200, 100, 200],
+                    requireInteraction: true
+                };
+                if (tag) options.tag = tag;
+                const notif = new Notification(title, options);
+                setTimeout(() => notif.close(), 8000);
+                playNotificationSound();
+                vibrateAndroid();
+            } catch (e) {}
+        }
+
+        function requestNotificationPermission() {
+            if (!isNotificationSupported()) {
+                showToast('❌ Notifikasi tidak didukung browser ini', 3000, 'error');
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                notificationPermission = true;
+                showToast('✅ Notifikasi sudah diizinkan', 2000, 'success');
+                renderCurrentView();
+                return;
+            }
+            if (Notification.permission === 'denied') {
+                showToast('❌ Izin notifikasi ditolak.', 3000, 'error');
+                return;
+            }
+            Notification.requestPermission().then(permission => {
+                notificationPermission = permission === 'granted';
+                if (notificationPermission) {
+                    showToast('🔔 Notifikasi diaktifkan!', 2000, 'success');
+                    initAudioContext();
+                } else {
+                    showToast('❌ Izin notifikasi ditolak', 2000, 'error');
+                }
+                renderCurrentView();
+            });
+        }
+
+        let notifCheckerInterval = null;
+
+        function startNotificationChecker() {
+            if (notifCheckerInterval) clearInterval(notifCheckerInterval);
+            notifCheckerInterval = setInterval(async () => {
+                if (!appReady || !currentUser) return;
+                if (!isNotificationSupported()) return;
+                if (!notificationPermission && Notification.permission === 'granted') {
+                    notificationPermission = true;
+                }
+                if (!notificationPermission) return;
+                await checkAndNotify();
+            }, 30000);
+        }
+
+        async function checkAndNotify() {
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                for (const t of tasks) {
+                    if (t.is_completed || !t.due_date) continue;
+                    const due = new Date(t.due_date);
+                    due.setHours(0, 0, 0, 0);
+                    const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+                    if (diff <= 1 && diff >= -1) {
+                        const key = 'notif_task_' + t.id + '_' + today.toISOString().split('T')[0];
+                        if (!sessionStorage.getItem(key)) {
+                            const msg = diff < 0 ? '🔴 TERLEWAT!' : (diff === 0 ? '🔴 HARI INI!' : '🟡 Besok!');
+                            showSystemNotification(`📋 Tugas: ${t.title}`, `${msg} Deadline ${formatDate(t.due_date)}`,
+                                key);
+                            sessionStorage.setItem(key, 'sent');
+                        }
+                    }
+                }
+                for (const d of debts) {
+                    if (d.status === 'lunas' || !d.due_date) continue;
+                    const due = new Date(d.due_date);
+                    due.setHours(0, 0, 0, 0);
+                    const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+                    if (diff <= 1 && diff >= -1) {
+                        const key = 'notif_debt_' + d.id + '_' + today.toISOString().split('T')[0];
+                        if (!sessionStorage.getItem(key)) {
+                            const msg = diff < 0 ? '🔴 TERLEWAT!' : (diff === 0 ? '🔴 HARI INI!' : '🟡 Besok!');
+                            const type = d.type === 'piutang' ? 'Piutang' : 'Hutang';
+                            showSystemNotification(`💰 ${type}: ${d.contact_name}`,
+                                `${msg} Jatuh tempo ${formatDate(d.due_date)} - Rp ${formatRupiah(d.amount)}`, key);
+                            sessionStorage.setItem(key, 'sent');
+                        }
+                    }
+                }
+                for (const r of reminders) {
+                    if (r.is_done || !r.due_date) continue;
+                    const due = new Date(r.due_date);
+                    due.setHours(0, 0, 0, 0);
+                    const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+                    if (diff <= 1 && diff >= -1) {
+                        const key = 'notif_rem_' + r.id + '_' + today.toISOString().split('T')[0];
+                        if (!sessionStorage.getItem(key)) {
+                            const msg = diff < 0 ? '🔴 TERLEWAT!' : (diff === 0 ? '🔴 HARI INI!' : '🟡 Besok!');
+                            showSystemNotification(`⏰ Pengingat: ${r.title}`,
+                                `${msg} ${formatDate(r.due_date)}${r.amount ? ' - Rp '+formatRupiah(r.amount) : ''}`,
+                                key);
+                            sessionStorage.setItem(key, 'sent');
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // ============================================================
+        // RECURRING MAP
+        // ============================================================
+        let recurringMap = {};
 
         function isRecurringTransaction(t) {
             if (!t) return false;
@@ -1831,15 +2371,51 @@
                 if (error) throw error;
                 recurringMap = {};
                 if (data) {
-                    data.forEach(r => {
-                        recurringMap[r.original_transaction_id] = true;
-                    });
+                    data.forEach(r => { recurringMap[r.original_transaction_id] = true; });
                 }
-                console.log('✅ Recurring map loaded:', Object.keys(recurringMap).length);
-            } catch (e) {
-                console.error('Error loading recurring map:', e);
-                recurringMap = {};
-            }
+            } catch (e) { recurringMap = {}; }
+        }
+
+        // ============================================================
+        // REALTIME SUBSCRIPTION
+        // ============================================================
+        function setupRealtimeSubscriptions() {
+            realtimeSubscriptions.forEach(sub => {
+                try { sub.unsubscribe(); } catch (e) {}
+            });
+            realtimeSubscriptions = [];
+
+            if (isGuestMode) return;
+            if (!currentFamilyId) return;
+
+            const familyIds = getFamilyMemberIds();
+            if (!familyIds.length) return;
+
+            const tables = ['transactions', 'debts', 'tasks', 'reminders', 'sedekah_data', 'sedekah_history'];
+            tables.forEach(tableName => {
+                try {
+                    const channel = sb.channel(`realtime-${tableName}-${currentFamilyId}`);
+                    const sub = channel
+                        .on(
+                            'postgres_changes', {
+                                event: '*',
+                                schema: 'public',
+                                table: tableName,
+                                filter: `user_id=in.(${familyIds.join(',')})`
+                            },
+                            (payload) => {
+                                console.log(`🔄 Realtime update on ${tableName}:`, payload);
+                                refreshAllData();
+                            }
+                        )
+                        .subscribe((status) => {
+                            console.log(`📡 Realtime ${tableName} status:`, status);
+                        });
+                    realtimeSubscriptions.push(sub);
+                } catch (e) {
+                    console.warn(`Failed to subscribe to ${tableName}:`, e);
+                }
+            });
         }
 
         // ============================================================
@@ -1862,7 +2438,8 @@
                         email: authUser.email || 'guest@tamu.com',
                         username: 'Tamu',
                         user_code: 'TAMU-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0'),
-                        display_name: 'Pengunjung'
+                        display_name: 'Pengunjung',
+                        avatar_url: null
                     };
                     this.isGuest = true;
                     return this.customUser;
@@ -1896,26 +2473,17 @@
                 }
             }
 
-            async getUserId() {
-                return this.customUser?.id || 0;
-            }
-
-            async getUserCode() {
-                return this.customUser?.user_code || 'USR-???';
-            }
-
-            async getUsername() {
-                return this.customUser?.username || 'User';
-            }
-
-            async getUserData() {
-                return this.customUser;
-            }
+            async getUserId() { return this.customUser?.id || 0; }
+            async getUserCode() { return this.customUser?.user_code || 'USR-???'; }
+            async getUsername() { return this.customUser?.username || 'User'; }
+            async getUserData() { return this.customUser; }
+            async getAvatarUrl() { return this.customUser?.avatar_url || null; }
 
             async updateProfile(data) {
                 if (this.isGuest) {
                     if (data.username) this.customUser.username = data.username;
                     if (data.display_name) this.customUser.display_name = data.display_name;
+                    if (data.avatar_url) this.customUser.avatar_url = data.avatar_url;
                     saveGuestData();
                     return this.customUser;
                 }
@@ -1940,7 +2508,7 @@
         const userManager = new CustomUserManager(null);
 
         // ============================================================
-        // GUEST DATA FUNCTIONS
+        // GUEST DATA
         // ============================================================
         function saveGuestData() {
             if (isGuestMode || currentCustomUser?.id?.startsWith('guest_')) {
@@ -1957,12 +2525,7 @@
                     sedekahReminders: sedekahReminders,
                     savedAt: new Date().toISOString()
                 };
-                try {
-                    localStorage.setItem('guest_data', JSON.stringify(data));
-                    console.log('✅ Guest data saved to localStorage');
-                } catch (e) {
-                    console.error('Error saving guest data:', e);
-                }
+                try { localStorage.setItem('guest_data', JSON.stringify(data)); } catch (e) {}
             }
         }
 
@@ -1981,17 +2544,14 @@
                     if (data.sedekahData) sedekahData = data.sedekahData;
                     if (data.sedekahHistory) sedekahHistory = data.sedekahHistory;
                     if (data.sedekahReminders) sedekahReminders = data.sedekahReminders;
-                    console.log('✅ Loaded guest data from localStorage');
                     return true;
                 }
-            } catch (e) {
-                console.error('Error loading guest data:', e);
-            }
+            } catch (e) {}
             return false;
         }
 
         // ============================================================
-        // UTILITY FUNCTIONS
+        // UTILITY
         // ============================================================
         function initSupabase() {
             if (typeof supabase !== 'undefined') {
@@ -2030,6 +2590,8 @@
         function formatDateInput(d) { if (!d) return ''; const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
 
         function formatDateTime(d) { if (!d) return '-'; const dt = new Date(d); return `${dt.getDate()}/${dt.getMonth()+1}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; }
+
+        function formatDateTimeShort(d) { if (!d) return '-'; const dt = new Date(d); return `${dt.getDate()}/${dt.getMonth()+1} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; }
 
         function capitalizeName(s) { if (!s) return ''; return s.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() +
                 w.slice(1)).join(' '); }
@@ -2106,11 +2668,11 @@
                 const due = new Date(d.due_date);
                 due.setHours(0, 0, 0, 0);
                 const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-                if (diff < 0) msgs.push({ text: `⚠️ TERLEWAT! ${d.type==='piutang'?'Piutang':'Hutang'} ${escapeHtml(d.contact_name)} sudah jatuh tempo ${Math.abs(diff)} hari yang lalu!`,
+                if (diff < 0) msgs.push({ text: `TERLEWAT! ${d.type==='piutang'?'Piutang':'Hutang'} ${escapeHtml(d.contact_name)} sudah jatuh tempo ${Math.abs(diff)} hari yang lalu!`,
                     type: 'danger' });
-                else if (diff === 0) msgs.push({ text: `🔴 HARI INI! ${d.type==='piutang'?'Piutang':'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo HARI INI!`,
+                else if (diff === 0) msgs.push({ text: `HARI INI! ${d.type==='piutang'?'Piutang':'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo HARI INI!`,
                     type: 'danger' });
-                else if (diff <= 3) msgs.push({ text: `🟡 ${d.type==='piutang'?'Piutang':'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff} hari lagi!`,
+                else if (diff <= 3) msgs.push({ text: `${d.type==='piutang'?'Piutang':'Hutang'} ${escapeHtml(d.contact_name)} jatuh tempo ${diff} hari lagi!`,
                     type: 'warning' });
             });
             tasks.forEach(t => {
@@ -2118,11 +2680,11 @@
                 const due = new Date(t.due_date);
                 due.setHours(0, 0, 0, 0);
                 const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-                if (diff < 0) msgs.push({ text: `🔴 TERLEWAT! Tugas "${escapeHtml(t.title)}" sudah terlewat ${Math.abs(diff)} hari!`,
+                if (diff < 0) msgs.push({ text: `TERLEWAT! Tugas "${escapeHtml(t.title)}" sudah terlewat ${Math.abs(diff)} hari!`,
                     type: 'danger' });
-                else if (diff === 0) msgs.push({ text: `🔴 HARI INI! Tugas "${escapeHtml(t.title)}" jatuh tempo HARI INI!`,
+                else if (diff === 0) msgs.push({ text: `HARI INI! Tugas "${escapeHtml(t.title)}" jatuh tempo HARI INI!`,
                     type: 'danger' });
-                else if (diff <= 7) msgs.push({ text: `🟡 Tugas "${escapeHtml(t.title)}" jatuh tempo ${diff} hari lagi!`,
+                else if (diff <= 7) msgs.push({ text: `Tugas "${escapeHtml(t.title)}" jatuh tempo ${diff} hari lagi!`,
                     type: 'warning' });
             });
             reminders.forEach(r => {
@@ -2130,11 +2692,11 @@
                 const due = new Date(r.due_date);
                 due.setHours(0, 0, 0, 0);
                 const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-                if (diff < 0) msgs.push({ text: `🔴 TERLEWAT! Pengingat "${escapeHtml(r.title)}" sudah terlewat ${Math.abs(diff)} hari!`,
+                if (diff < 0) msgs.push({ text: `TERLEWAT! Pengingat "${escapeHtml(r.title)}" sudah terlewat ${Math.abs(diff)} hari!`,
                     type: 'danger' });
-                else if (diff === 0) msgs.push({ text: `🔴 HARI INI! Pengingat "${escapeHtml(r.title)}" jatuh tempo HARI INI!`,
+                else if (diff === 0) msgs.push({ text: `HARI INI! Pengingat "${escapeHtml(r.title)}" jatuh tempo HARI INI!`,
                     type: 'danger' });
-                else if (diff <= 7) msgs.push({ text: `🟡 Pengingat "${escapeHtml(r.title)}" jatuh tempo ${diff} hari lagi!`,
+                else if (diff <= 7) msgs.push({ text: `Pengingat "${escapeHtml(r.title)}" jatuh tempo ${diff} hari lagi!`,
                     type: 'warning' });
             });
             msgs.sort((a, b) => {
@@ -2152,8 +2714,10 @@
             const warning = msgs.filter(m => m.type === 'warning');
             let cls = danger.length ? 'danger' : (warning.length ? 'warning' : '');
             let html = `<div class="running-text-container ${cls}"><div class="running-text">`;
-            danger.forEach(m => html += `<span class="text-danger">🔴 ${m.text}</span>`);
-            warning.forEach(m => html += `<span class="text-warning">🟡 ${m.text}</span>`);
+            msgs.forEach(m => {
+                const icon = m.type === 'danger' ? '🔴' : '🟡';
+                html += `<span>${icon} ${m.text}</span>`;
+            });
             html += `</div></div>`;
             return html;
         }
@@ -2168,8 +2732,78 @@
         }
 
         // ============================================================
-        // LOAD FUNCTIONS
+        // UPLOAD AVATAR
         // ============================================================
+        async function uploadAvatar(file) {
+            if (!currentUser) return null;
+            if (isGuestMode) {
+                showToast('❌ Mode tamu tidak bisa upload foto', 2000, 'error');
+                return null;
+            }
+            try {
+                const uid = await userManager.getUserId();
+                if (!uid) return null;
+                const ext = file.name.split('.').pop();
+                const path = `avatars/${uid}_${Date.now()}.${ext}`;
+                const { data: uploadData, error: uploadError } = await sb.storage
+                    .from('user-avatars')
+                    .upload(path, file, { cacheControl: '3600', upsert: true });
+                if (uploadError) throw uploadError;
+                const { data: publicUrl } = sb.storage.from('user-avatars').getPublicUrl(path);
+                const url = publicUrl.publicUrl;
+                await userManager.updateProfile({ avatar_url: url });
+                currentCustomUser = await userManager.getUserData();
+                showToast('✅ Foto profil diupdate!', 2000, 'success');
+                renderCurrentView();
+                return url;
+            } catch (e) {
+                showToast('❌ Gagal upload foto: ' + e.message, 3000, 'error');
+                return null;
+            }
+        }
+
+        function triggerAvatarUpload() {
+            if (isGuestMode) {
+                showToast('❌ Mode tamu tidak bisa upload foto', 2000, 'error');
+                return;
+            }
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('❌ Ukuran max 2MB', 2000, 'error');
+                    return;
+                }
+                await uploadAvatar(file);
+            };
+            input.click();
+        }
+
+        // ============================================================
+        // LOAD DATA
+        // ============================================================
+        async function refreshAllData() {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            try {
+                await loadTransactions();
+                await loadTasks();
+                await loadDebts();
+                await loadReminders();
+                await loadSedekahData();
+                if (appReady) {
+                    renderCurrentView();
+                }
+            } catch (e) {
+                console.warn('Refresh data error:', e);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
         async function loadFamilyData() {
             if (isGuestMode) {
                 currentFamilyId = null;
@@ -2197,6 +2831,9 @@
                     familyMembers = [];
                     familyInfo = null;
                 }
+                if (currentFamilyId && !isGuestMode) {
+                    setupRealtimeSubscriptions();
+                }
             } catch (e) { currentFamilyId = null;
                 familyMembers = [];
                 familyInfo = null; }
@@ -2205,13 +2842,7 @@
         async function loadCategories() {
             if (isGuestMode) {
                 if (!categories.length) {
-                    categories = [
-                        { id: 'cat1', name: 'Makanan', icon: '🍔', type: 'pengeluaran', color: '#ef4444' },
-                        { id: 'cat2', name: 'Transportasi', icon: '🚗', type: 'pengeluaran', color: '#f59e0b' },
-                        { id: 'cat3', name: 'Belanja', icon: '🛍️', type: 'pengeluaran', color: '#8b5cf6' },
-                        { id: 'cat4', name: 'Gaji', icon: '💰', type: 'pemasukan', color: '#10b981' },
-                        { id: 'cat5', name: 'Bonus', icon: '🎁', type: 'pemasukan', color: '#3b82f6' }
-                    ];
+                    categories = DEFAULT_CATEGORIES.map((c, i) => ({ ...c, id: 'cat_' + (i + 1) }));
                 }
                 return;
             }
@@ -2225,16 +2856,25 @@
                     else q = q.eq('user_id', uid);
                 } else { q = q.eq('user_id', uid); }
                 const { data } = await q;
-                categories = data || [];
-            } catch (e) { categories = []; }
+                if (data && data.length > 0) {
+                    categories = data || [];
+                } else {
+                    // User baru, buat kategori default
+                    const insertData = DEFAULT_CATEGORIES.map(c => ({ ...c, user_id: uid }));
+                    const { data: inserted, error } = await sb.from('categories').insert(insertData).select();
+                    if (error) throw error;
+                    categories = inserted || [];
+                    showToast('✅ Kategori default telah dibuat!', 2000, 'success');
+                }
+            } catch (e) {
+                console.error('Load categories error:', e);
+                categories = [];
+            }
         }
 
         async function loadTransactions() {
             if (isGuestMode) {
-                if (!transactions.length) {
-                    transactions = [];
-                }
-                // Untuk guest, tidak ada recurring map
+                if (!transactions.length) transactions = [];
                 recurringMap = {};
                 return;
             }
@@ -2249,7 +2889,6 @@
                 } else { q = q.eq('user_id', uid); }
                 const { data } = await q;
                 transactions = (data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                // Load recurring map setelah transaksi diambil
                 await loadRecurringMap();
             } catch (e) { transactions = []; }
         }
@@ -2356,7 +2995,7 @@
         async function loadAllData() {
             await loadFamilyData();
             await loadCategories();
-            await loadTransactions(); // di dalamnya sudah panggil loadRecurringMap
+            await loadTransactions();
             await loadDebts();
             await loadSavings();
             await loadTasks();
@@ -2454,16 +3093,16 @@
         }
 
         // ============================================================
-        // KATEGORI FUNCTIONS
+        // KATEGORI
         // ============================================================
         async function renderKategori() {
             await loadCategories();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openCategoryFormModal()">➕ Tambah Kategori</button>
                 <div class="card"><div id="categoryList"></div></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('kategori', html);
             const container = document.getElementById('categoryList');
             if (!categories.length) {
                 container.innerHTML =
@@ -2569,7 +3208,7 @@
         }
 
         // ============================================================
-        // TASK FUNCTIONS
+        // TASK - Premium
         // ============================================================
         function getTaskStatus(t) {
             if (t.is_completed) return { label: '✅ Selesai', cls: 'done', color: '#4ade80' };
@@ -2661,34 +3300,51 @@
             await loadTasks();
             const pending = tasks.filter(t => !t.is_completed);
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Tugas</div><div class="header-code">${pending.length} tertunda</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Tugas</div><div class="header-code">${pending.length} tertunda</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openTaskModal()">➕ Tambah Tugas</button>
                 <div class="filter">${['all','active','completed'].map(f => `<button class="filter-btn ${taskFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='active'?'Belum Selesai':'Selesai'}</button>`).join('')}</div>
-                <div class="card"><div id="tasksList"></div></div>
+                <div id="tasksPremiumList"></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('tasks', html);
             let filtered = tasks;
             if (taskFilter === 'active') filtered = tasks.filter(t => !t.is_completed);
             else if (taskFilter === 'completed') filtered = tasks.filter(t => t.is_completed);
-            const container = document.getElementById('tasksList');
-            if (!filtered.length) { container.innerHTML =
-                    '<div class="empty-state"><div class="icon">✅</div><div class="title">Tidak ada tugas</div></div>'; return; }
+            const container = document.getElementById('tasksPremiumList');
+            if (!filtered.length) {
+                container.innerHTML =
+                    '<div class="empty-state"><div class="icon">✅</div><div class="title">Tidak ada tugas</div></div>';
+                return;
+            }
             container.innerHTML = filtered.map(t => {
                 const status = getTaskStatus(t);
+                const icon = t.is_completed ? '✅' : '📋';
+                const isOverdue = status.cls === 'danger';
                 return `
-                    <div class="tx-item task-item" data-id="${t.id}" style="cursor:pointer; border-left-color: ${status.color};">
-                        <div class="left">
-                            <input type="checkbox" class="task-check" data-id="${t.id}" ${t.is_completed?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:#3b82f6;flex-shrink:0;">
-                            <div>
-                                <div style="${t.is_completed?'text-decoration:line-through;opacity:0.6;':''}font-weight:500;">${escapeHtml(t.title)}</div>
-                                <div style="font-size:11px;color:var(--text-secondary);">${t.due_date ? `📅 ${formatDate(t.due_date)}` : 'Tanpa deadline'}<span style="color:${status.color};font-weight:600;margin-left:8px;">${status.label}</span></div>
+                    <div class="task-premium-card" data-id="${t.id}" style="border-left:4px solid ${status.color};">
+                        <div class="top-row">
+                            <div style="flex:1;">
+                                <div class="task-title">
+                                    <span class="task-icon">${icon}</span>
+                                    ${escapeHtml(t.title)}
+                                    ${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:4px;">📤</span>` : ''}
+                                </div>
+                                <div class="task-meta">
+                                    <span>${t.due_date ? `📅 ${formatDate(t.due_date)}` : 'Tanpa deadline'}</span>
+                                    <span class="status-badge ${status.cls}">${status.label}</span>
+                                    ${isOverdue ? '<span style="color:#f87171;">⚠️</span>' : ''}
+                                </div>
+                                ${t.description ? `<div class="task-desc">${escapeHtml(t.description)}</div>` : ''}
                             </div>
+                            <input type="checkbox" class="task-checkbox" data-id="${t.id}" ${t.is_completed?'checked':''}>
                         </div>
-                        <span style="font-size:11px;color:var(--text-secondary);">${t.is_completed ? '✅' : '⏳'}</span>
+                        <div class="task-actions">
+                            <button class="btn-small edit" onclick="event.stopPropagation();openTaskModal('${t.id}')">✏️ Edit</button>
+                            <button class="btn-small delete" onclick="event.stopPropagation();deleteTask('${t.id}')">🗑️</button>
+                        </div>
                     </div>
                 `;
             }).join('');
-            document.querySelectorAll('.task-check').forEach(cb => {
+            document.querySelectorAll('.task-checkbox').forEach(cb => {
                 cb.onclick = async e => {
                     e.stopPropagation();
                     if (isGuestMode) {
@@ -2702,8 +3358,11 @@
                     renderTasks();
                 };
             });
-            document.querySelectorAll('.tx-item').forEach(el => {
-                el.onclick = e => { if (e.target.type !== 'checkbox') openTaskModal(el.dataset.id); };
+            document.querySelectorAll('.task-premium-card').forEach(el => {
+                el.onclick = (e) => {
+                    if (e.target.closest('.task-checkbox') || e.target.closest('.task-actions')) return;
+                    openTaskModal(el.dataset.id);
+                };
             });
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.onclick = () => { taskFilter = btn.dataset.filter;
@@ -2711,8 +3370,21 @@
             });
         }
 
+        async function deleteTask(taskId) {
+            if (!confirm('Hapus tugas ini?')) return;
+            if (isGuestMode) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                saveGuestData();
+            } else {
+                await sb.from('tasks').delete().eq('id', taskId);
+            }
+            showToast('✅ Tugas dihapus', 2000, 'success');
+            await loadTasks();
+            renderTasks();
+        }
+
         // ============================================================
-        // DEBT FUNCTIONS
+        // DEBT - Premium
         // ============================================================
         function openDebtModal(editId = null) {
             const isEdit = !!editId;
@@ -3089,58 +3761,95 @@
                 return tb - ta;
             });
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div><div class="header-code">${debts.length} transaksi</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div><div class="header-code">${debts.length} transaksi</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <div class="stats-row"><div class="stat-card"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div><div class="stat-card"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div></div>
-                <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;padding:8px 12px;background:rgba(16,185,129,0.06);border-radius:8px;border:1px solid rgba(16,185,129,0.1);text-align:center;">
-                    💡 <strong>Piutang lunas</strong> → Saldo bertambah &nbsp;|&nbsp; <strong>Hutang lunas</strong> → Saldo berkurang
-                </div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openDebtModal()">+ Tambah</button>
-                <div class="card"><div id="debtList"></div></div>
+                <div id="debtPremiumList"></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
-            const container = document.getElementById('debtList');
-            if (!sorted.length) { container.innerHTML =
-                    '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada data</div></div>'; return; }
+            renderView('hutang', html);
+            const container = document.getElementById('debtPremiumList');
+            if (!sorted.length) {
+                container.innerHTML =
+                    '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada data</div></div>';
+                return;
+            }
             container.innerHTML = sorted.map(([name, items]) => {
                 let total = 0;
-                items.forEach(d => { if (d.status !== 'lunas') { if (d.type === 'piutang') total += Number(d
-                            .amount) || 0;
-                        else total -= Number(d.amount) || 0; } });
+                let totalBelumLunas = 0;
+                items.forEach(d => {
+                    if (d.status !== 'lunas') {
+                        if (d.type === 'piutang') total += Number(d.amount) || 0;
+                        else total -= Number(d.amount) || 0;
+                        totalBelumLunas += Number(d.amount) || 0;
+                    }
+                });
                 const abs = Math.abs(total);
                 const isPiutang = total >= 0;
                 const hasWa = items.some(d => d.wa_number);
                 const overdue = items.filter(d => d.status !== 'lunas' && d.due_date && new Date(d.due_date) <
                     new Date()).length;
                 const lunasCount = items.filter(d => d.status === 'lunas').length;
-                return `<div class="debt-group" onclick="showDebtGroupDetail('${escapeHtml(name)}')">
-                    <div class="header"><span class="name">${escapeHtml(name)} ${overdue ? `⚠️${overdue}` : ''}</span><span class="total ${isPiutang ? 'income' : 'expense'}">${isPiutang ? '+' : '-'}Rp ${formatRupiah(abs)}</span></div>
-                    <div class="sub">${items.length} transaksi ${hasWa ? '· 📱 WA' : ''}${lunasCount > 0 ? `· ✅ ${lunasCount} lunas` : ''}</div>
-                </div>`;
+                const progress = totalBelumLunas > 0 ? Math.min((lunasCount / items.length) * 100, 100) : 0;
+                return `
+                    <div class="debt-premium-card" onclick="showDebtGroupDetail('${escapeHtml(name)}')">
+                        <div class="top-row">
+                            <span class="debt-name">${escapeHtml(name)} ${overdue ? '⚠️' : ''}</span>
+                            <span class="debt-amount ${isPiutang ? 'income' : 'expense'}">${isPiutang ? '+' : '-'}Rp ${formatRupiah(abs)}</span>
+                        </div>
+                        <div class="debt-meta">
+                            <span>${items.length} transaksi</span>
+                            ${hasWa ? '<span>📱 WA</span>' : ''}
+                            ${lunasCount > 0 ? `<span class="lunas">✅ ${lunasCount} lunas</span>` : ''}
+                            ${overdue > 0 ? `<span class="overdue">⚠️ ${overdue} overdue</span>` : ''}
+                        </div>
+                        <div class="progress-bar">
+                            <div class="fill" style="width:${progress}%;background:${isPiutang ? '#4ade80' : '#f87171'};"></div>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${Math.round(progress)}% terselesaikan</div>
+                    </div>
+                `;
             }).join('');
         }
 
         // ============================================================
-        // SAVINGS FUNCTIONS
+        // SAVINGS - Premium
         // ============================================================
         async function renderSavings() {
             await loadSavings();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Tabungan Pribadi</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Tabungan Pribadi</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <div style="background:rgba(59,130,246,0.05);padding:12px;border-radius:12px;text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:12px;">💡 Tabungan bersifat pribadi</div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openSavingsModal()">+ Tambah</button>
-                <div class="card"><div id="savingsList"></div></div>
+                <div id="savingsPremiumList"></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
-            const container = document.getElementById('savingsList');
-            if (!savings.length) { container.innerHTML =
-                    '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada tabungan</div></div>'; return; }
-            container.innerHTML = savings.map(s => `
-                <div class="budget-item" onclick="openSavingsModal('${s.id}')">
-                    <div class="header"><span class="name">${escapeHtml(s.name)}</span><span style="color:#4ade80;">${formatRupiah(s.current_amount||0)}</span></div>
-                    <div class="amounts"><span>Target: Rp ${formatRupiah(s.target_amount||0)}</span></div>
-                    <div class="progress"><div class="fill" style="width:${s.target_amount ? Math.min((s.current_amount||0)/s.target_amount*100,100) : 0}%;background:linear-gradient(90deg,#10b981,#34d399);"></div></div>
-                </div>
-            `).join('');
+            renderView('savings', html);
+            const container = document.getElementById('savingsPremiumList');
+            if (!savings.length) {
+                container.innerHTML =
+                    '<div class="empty-state"><div class="icon">💰</div><div class="title">Belum ada tabungan</div></div>';
+                return;
+            }
+            container.innerHTML = savings.map(s => {
+                const pct = s.target_amount > 0 ? Math.min((s.current_amount / s.target_amount) * 100, 100) : 0;
+                return `
+                    <div class="saving-premium-card" onclick="openSavingsModal('${s.id}')">
+                        <div class="top-row">
+                            <div>
+                                <div class="saving-name">${escapeHtml(s.name)}</div>
+                                <div class="saving-target">Target: Rp ${formatRupiah(s.target_amount)}</div>
+                            </div>
+                            <div class="saving-amount">Rp ${formatRupiah(s.current_amount)}</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="fill" style="width:${pct}%;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:4px;">
+                            <span>${Math.round(pct)}% tercapai</span>
+                            <span>${s.current_amount >= s.target_amount ? '🎉 Tercapai!' : 'Sisa Rp ' + formatRupiah(s.target_amount - s.current_amount)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function openSavingsModal(editId = null) {
@@ -3218,25 +3927,71 @@
         }
 
         // ============================================================
-        // REMINDERS FUNCTIONS
+        // REMINDERS (Pengingat) - Premium
         // ============================================================
         async function renderReminders() {
             await loadReminders();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">⏰</div><div class="header-info"><div class="header-name">Pengingat</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">⏰</div><div class="header-info"><div class="header-name">Pengingat</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openReminderModal()">+ Tambah</button>
-                <div class="card"><div id="remindersList"></div></div>
+                <div id="remindersPremiumList"></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
-            const container = document.getElementById('remindersList');
-            if (!reminders.length) { container.innerHTML =
-                    '<div class="empty-state"><div class="icon">⏰</div><div class="title">Belum ada pengingat</div></div>'; return; }
+            renderView('reminders', html);
+            const container = document.getElementById('remindersPremiumList');
+            if (!reminders.length) {
+                container.innerHTML =
+                    '<div class="empty-state"><div class="icon">⏰</div><div class="title">Belum ada pengingat</div></div>';
+                return;
+            }
             container.innerHTML = reminders.map(r => {
                 const status = getTaskStatus({ ...r, is_completed: r.is_done, due_date: r.due_date });
-                return `<div class="tx-item" onclick="openReminderModal('${r.id}')" style="cursor:pointer;border-left:3px solid ${status.color};padding-left:12px;">
-                    <div class="left"><div><div style="font-weight:500;">${escapeHtml(r.title)} ${r.is_done ? '✅' : ''}</div><div style="font-size:11px;color:var(--text-secondary);">📅 ${formatDate(r.due_date)}${!r.is_done ? `<span style="color:${status.color};font-weight:600;margin-left:8px;">${status.label}</span>` : ''}</div></div></div>
-                </div>`;
+                const icon = r.is_done ? '✅' : '⏰';
+                const isOverdue = status.cls === 'danger';
+                return `
+                    <div class="task-premium-card" onclick="openReminderModal('${r.id}')" style="border-left:4px solid ${status.color};">
+                        <div class="top-row">
+                            <div style="flex:1;">
+                                <div class="task-title">
+                                    <span class="task-icon">${icon}</span>
+                                    ${escapeHtml(r.title)}
+                                    ${r.is_done ? '<span style="font-size:11px;color:#4ade80;">✅ Selesai</span>' : ''}
+                                    ${r.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:4px;">📤</span>` : ''}
+                                </div>
+                                <div class="task-meta">
+                                    <span>📅 ${formatDate(r.due_date)}</span>
+                                    <span class="status-badge ${status.cls}">${status.label}</span>
+                                    ${isOverdue ? '<span style="color:#f87171;">⚠️</span>' : ''}
+                                    ${r.amount ? `<span>💰 Rp ${formatRupiah(r.amount)}</span>` : ''}
+                                </div>
+                                ${r.description ? `<div class="task-desc">${escapeHtml(r.description)}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-small edit" onclick="event.stopPropagation();openReminderModal('${r.id}')">✏️ Edit</button>
+                            <button class="btn-small delete" onclick="event.stopPropagation();deleteReminder('${r.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
             }).join('');
+            document.querySelectorAll('.task-premium-card').forEach(el => {
+                el.onclick = (e) => {
+                    if (e.target.closest('.task-actions')) return;
+                    openReminderModal(el.dataset.id);
+                };
+            });
+        }
+
+        async function deleteReminder(reminderId) {
+            if (!confirm('Hapus pengingat ini?')) return;
+            if (isGuestMode) {
+                reminders = reminders.filter(r => r.id !== reminderId);
+                saveGuestData();
+            } else {
+                await sb.from('reminders').delete().eq('id', reminderId);
+            }
+            showToast('✅ Pengingat dihapus', 2000, 'success');
+            await loadReminders();
+            renderReminders();
         }
 
         function openReminderModal(editId = null) {
@@ -3315,7 +4070,7 @@
         }
 
         // ============================================================
-        // BUDGET FUNCTIONS
+        // BUDGET
         // ============================================================
         async function renderBudgetPage() {
             await loadTransactions();
@@ -3325,7 +4080,7 @@
             ];
             const total = budgets.reduce((s, b) => s + Number(b.amount), 0);
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <div class="month-selector">
                     <button id="prevBudgetMonth">◀</button>
                     <span>📋 ${months[currentBudgetMonth]} ${currentBudgetYear}</span>
@@ -3346,7 +4101,7 @@
                 </div>
                 <div class="card"><div id="budgetList"></div></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('budget', html);
             const container = document.getElementById('budgetList');
             if (!budgets.length) { container.innerHTML =
                     '<div class="empty-state"><div class="icon">📊</div><div class="title">Belum ada anggaran</div></div>'; return; }
@@ -3449,17 +4204,17 @@
         }
 
         // ============================================================
-        // TRANSAKSI FUNCTIONS
+        // TRANSAKSI
         // ============================================================
         async function renderTransaksi() {
-            await loadTransactions(); // sudah load recurring map
+            await loadTransactions();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button></div></div>
-                <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="pushHistory(currentNav);currentNav='laporan';updateNav();renderLaporan();">📊 Laporan</button></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="navigateTo('laporan')">📊 Laporan</button></div>
                 <div class="filter">${['all','income','expense'].map(f => `<button class="filter-btn ${transaksiFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='income'?'💵 Pemasukan':'💸 Pengeluaran'}</button>`).join('')}</div>
                 <div class="card"><div id="transaksiList"></div></div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('transaksi', html);
             let data = [...transactions];
             if (transaksiFilter === 'income') data = data.filter(t => t.type === 'pemasukan');
             else if (transaksiFilter === 'expense') data = data.filter(t => t.type === 'pengeluaran');
@@ -3475,7 +4230,7 @@
                         <span class="dot" style="background:${cat?.color || '#64748b'}"></span>
                         <div>
                             <div class="desc">${escapeHtml(t.description)} ${recurringTag}</div>
-                            <div class="meta">${formatDate(t.created_at)}${t.user_id !== currentCustomUser?.id ? ' · ' + getUserEmail(t.user_id) : ''}</div>
+                            <div class="meta">${formatDateTimeShort(t.created_at)}${t.user_id !== currentCustomUser?.id ? ' · ' + getUserEmail(t.user_id) : ''}</div>
                         </div>
                     </div>
                     <div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div>
@@ -3495,7 +4250,7 @@
         }
 
         // ============================================================
-        // SHOW TRANSACTION DETAIL - tombol recurring di atas tombol aksi
+        // SHOW TRANSACTION DETAIL
         // ============================================================
         async function showTransactionDetail(tx) {
             const cat = getCategoryById(tx.category_id);
@@ -3503,7 +4258,6 @@
             const uid = await userManager.getUserId();
             let recurringData = null;
             let isOriginalRecurring = false;
-            // Ambil data recurring tanpa filter user agar semua anggota bisa lihat
             if (uid && !isGuestMode) {
                 try {
                     const { data: recurring } = await sb.from('recurring_transactions').select('*').eq(
@@ -3516,7 +4270,6 @@
             let recurringInfo = '';
             let recurringActionsHtml = '';
 
-            // Tentukan status
             if (isRecur) {
                 const statusText = isOriginalRecurring ?
                     (recurringData.is_active ? '✅ Aktif (Berulang)' : '❌ Nonaktif (Berulang)') :
@@ -3531,7 +4284,6 @@
                     recurringInfo += `
                         <div class="modal-detail-row"><span class="modal-detail-label">📅 Hari</span><span class="modal-detail-value">Setiap tanggal ${recurringData.day_of_month}</span></div>
                     `;
-                    // Tampilkan toggle hanya jika pemilik transaksi
                     if (tx.user_id === currentCustomUser?.id) {
                         recurringActionsHtml = `
                             <div class="recurring-action-section">
@@ -3555,11 +4307,9 @@
                     `;
                 }
             } else {
-                // Transaksi biasa
                 recurringInfo = `
                     <div class="modal-detail-row"><span class="modal-detail-label">🔄 Recurring</span><span class="modal-detail-value"><span class="modal-badge warning">Belum Diaktifkan</span></span></div>
                 `;
-                // Hanya tampilkan tombol aktivasi jika pemilik transaksi
                 if (tx.user_id === currentCustomUser?.id) {
                     recurringActionsHtml = `
                         <div class="recurring-action-section" style="border-color: rgba(139,92,246,0.2); background: rgba(139,92,246,0.05);">
@@ -3584,7 +4334,7 @@
                     <div style="display:grid;gap:4px;padding:4px 0;">
                         <div class="modal-detail-row"><span class="modal-detail-label">Deskripsi</span><span class="modal-detail-value">${escapeHtml(tx.description)}</span></div>
                         <div class="modal-detail-row"><span class="modal-detail-label">Jumlah</span><span class="modal-detail-value" style="color:${tx.type==='pemasukan'?'#4ade80':'#f87171'}">${tx.type==='pemasukan'?'+':'-'}Rp ${formatRupiah(tx.amount)}</span></div>
-                        <div class="modal-detail-row"><span class="modal-detail-label">Tanggal</span><span class="modal-detail-value">${formatDate(tx.created_at)}</span></div>
+                        <div class="modal-detail-row"><span class="modal-detail-label">Tanggal & Waktu</span><span class="modal-detail-value">${formatDateTime(tx.created_at)}</span></div>
                         ${cat ? `<div class="modal-detail-row"><span class="modal-detail-label">Kategori</span><span class="modal-detail-value">${cat.icon} ${cat.name}</span></div>` : ''}
                         ${recurringInfo}
                     </div>
@@ -3684,7 +4434,7 @@
                         <option value="pemasukan" ${(isEdit && tx.type === 'pemasukan') || predefinedType === 'pemasukan' ? 'selected' : ''}>💵 Pemasukan</option>
                         <option value="pengeluaran" ${(isEdit && tx.type === 'pengeluaran') || predefinedType === 'pengeluaran' ? 'selected' : ''}>💸 Pengeluaran</option>
                     </select>
-                    <input type="date" id="modalTanggal" class="modal-input" value="${isEdit ? formatDateInput(tx.created_at) : today}">
+                    <input type="datetime-local" id="modalTanggalWaktu" class="modal-input" value="${isEdit ? new Date(tx.created_at).toISOString().slice(0,16) : new Date().toISOString().slice(0,16)}">
                     <select id="modalKat" class="modal-select">
                         <option value="">Pilih Kategori</option>
                         ${categories.map(c => `<option value="${c.id}" ${isEdit && tx.category_id === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
@@ -3739,13 +4489,14 @@
                 const desc = document.getElementById('modalDesk').value.trim();
                 const amount = parseRupiah(document.getElementById('modalJum').value);
                 const type = document.getElementById('modalTipe').value;
-                const tanggal = document.getElementById('modalTanggal').value;
+                const datetime = document.getElementById('modalTanggalWaktu').value;
                 const catId = document.getElementById('modalKat').value;
                 const isRecurring = document.getElementById('modalRecurring')?.checked || false;
                 if (!desc || !amount) { showToast('❌ Isi dengan benar', 2000, 'error'); return; }
+                if (!datetime) { showToast('❌ Pilih tanggal dan waktu', 2000, 'error'); return; }
                 const uid = await userManager.getUserId();
                 if (!uid) { showToast('❌ User ID tidak ditemukan', 2000, 'error'); return; }
-                const data = { description: desc, amount, type, created_at: new Date(tanggal).toISOString() };
+                const data = { description: desc, amount, type, created_at: new Date(datetime).toISOString() };
                 if (catId) data.category_id = catId;
                 try {
                     if (isEdit) {
@@ -3781,7 +4532,7 @@
                                 if (isRecurring) {
                                     showToast('🔄 Menyimpan transaksi berulang...', 2000);
                                     await createRecurringTransaction(newTx[0]);
-                                    await loadRecurringMap(); // update map
+                                    await loadRecurringMap();
                                     await loadTransactions();
                                     showToast('✅ Transaksi berulang siap! (Mulai bulan depan dengan tanda 🔄)',
                                         2500, 'success');
@@ -3849,7 +4600,7 @@
                     last_generated: new Date().toISOString().split('T')[0]
                 }).select().single();
                 if (error) throw error;
-                await loadRecurringMap(); // update map
+                await loadRecurringMap();
                 return recurring;
             } catch (e) { console.error('Create recurring error:', e); return null; }
         }
@@ -3945,7 +4696,7 @@
                 }
 
                 if (generated) {
-                    await loadTransactions(); // reload transaksi dan map
+                    await loadTransactions();
                     if (currentNav === 'transaksi') renderTransaksi();
                     else if (currentNav === 'home') renderHome();
                 }
@@ -3955,7 +4706,7 @@
         }
 
         // ============================================================
-        // LAPORAN FUNCTIONS
+        // LAPORAN
         // ============================================================
         async function renderLaporan() {
             await loadTransactions();
@@ -3988,7 +4739,6 @@
                 const d = new Date(t.created_at);
                 return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
             });
-            // FILTER: Hapus transaksi berulang dari pengeluaran teratas
             const nonRecurringMonth = monthFiltered.filter(t => !isRecurringTransaction(t));
             monthFiltered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             let bulanPemasukan = 0,
@@ -3998,7 +4748,7 @@
             let html = `
                 <div class="header">
                     <div class="header-user"><div class="header-avatar">📊</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
-                    <div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);currentNav='transaksi';updateNav();renderTransaksi();">←</button></div>
+                    <div class="header-actions"><button class="header-btn" onclick="navigateTo('transaksi')">←</button></div>
                 </div>
                 <div class="month-selector">
                     <button id="prevMonth">◀</button>
@@ -4029,7 +4779,7 @@
                     <div id="detailTransaksi"></div>
                 </div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('laporan', html);
             const ctx = document.getElementById('laporanChart')?.getContext('2d');
             if (ctx && data.length) {
                 if (window.laporanChart && typeof window.laporanChart.destroy === 'function') window.laporanChart
@@ -4081,7 +4831,7 @@
                                         <div class="desc" style="font-size:13px;font-weight:500;color:var(--text-primary);">
                                             ${isPemasukan ? '💚' : '❤️'} ${escapeHtml(i.description)}${recurringTag}
                                         </div>
-                                        <div style="font-size:11px;color:var(--text-secondary);">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'}</div>
+                                        <div style="font-size:11px;color:var(--text-secondary);">${cat ? cat.icon + ' ' + cat.name : 'Tanpa Kategori'} · ${formatDateTimeShort(i.created_at)}</div>
                                     </div>
                                 </div>
                                 <div class="amount ${isPemasukan ? 'income' : 'expense'}" style="font-size:14px;">
@@ -4109,8 +4859,30 @@
         }
 
         // ============================================================
-        // SEDEKAH FUNCTIONS (dengan perubahan support guest)
+        // SEDEKAH (tidak diubah)
         // ============================================================
+        const SEDEKAH_TYPES = [
+            { id: 'pagi', label: 'Pagi', icon: '🌅', frequency: 'daily' },
+            { id: 'saudara', label: 'ke Saudara', icon: '👨‍👩‍👧', frequency: 'daily' },
+            { id: 'kerabat', label: 'ke Kerabat', icon: '👪', frequency: 'daily' },
+            { id: 'fakir', label: 'Fakir/Miskin', icon: '🤲', frequency: 'daily' },
+            { id: 'yatim', label: 'Yatim', icon: '🧒', frequency: 'daily' },
+            { id: 'masjid', label: 'Masjid', icon: '🕌', frequency: 'daily' },
+            { id: 'jumatan', label: 'Jum\'at', icon: '📿', frequency: 'weekly' },
+            { id: 'ramadhan', label: 'Ramadhan', icon: '🌙', frequency: 'monthly' }
+        ];
+        const ACTION_TYPES = [
+            { id: 'uang', label: 'Uang', icon: '💰' },
+            { id: 'makanan', label: 'Makanan', icon: '🍚' },
+            { id: 'pakaian', label: 'Pakaian', icon: '👕' },
+            { id: 'tenaga', label: 'Tenaga', icon: '💪' },
+            { id: 'fikiran', label: 'Fikiran', icon: '🧠' }
+        ];
+        let sedekahData = [];
+        let sedekahReminders = [];
+        let sedekahHistory = [];
+        let sedekahChart = null;
+
         async function loadSedekahData() {
             const uid = await userManager.getUserId();
             if (!uid) {
@@ -4131,7 +4903,6 @@
                                 actions: [] }));
                             sedekahHistory = data.sedekahHistory || [];
                             sedekahReminders = data.sedekahReminders || [];
-                            console.log('✅ Loaded guest sedekah data for', today);
                             return;
                         } catch (e) {}
                     }
@@ -4151,7 +4922,6 @@
                 const { data: current, error: err } = await q.maybeSingle();
 
                 if (err) {
-                    console.error('Load sedekah_data error:', err);
                     sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
                 } else if (current) {
                     sedekahData = current.actions || [];
@@ -4175,15 +4945,11 @@
                 }
                 const { data: history, error: historyErr } = await historyQuery.order('created_at', { ascending: false });
                 if (historyErr) {
-                    console.error('Load sedekah_history error:', historyErr);
                     sedekahHistory = [];
                 } else {
                     sedekahHistory = history || [];
                 }
-                console.log('✅ Loaded sedekahHistory:', sedekahHistory.length, 'items');
-                console.log('✅ Total points from history:', sedekahHistory.reduce((sum, h) => sum + (h.points || 0), 0));
             } catch (e) {
-                console.error('❌ Load sedekah error:', e);
                 sedekahData = SEDEKAH_TYPES.map(st => ({ id: st.id, completed: false, actions: [] }));
                 sedekahReminders = [];
                 sedekahHistory = [];
@@ -4225,8 +4991,6 @@
                     }
                 });
 
-                console.log('📊 Completed items to save:', completedItems.length);
-
                 const payload = {
                     user_id: uid,
                     tanggal: today,
@@ -4247,7 +5011,6 @@
                 const { data: existing, error: existingError } = await q.maybeSingle();
 
                 if (existingError && existingError.code !== 'PGRST116') {
-                    console.error('Error checking existing sedekah_data:', existingError);
                     throw existingError;
                 } else if (existing) {
                     await sb.from('sedekah_data').update(payload).eq('id', existing.id);
@@ -4274,7 +5037,6 @@
                                     updated_at: now.toISOString()
                                 })
                                 .eq('id', existingHistory.id);
-                            console.log('✅ Updated points for:', item.id, 'points:', item.points);
                             continue;
                         }
 
@@ -4293,28 +5055,18 @@
                             histPayload.family_id = currentFamilyId;
                         }
 
-                        const { error: insertError } = await sb.from('sedekah_history').insert(histPayload);
-                        if (insertError) {
-                            console.error('Insert history error:', insertError);
-                        } else {
-                            console.log('✅ Insert history success for:', item.id);
-                        }
+                        await sb.from('sedekah_history').insert(histPayload);
                     }
 
                     await loadSedekahData();
                     const totalPoints = sedekahHistory.reduce((sum, h) => sum + (h.points || 0), 0);
-                    console.log('🔄 Total points after reload:', totalPoints);
                     showToast(`✅ Poin berhasil disimpan! Total: ${totalPoints} poin`, 2000, 'success');
                 }
             } catch (e) {
-                console.error('Save sedekah error:', e);
                 showToast('❌ Gagal menyimpan sedekah: ' + e.message, 3000, 'error');
             }
         }
 
-        // ============================================================
-        // SEDEKAH: REMINDER & ACTION MODALS
-        // ============================================================
         function openReminderSedekahModal(typeId) {
             const st = SEDEKAH_TYPES.find(t => t.id === typeId);
             if (!st) return;
@@ -4597,9 +5349,6 @@
             document.getElementById('closeSedekahActions').onclick = () => modal.remove();
         }
 
-        // ============================================================
-        // RENDER KUNCI SUKSES
-        // ============================================================
         async function renderKunciSukses() {
             await loadSedekahData();
             await loadTransactions();
@@ -4696,7 +5445,7 @@
                     </div>
                     <div class="header-actions">
                         <button class="header-btn" onclick="openPanduanSedekah()">📖</button>
-                        <button class="header-btn" onclick="pushHistory(currentNav);currentNav='home';updateNav();renderHome();">←</button>
+                        <button class="header-btn" onclick="navigateTo('home')">←</button>
                     </div>
                 </div>
                 ${familyInfoText}
@@ -4810,7 +5559,7 @@
                     }
                 </div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('kunci-sukses', html);
         }
 
         function openPanduanSedekah() {
@@ -4854,7 +5603,166 @@
         }
 
         // ============================================================
-        // RENDER HOME - FIXED: Transaksi berulang tidak masuk pengeluaran teratas
+        // MENU PANDUAN
+        // ============================================================
+        async function renderGuide() {
+            const html = `
+                <div class="header">
+                    <div class="header-user">
+                        <div class="header-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">📖</div>
+                        <div class="header-info">
+                            <div class="header-name">Panduan Aplikasi</div>
+                            <div class="header-code">Lengkap &amp; Terstruktur</div>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="header-btn" onclick="navigateTo('home')">←</button>
+                    </div>
+                </div>
+
+                <div style="background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:var(--radius);padding:20px;margin-bottom:16px;border:1px solid #bfdbfe;">
+                    <div style="font-size:20px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:10px;">
+                        📖 Panduan Lengkap Keuangan Keluarga
+                    </div>
+                    <div style="font-size:14px;color:#475569;margin-top:4px;line-height:1.6;">
+                        Aplikasi ini dirancang untuk membantu Anda mengelola keuangan pribadi dan keluarga dengan mudah. 
+                        Berikut adalah penjelasan lengkap setiap fitur dan fungsinya.
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+                        <button onclick="window.open('panduan.html','_blank')" class="modal-btn modal-btn-primary" style="padding:8px 20px;font-size:13px;">📄 Buka Panduan Lengkap</button>
+                        <button onclick="window.print()" class="modal-btn modal-btn-secondary" style="padding:8px 20px;font-size:13px;">🖨️ Cetak / PDF</button>
+                    </div>
+                </div>
+
+                <div style="font-size:18px;font-weight:700;margin:16px 0 12px;display:flex;align-items:center;gap:8px;">
+                    🧭 Navigasi &amp; Menu
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 16px;border:1px solid var(--border-color);">
+                        <div style="font-weight:600;">🏠 Beranda</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">Ringkasan saldo, tugas, pengeluaran teratas, dan transaksi terbaru.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 16px;border:1px solid var(--border-color);">
+                        <div style="font-weight:600;">📋 Transaksi</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">Daftar semua transaksi dengan filter pemasukan/pengeluaran.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 16px;border:1px solid var(--border-color);">
+                        <div style="font-weight:600;">📊 Anggaran</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">Kelola anggaran per kategori per bulan dengan progress bar.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 16px;border:1px solid var(--border-color);">
+                        <div style="font-weight:600;">➕ Tambah (Tengah)</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">Tombol cepat untuk menambahkan transaksi baru.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 16px;border:1px solid var(--border-color);">
+                        <div style="font-weight:600;">📂 Lainnya</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">Akses ke semua menu tambahan: Tugas, Hutang, Tabungan, Pengingat, Kategori, Laporan, Kunci Sukses, Pengaturan, dan Panduan.</div>
+                    </div>
+                    <div style="background:var(--bg-card);border-radius:12px;padding:14px 16px;border:1px solid var(--border-color);">
+                        <div style="font-weight:600;">📖 Panduan</div>
+                        <div style="font-size:12px;color:var(--text-secondary);">Dokumentasi lengkap aplikasi (halaman ini).</div>
+                    </div>
+                </div>
+
+                <div style="font-size:18px;font-weight:700;margin:16px 0 12px;display:flex;align-items:center;gap:8px;">
+                    ⭐ Fitur Unggulan
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                    <div style="background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:12px;padding:14px 16px;border:1px solid #bfdbfe;">
+                        <div style="font-weight:600;">🔄 Transaksi Berulang</div>
+                        <div style="font-size:12px;color:#1e293b;line-height:1.5;">Aktifkan pada transaksi apa pun. Setiap bulan otomatis ditambahkan dengan tanda 🔄.</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fefce8,#fef9c3);border-radius:12px;padding:14px 16px;border:1px solid #fde68a;">
+                        <div style="font-weight:600;">🔔 Notifikasi &amp; Suara</div>
+                        <div style="font-size:12px;color:#1e293b;line-height:1.5;">Pengingat otomatis untuk tugas, hutang, dan pengingat dengan suara notifikasi.</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:14px 16px;border:1px solid #86efac;">
+                        <div style="font-weight:600;">👨‍👩‍👧‍👦 Keluarga</div>
+                        <div style="font-size:12px;color:#1e293b;line-height:1.5;">Berbagi data transaksi, tugas, hutang, dan sedekah dengan anggota keluarga.</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fdf2f8,#fce7f3);border-radius:12px;padding:14px 16px;border:1px solid #f9a8d4;">
+                        <div style="font-weight:600;">📱 Cache &amp; Navigasi Cepat</div>
+                        <div style="font-size:12px;color:#1e293b;line-height:1.5;">Halaman di-cache 5 detik untuk navigasi cepat dengan data realtime.</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border-radius:12px;padding:14px 16px;border:1px solid #fca5a5;">
+                        <div style="font-weight:600;">💰 Hutang &amp; Piutang</div>
+                        <div style="font-size:12px;color:#1e293b;line-height:1.5;">Catat hutang/piutang, integrasi WhatsApp, otomatis buat transaksi saat lunas.</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:14px 16px;border:1px solid #c4b5fd;">
+                        <div style="font-weight:600;">🔑 Kunci Sukses (Sedekah)</div>
+                        <div style="font-size:12px;color:#1e293b;line-height:1.5;">Motivasi sedekah dengan poin, target 25% dari saldo, dan doa inspiratif.</div>
+                    </div>
+                </div>
+
+                <div style="font-size:18px;font-weight:700;margin:16px 0 12px;display:flex;align-items:center;gap:8px;">
+                    ⚖️ Aturan &amp; Kebijakan
+                </div>
+                <div style="background:var(--bg-card);border-radius:12px;padding:16px 20px;border:1px solid var(--border-color);font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    <ol style="padding-left:20px;">
+                        <li><strong>Keamanan:</strong> Data dienkripsi dan hanya dapat diakses oleh akun Anda.</li>
+                        <li><strong>Keluarga:</strong> Anggota keluarga dapat melihat semua transaksi kecuali tabungan pribadi.</li>
+                        <li><strong>Transaksi Berulang:</strong> Hanya pemilik transaksi yang dapat mengaktifkan/menonaktifkan.</li>
+                        <li><strong>Notifikasi:</strong> Aplikasi memerlukan izin notifikasi untuk mengirim pengingat. Suara menggunakan Web Audio API.</li>
+                        <li><strong>Sedekah:</strong> Poin bersifat motivasi, tidak memiliki nilai tukar. Target 25% dari saldo adalah saran.</li>
+                        <li><strong>Hutang/Piutang:</strong> Saat ditandai lunas, transaksi otomatis dibuat. Pembatalan lunas akan menghapus transaksi tersebut.</li>
+                        <li><strong>Cache:</strong> Halaman di-cache selama 5 detik untuk performa dengan data realtime dari database.</li>
+                    </ol>
+                </div>
+
+                <div style="text-align:center;margin-top:20px;">
+                    <button onclick="window.open('panduan.html','_blank')" class="modal-btn modal-btn-primary" style="padding:12px 32px;font-size:15px;">📄 Buka Panduan Lengkap</button>
+                    <button onclick="window.print()" class="modal-btn modal-btn-secondary" style="padding:12px 32px;font-size:15px;margin-left:10px;">🖨️ Cetak / PDF</button>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Klik "Buka Panduan Lengkap" untuk melihat panduan interaktif dengan contoh gambar.</div>
+                </div>
+
+                <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border-color);text-align:center;font-size:12px;color:var(--text-muted);">
+                    Keuangan Keluarga — Versi 2.0 · Dibuat dengan ❤️ untuk keluarga Indonesia
+                </div>
+            `;
+            renderView('guide', html);
+        }
+
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
+        function navigateTo(viewName) {
+            pushHistory(currentNav);
+            currentNav = viewName;
+            updateNav();
+            renderCurrentView();
+        }
+
+        function renderView(viewName, html) {
+            document.getElementById('appContainer').innerHTML = html;
+            renderNotificationBanner();
+        }
+
+        function renderNotificationBanner() {
+            const existing = document.querySelector('.notif-banner');
+            if (existing) existing.remove();
+
+            if (isNotificationSupported() && Notification.permission === 'default') {
+                const banner = document.createElement('div');
+                banner.className = 'notif-banner';
+                banner.innerHTML = `
+                    <span>🔔 Aktifkan notifikasi untuk pengingat otomatis</span>
+                    <button class="notif-btn" onclick="requestNotificationPermission()">Izinkan</button>
+                `;
+                const container = document.getElementById('appContainer');
+                if (container && container.firstChild) {
+                    container.insertBefore(banner, container.firstChild);
+                } else if (container) {
+                    container.prepend(banner);
+                }
+            } else if (isNotificationSupported() && Notification.permission === 'granted' && !notificationPermission) {
+                notificationPermission = true;
+            }
+        }
+
+        // ============================================================
+        // RENDER HOME
         // ============================================================
         async function renderHome() {
             await loadTransactions();
@@ -4879,9 +5787,9 @@
             const recent = transactions.slice(0, 5);
             const userCode = await userManager.getUserCode();
             const userName = await userManager.getUsername();
+            const avatarUrl = await userManager.getAvatarUrl();
             const now = new Date();
 
-            // EXCLUDE SEMUA transaksi berulang (master + generated) dari pengeluaran teratas
             const bulanIni = transactions.filter(t => {
                 const d = new Date(t.created_at);
                 return d.getMonth() === now.getMonth() &&
@@ -4892,9 +5800,19 @@
             const topExpenses = [...bulanIni].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0)).slice(
             0, 5);
 
+            let avatarHtml = avatarUrl ?
+                `<img src="${avatarUrl}" alt="avatar" />` :
+                `<span class="initials">${(userName[0]||'U').toUpperCase()}</span>`;
+
             let html = `
                 <div class="header">
-                    <div class="header-user"><div class="header-avatar">${(userName[0]||'U').toUpperCase()}</div><div class="header-info"><div class="header-name">${escapeHtml(userName)}</div><div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}${isGuestMode ? ' 👤 Tamu' : ''}</div></div></div>
+                    <div class="header-user" onclick="triggerAvatarUpload()">
+                        <div class="header-avatar">${avatarHtml}</div>
+                        <div class="header-info">
+                            <div class="header-name">${escapeHtml(userName)}</div>
+                            <div class="header-code">${escapeHtml(userCode)}${currentFamilyId ? ' · ' + escapeHtml(familyInfo?.name || '') : ''}${isGuestMode ? ' 👤 Tamu' : ''}</div>
+                        </div>
+                    </div>
                     <div class="header-actions"><button class="header-btn" id="reminderBtn">🔔${overdue > 0 ? `<span class="badge">${overdue}</span>` : ''}</button><button class="header-btn" id="openSettingsBtn">⚙️</button><button class="header-btn" id="logoutBtn" style="font-size:14px;">🚪</button></div>
                 </div>
                 ${renderRunningText()}
@@ -4921,7 +5839,7 @@
                     ${topExpenses.length === 0 ? '<div class="empty-state" style="padding:12px 0;"><div class="desc">✅ Tidak ada pengeluaran non-rutin bulan ini</div></div>' : topExpenses.map((t,i) => {
                         const cat = getCategoryById(t.category_id);
                         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                            <div><span style="font-weight:500;">${i+1}. ${escapeHtml(t.description)}</span>${cat ? `<span style="font-size:10px;color:var(--text-secondary);margin-left:6px;">${cat.icon}</span>` : ''}${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:6px;">📤</span>` : ''}<div style="font-size:11px;color:var(--text-secondary);">${formatDate(t.created_at)}</div></div>
+                            <div><span style="font-weight:500;">${i+1}. ${escapeHtml(t.description)}</span>${cat ? `<span style="font-size:10px;color:var(--text-secondary);margin-left:6px;">${cat.icon}</span>` : ''}${t.user_id !== currentCustomUser?.id ? `<span class="family-badge shared" style="font-size:9px;padding:2px 8px;border-radius:20px;background:rgba(251,191,36,0.15);color:#fbbf24;margin-left:6px;">📤</span>` : ''}<div style="font-size:11px;color:var(--text-secondary);">${formatDateTimeShort(t.created_at)}</div></div>
                             <span style="color:#f87171;font-weight:600;">-Rp ${formatRupiah(t.amount)}</span>
                         </div>`;
                     }).join('')}
@@ -4934,15 +5852,12 @@
                         const isShared = t.user_id !== currentCustomUser?.id;
                         const isRecur = isRecurringTransaction(t);
                         const recurringTag = isRecur ? ' <span class="recurring-badge-dash">🔄</span>' : '';
-                        return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${recurringTag}</div><div class="meta">${formatDate(t.created_at)}${isShared ? ' · ' + getUserEmail(t.user_id) : ''}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
+                        return `<div class="tx-item" data-id="${t.id}"><div class="left"><span class="dot" style="background:${cat?.color || '#64748b'}"></span><div><div class="desc">${escapeHtml(t.description)}${recurringTag}</div><div class="meta">${formatDateTimeShort(t.created_at)}${isShared ? ' · ' + getUserEmail(t.user_id) : ''}</div></div></div><div class="amount ${t.type === 'pemasukan' ? 'income' : 'expense'}">${t.type === 'pemasukan' ? '+' : '-'}Rp ${formatRupiah(t.amount)}</div></div>`;
                     }).join('')}
                 </div>
             `;
-            document.getElementById('appContainer').innerHTML = html;
-            document.getElementById('tasksCard')?.addEventListener('click', () => { pushHistory(currentNav);
-                currentNav = 'tasks';
-                updateNav();
-                renderTasks(); });
+            renderView('home', html);
+            document.getElementById('tasksCard')?.addEventListener('click', () => { navigateTo('tasks'); });
             document.querySelectorAll('.task-preview-item').forEach(el => {
                 el.onclick = (e) => {
                     e.stopPropagation();
@@ -4951,27 +5866,14 @@
                 };
             });
             document.getElementById('logoutBtn')?.addEventListener('click', logout);
-            document.getElementById('openSettingsBtn')?.addEventListener('click', () => { pushHistory(currentNav);
-                previousNav = currentNav;
-                currentNav = 'settings';
-                updateNav();
-                renderSettings(); });
+            document.getElementById('openSettingsBtn')?.addEventListener('click', () => { navigateTo('settings'); });
             document.getElementById('reminderBtn')?.addEventListener('click', showRemindersPopup);
             document.getElementById('toggleBalanceBtn')?.addEventListener('click', e => { e.stopPropagation();
                 isBalanceHidden = !isBalanceHidden;
                 renderHome(); });
-            document.getElementById('piutangCard')?.addEventListener('click', () => { pushHistory(currentNav);
-                currentNav = 'hutang';
-                updateNav();
-                renderHutang(); });
-            document.getElementById('hutangCard')?.addEventListener('click', () => { pushHistory(currentNav);
-                currentNav = 'hutang';
-                updateNav();
-                renderHutang(); });
-            document.getElementById('savingsCard')?.addEventListener('click', () => { pushHistory(currentNav);
-                currentNav = 'savings';
-                updateNav();
-                renderSavings(); });
+            document.getElementById('piutangCard')?.addEventListener('click', () => { navigateTo('hutang'); });
+            document.getElementById('hutangCard')?.addEventListener('click', () => { navigateTo('hutang'); });
+            document.getElementById('savingsCard')?.addEventListener('click', () => { navigateTo('savings'); });
             document.querySelectorAll('.tx-item').forEach(el => {
                 el.onclick = () => {
                     const id = el.dataset.id;
@@ -4982,14 +5884,25 @@
         }
 
         // ============================================================
-        // RENDER SETTINGS (dengan semua fungsi yang diperlukan)
+        // RENDER SETTINGS
         // ============================================================
         async function renderSettings() {
             await loadFamilyData();
             const user = await userManager.getUserData();
+            const avatarUrl = await userManager.getAvatarUrl();
+            let avatarHtml = avatarUrl ?
+                `<img src="${avatarUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #3b82f6;" />` :
+                `<div style="width:60px;height:60px;border-radius:50%;background:var(--gradient-premium);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:white;">${(user?.username||'U')[0].toUpperCase()}</div>`;
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">⚙️</div><div class="header-info"><div class="header-name">Pengaturan</div></div></div><div class="header-actions"><button class="header-btn" onclick="pushHistory(currentNav);previousNav=currentNav;currentNav='home';updateNav();renderHome();">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">⚙️</div><div class="header-info"><div class="header-name">Pengaturan</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
                 <div class="card"><div class="card-title">👤 Profil</div>
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                        ${avatarHtml}
+                        <div>
+                            <button class="modal-btn modal-btn-primary" style="padding:4px 14px;font-size:12px;" onclick="triggerAvatarUpload()">📸 Ganti Foto</button>
+                            <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Klik avatar di beranda juga bisa</div>
+                        </div>
+                    </div>
                     <div style="display:grid;gap:8px;">
                         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Kode</span><span style="font-weight:600;color:#3b82f6;">${user?.user_code || 'USR-???'}</span></div>
                         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-color);"><span style="color:var(--text-secondary);">Username</span><span>${escapeHtml(user?.username || '-')}</span></div>
@@ -5036,7 +5949,7 @@
                 </div>
                 ` : ''}
             `;
-            document.getElementById('appContainer').innerHTML = html;
+            renderView('settings', html);
 
             document.getElementById('darkModeSwitch')?.addEventListener('change', toggleTheme);
 
@@ -5232,7 +6145,7 @@
         }
 
         // ============================================================
-        // BOTTOM NAV, UPDATE NAV, RENDER CURRENT VIEW
+        // BOTTOM NAV
         // ============================================================
         function addBottomNav() {
             const navHtml = `
@@ -5252,6 +6165,7 @@
                         <button class="menu-popup-item" data-nav="kategori"><span class="icon">🏷️</span>Kategori</button>
                         <button class="menu-popup-item" data-nav="laporan"><span class="icon">📊</span>Laporan</button>
                         <button class="menu-popup-item" data-nav="kunci-sukses"><span class="icon">🔑</span>Kunci Sukses</button>
+                        <button class="menu-popup-item" data-nav="guide"><span class="icon">📖</span>Panduan</button>
                         <button class="menu-popup-item" data-nav="settings"><span class="icon">⚙️</span>Settings</button>
                     </div>
                 </div>
@@ -5282,10 +6196,7 @@
                     popup.classList.remove('open');
                     moreBtn.classList.remove('active');
                     moreBtn.style.color = '';
-                    pushHistory(currentNav);
-                    currentNav = btn.dataset.nav;
-                    updateNav();
-                    renderCurrentView();
+                    navigateTo(btn.dataset.nav);
                 });
             });
             document.querySelectorAll('.nav-item[data-nav]').forEach(btn => {
@@ -5296,10 +6207,7 @@
                         moreBtn.classList.remove('active');
                         moreBtn.style.color = '';
                     }
-                    pushHistory(currentNav);
-                    currentNav = btn.dataset.nav;
-                    updateNav();
-                    renderCurrentView();
+                    navigateTo(btn.dataset.nav);
                 });
             });
         }
@@ -5311,6 +6219,9 @@
             });
         }
 
+        // ============================================================
+        // RENDER CURRENT VIEW
+        // ============================================================
         function renderCurrentView() {
             if (!appReady) return;
             const views = {
@@ -5324,13 +6235,14 @@
                 reminders: renderReminders,
                 kategori: renderKategori,
                 laporan: renderLaporan,
-                'kunci-sukses': renderKunciSukses
+                'kunci-sukses': renderKunciSukses,
+                guide: renderGuide
             };
             if (views[currentNav]) views[currentNav]();
         }
 
         // ============================================================
-        // AUTO-RECURRING CHECKER
+        // RECURRING CHECKER
         // ============================================================
         let recurringInterval = null;
 
@@ -5363,11 +6275,16 @@
             currentCustomUser = customUser;
             isGuestMode = false;
             await loadAllData();
-            try { await processRecurringTransactions(); } catch (e) { console.log('⚠️ Recurring skipped'); }
+            try { await processRecurringTransactions(); } catch (e) {}
             await initTheme();
             appReady = true;
             addBottomNav();
             startRecurringChecker();
+            startNotificationChecker();
+            if (isNotificationSupported() && Notification.permission === 'granted') {
+                notificationPermission = true;
+                initAudioContext();
+            }
             renderCurrentView();
             hideLoading();
         }
@@ -5394,7 +6311,8 @@
                     email: 'guest@tamu.com',
                     username: 'Tamu',
                     user_code: 'TAMU-' + String(Math.floor(Math.random() * 10000)).padStart(4, '0'),
-                    display_name: 'Pengunjung'
+                    display_name: 'Pengunjung',
+                    avatar_url: null
                 };
 
                 userManager.customUser = currentCustomUser;
@@ -5409,6 +6327,11 @@
                 appReady = true;
                 addBottomNav();
                 startRecurringChecker();
+                startNotificationChecker();
+                if (isNotificationSupported() && Notification.permission === 'granted') {
+                    notificationPermission = true;
+                    initAudioContext();
+                }
                 renderCurrentView();
                 hideLoading();
 
@@ -5424,6 +6347,11 @@
 
         async function logout() {
             if (recurringInterval) clearInterval(recurringInterval);
+            if (notifCheckerInterval) clearInterval(notifCheckerInterval);
+            realtimeSubscriptions.forEach(sub => {
+                try { sub.unsubscribe(); } catch (e) {}
+            });
+            realtimeSubscriptions = [];
             if (isGuestMode) {
                 isGuestMode = false;
                 userManager.isGuest = false;
@@ -5521,6 +6449,10 @@
                     hideLoading(); }
             } catch (e) { document.getElementById('loginModal').style.display = 'flex';
                 hideLoading(); }
+            if (isNotificationSupported() && Notification.permission === 'granted') {
+                notificationPermission = true;
+                initAudioContext();
+            }
         }
 
         // ============================================================
