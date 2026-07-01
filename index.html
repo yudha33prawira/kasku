@@ -14,6 +14,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <style>
+        /* ============================================================
+           ALL STYLES SAME AS ORIGINAL
+           ============================================================ */
         * {
             margin: 0;
             padding: 0;
@@ -309,6 +312,8 @@
             box-shadow: 0 2px 8px rgba(239,68,68,0.4);
         }
 
+        /* ===== REST OF STYLES SAME AS ORIGINAL ===== */
+        /* ... (all other styles remain identical) ... */
         .running-text-container {
             border-radius: var(--radius-sm);
             padding: 12px 16px;
@@ -493,7 +498,6 @@
             flex-shrink: 0;
         }
 
-        /* ===== HOME GRID - FIXED PADDING ===== */
         .home-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -597,7 +601,6 @@
             margin-top: 4px;
         }
 
-        /* ===== TUGAS & PENGINGAT PREMIUM - FIXED PADDING ===== */
         .task-premium-card {
             background: var(--bg-card-glass);
             backdrop-filter: blur(12px);
@@ -825,7 +828,6 @@
             color: #ef4444;
         }
 
-        /* ===== TRANSAKSI PREMIUM DENGAN ICON ===== */
         .tx-premium-item {
             display: flex;
             justify-content: space-between;
@@ -2233,7 +2235,6 @@
             }
         }
 
-        /* ===== LOGIN BUTTON IMPROVEMENTS ===== */
         .login-actions {
             display: flex;
             flex-direction: column;
@@ -2292,7 +2293,6 @@
             min-height: 20px;
         }
 
-        /* ===== LAPORAN PREMIUM ===== */
         .laporan-premium-card {
             background: var(--bg-card-glass);
             backdrop-filter: blur(12px);
@@ -2344,7 +2344,6 @@
             transition: width 0.5s ease;
         }
 
-        /* ===== FIX FOR TASK & REMINDER PADDING ===== */
         .card .task-premium-card:last-child,
         .card .saving-premium-card:last-child,
         .card .debt-premium-card:last-child,
@@ -2906,6 +2905,21 @@
 
         function pushHistory(n) { navigationHistory.push(n); }
 
+        // ============================================================
+        // NAVIGATION FIX: goBack() function
+        // ============================================================
+        function goBack() {
+            if (navigationHistory.length > 0) {
+                const previous = navigationHistory.pop();
+                currentNav = previous;
+                updateNav();
+                renderCurrentView();
+            } else {
+                // If no history, go to home
+                navigateTo('home');
+            }
+        }
+
         function getFamilyMemberIds() { return familyMembers.map(m => m.user_id); }
 
         function getFamilyBadge(userId) {
@@ -3022,95 +3036,61 @@
         }
 
         // ============================================================
-        // UPLOAD AVATAR - DENGAN RLS YANG BENAR
+        // UPLOAD AVATAR - With RLS Fix
         // ============================================================
-async function uploadAvatar(file) {
-    if (!currentUser) return null;
-    if (isGuestMode) {
-        showToast('❌ Mode tamu tidak bisa upload foto', 2000, 'error');
-        return null;
-    }
-    try {
-        const uid = await userManager.getUserId();
-        if (!uid) return null;
-        
-        // ============================================================
-        // 1. HAPUS FOTO LAMA (jika ada)
-        // ============================================================
-        const oldAvatarUrl = await userManager.getAvatarUrl();
-        if (oldAvatarUrl) {
-            try {
-                // Extract path dari URL
-                const parts = oldAvatarUrl.split('/');
-                const fileName = parts[parts.length - 1];
-                // Cari folder 'avatars/' atau langsung file
-                const avatarsIndex = parts.indexOf('avatars');
-                let oldPath;
-                if (avatarsIndex !== -1) {
-                    oldPath = parts.slice(avatarsIndex).join('/');
-                } else {
-                    oldPath = `avatars/${fileName}`;
-                }
-                
-                console.log('🗑️ Menghapus foto lama:', oldPath);
-                const { error: deleteError } = await sb.storage
-                    .from('user-avatars')
-                    .remove([oldPath]);
-                
-                if (deleteError) {
-                    console.warn('⚠️ Gagal hapus foto lama:', deleteError);
-                    // Lanjutkan upload meskipun gagal hapus
-                } else {
-                    console.log('✅ Foto lama berhasil dihapus');
-                }
-            } catch (e) {
-                console.warn('⚠️ Error saat menghapus foto lama:', e);
-                // Lanjutkan upload
-            }
-        }
-        
-        // ============================================================
-        // 2. UPLOAD FOTO BARU
-        // ============================================================
-        const ext = file.name.split('.').pop();
-        const path = `avatars/${uid}_${Date.now()}.${ext}`;
-        
-        console.log('📤 Uploading to:', path);
-        
-        const { data: uploadData, error: uploadError } = await sb.storage
-            .from('user-avatars')
-            .upload(path, file, {
-                cacheControl: '3600',
-                upsert: true
-            });
-        
-        if (uploadError) {
-            console.error('Upload error:', uploadError);
-            if (uploadError.message && uploadError.message.includes('row-level security')) {
-                showToast('⚠️ Perlu setting RLS di Supabase Storage. Baca panduan.', 4000, 'warning');
+        async function uploadAvatar(file) {
+            if (!currentUser) return null;
+            if (isGuestMode) {
+                showToast('❌ Mode tamu tidak bisa upload foto', 2000, 'error');
                 return null;
             }
-            throw uploadError;
+            try {
+                const uid = await userManager.getUserId();
+                if (!uid) return null;
+
+                // 1. Delete old avatar if exists
+                const oldAvatarUrl = await userManager.getAvatarUrl();
+                if (oldAvatarUrl) {
+                    try {
+                        const parts = oldAvatarUrl.split('/');
+                        const fileName = parts[parts.length - 1];
+                        const avatarsIndex = parts.indexOf('avatars');
+                        let oldPath;
+                        if (avatarsIndex !== -1) {
+                            oldPath = parts.slice(avatarsIndex).join('/');
+                        } else {
+                            oldPath = `avatars/${fileName}`;
+                        }
+                        await sb.storage.from('user-avatars').remove([oldPath]);
+                    } catch (e) { console.warn('⚠️ Gagal hapus foto lama:', e); }
+                }
+
+                // 2. Upload new avatar
+                const ext = file.name.split('.').pop();
+                const path = `avatars/${uid}_${Date.now()}.${ext}`;
+                const { data: uploadData, error: uploadError } = await sb.storage
+                    .from('user-avatars')
+                    .upload(path, file, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+                if (uploadError) throw uploadError;
+                const { data: publicUrl } = sb.storage.from('user-avatars').getPublicUrl(path);
+                const url = publicUrl.publicUrl;
+
+                // 3. Update database
+                await userManager.updateProfile({ avatar_url: url });
+                currentCustomUser = await userManager.getUserData();
+
+                showToast('✅ Foto profil diupdate!', 2000, 'success');
+                renderCurrentView();
+                return url;
+            } catch (e) {
+                console.error('Upload error:', e);
+                showToast('❌ Gagal upload foto: ' + e.message, 3000, 'error');
+                return null;
+            }
         }
-        
-        const { data: publicUrl } = sb.storage.from('user-avatars').getPublicUrl(path);
-        const url = publicUrl.publicUrl;
-        
-        // ============================================================
-        // 3. UPDATE DATABASE
-        // ============================================================
-        await userManager.updateProfile({ avatar_url: url });
-        currentCustomUser = await userManager.getUserData();
-        
-        showToast('✅ Foto profil diupdate! Foto lama otomatis dihapus.', 2000, 'success');
-        renderCurrentView();
-        return url;
-    } catch (e) {
-        console.error('Upload error:', e);
-        showToast('❌ Gagal upload foto: ' + e.message, 3000, 'error');
-        return null;
-    }
-}
 
         function triggerAvatarUpload() {
             if (isGuestMode) {
@@ -3447,7 +3427,7 @@ async function uploadAvatar(file) {
         async function renderKategori() {
             await loadCategories();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">🏷️</div><div class="header-info"><div class="header-name">Kategori</div><div class="header-code">${categories.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openCategoryFormModal()">➕ Tambah Kategori</button>
                 <div class="card"><div id="categoryList"></div></div>
             `;
@@ -3649,7 +3629,7 @@ async function uploadAvatar(file) {
             await loadTasks();
             const pending = tasks.filter(t => !t.is_completed);
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Tugas</div><div class="header-code">${pending.length} tertunda</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Tugas</div><div class="header-code">${pending.length} tertunda</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openTaskModal()">➕ Tambah Tugas</button>
                 <div class="filter">${['all','active','completed'].map(f => `<button class="filter-btn ${taskFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='active'?'Belum Selesai':'Selesai'}</button>`).join('')}</div>
                 <div id="tasksPremiumList"></div>
@@ -4110,7 +4090,7 @@ async function uploadAvatar(file) {
                 return tb - ta;
             });
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div><div class="header-code">${debts.length} transaksi</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">💰</div><div class="header-info"><div class="header-name">Hutang & Piutang</div><div class="header-code">${debts.length} transaksi</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <div class="stats-row"><div class="stat-card"><div class="label">💰 Piutang</div><div class="value income">Rp ${formatRupiah(piutang)}</div></div><div class="stat-card"><div class="label">💸 Hutang</div><div class="value expense">Rp ${formatRupiah(hutang)}</div></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openDebtModal()">+ Tambah</button>
                 <div id="debtPremiumList"></div>
@@ -4166,7 +4146,7 @@ async function uploadAvatar(file) {
         async function renderSavings() {
             await loadSavings();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">🏦</div><div class="header-info"><div class="header-name">Tabungan Pribadi</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">🏦</div><div class="header-info"><div class="header-name">Tabungan Pribadi</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <div style="background:rgba(59,130,246,0.05);padding:12px;border-radius:12px;text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:12px;">💡 Tabungan bersifat pribadi</div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openSavingsModal()">+ Tambah</button>
                 <div id="savingsPremiumList"></div>
@@ -4281,7 +4261,7 @@ async function uploadAvatar(file) {
         async function renderReminders() {
             await loadReminders();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">⏰</div><div class="header-info"><div class="header-name">Pengingat</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">⏰</div><div class="header-info"><div class="header-name">Pengingat</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <button class="modal-btn modal-btn-primary modal-btn-full" style="margin-bottom:12px;" onclick="openReminderModal()">+ Tambah</button>
                 <div id="remindersPremiumList"></div>
             `;
@@ -4429,7 +4409,7 @@ async function uploadAvatar(file) {
             ];
             const total = budgets.reduce((s, b) => s + Number(b.amount), 0);
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">✍🏻</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">✍🏻</div><div class="header-info"><div class="header-name">Anggaran</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <div class="month-selector">
                     <button id="prevBudgetMonth">◀</button>
                     <span>📋 ${months[currentBudgetMonth]} ${currentBudgetYear}</span>
@@ -4553,12 +4533,12 @@ async function uploadAvatar(file) {
         }
 
         // ============================================================
-        // TRANSAKSI PREMIUM - DENGAN ICON KATEGORI
+        // TRANSAKSI PREMIUM
         // ============================================================
         async function renderTransaksi() {
             await loadTransactions();
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">📋</div><div class="header-info"><div class="header-name">Transaksi</div><div class="header-code">${transactions.length} total</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <div style="display:flex;gap:8px;margin-bottom:12px;"><button class="modal-btn modal-btn-primary" style="flex:1;" onclick="openTransaksiModal()">+ Tambah</button><button class="modal-btn modal-btn-secondary" style="flex:1;" onclick="navigateTo('laporan')">📊 Laporan</button></div>
                 <div class="filter">${['all','income','expense'].map(f => `<button class="filter-btn ${transaksiFilter===f?'active':''}" data-filter="${f}">${f==='all'?'Semua':f==='income'?'💵 Pemasukan':'💸 Pengeluaran'}</button>`).join('')}</div>
                 <div class="card"><div id="transaksiPremiumList"></div></div>
@@ -5086,7 +5066,6 @@ async function uploadAvatar(file) {
                 catTotals[cid] = (catTotals[cid] || 0) + Number(t.amount);
             });
             
-            // Top 5 kategori
             const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
             
             const monthFiltered = transactions.filter(t => {
@@ -5102,7 +5081,7 @@ async function uploadAvatar(file) {
             let html = `
                 <div class="header">
                     <div class="header-user"><div class="header-avatar">📆</div><div class="header-info"><div class="header-name">Laporan</div><div class="header-code">${all.length} transaksi</div></div></div>
-                    <div class="header-actions"><button class="header-btn" onclick="navigateTo('transaksi')">←</button></div>
+                    <div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div>
                 </div>
                 <div class="month-selector">
                     <button id="prevMonth">◀</button>
@@ -5155,7 +5134,6 @@ async function uploadAvatar(file) {
             `;
             renderView('laporan', html);
             
-            // Chart
             const ctx = document.getElementById('laporanChart')?.getContext('2d');
             const chartLabels = [],
                 chartData = [],
@@ -5181,7 +5159,6 @@ async function uploadAvatar(file) {
                 });
             }
             
-            // Detail transaksi
             const grouped = {};
             monthFiltered.forEach(t => {
                 const d = formatDate(t.created_at);
@@ -5254,7 +5231,7 @@ async function uploadAvatar(file) {
         }
 
         // ============================================================
-        // SEDEKAH (disingkat karena panjang)
+        // SEDEKAH (Kunci Sukses)
         // ============================================================
         const SEDEKAH_TYPES = [
             { id: 'pagi', label: 'Pagi', icon: '🌅', frequency: 'daily' },
@@ -5840,7 +5817,7 @@ async function uploadAvatar(file) {
                     </div>
                     <div class="header-actions">
                         <button class="header-btn" onclick="openPanduanSedekah()">📖</button>
-                        <button class="header-btn" onclick="navigateTo('home')">←</button>
+                        <button class="header-btn" onclick="goBack()">←</button>
                     </div>
                 </div>
                 ${familyInfoText}
@@ -6011,7 +5988,7 @@ async function uploadAvatar(file) {
                         </div>
                     </div>
                     <div class="header-actions">
-                        <button class="header-btn" onclick="navigateTo('home')">←</button>
+                        <button class="header-btn" onclick="goBack()">←</button>
                     </div>
                 </div>
                 <div style="background:linear-gradient(135deg,#eff6ff,#eef2ff);border-radius:var(--radius);padding:20px;margin-bottom:16px;border:1px solid #bfdbfe;">
@@ -6149,7 +6126,7 @@ async function uploadAvatar(file) {
         }
 
         // ============================================================
-        // RENDER HOME - Dengan Tabungan di Atas, Grid Tugas & Pengingat di Bawah
+        // RENDER HOME
         // ============================================================
         async function renderHome() {
             await loadTransactions();
@@ -6197,7 +6174,6 @@ async function uploadAvatar(file) {
                 `<img src="${avatarUrl}" alt="avatar" />` :
                 `<span class="initials">${(userName[0]||'U').toUpperCase()}</span>`;
 
-            // Render tugas
             let tasksHtml = '';
             if (recentTasks.length === 0) {
                 tasksHtml = '<div class="hgc-empty">🎉 Tidak ada tugas</div>';
@@ -6215,7 +6191,6 @@ async function uploadAvatar(file) {
                 }
             }
 
-            // Render pengingat
             let remindersHtml = '';
             if (recentReminders.length === 0) {
                 remindersHtml = '<div class="hgc-empty">⏰ Tidak ada pengingat</div>';
@@ -6243,8 +6218,8 @@ async function uploadAvatar(file) {
                         </div>
                     </div>
                     <div class="header-actions"><button class="header-btn" id="reminderBtn">🔔${overdue > 0 ? `<span class="badge">${overdue}</span>` : ''}</button><button class="header-btn" id="openSettingsBtn">⚙️</button><button class="header-btn" id="logoutBtn">
-    <img src="https://dttupsimbwsffyylfpax.supabase.co/storage/v1/object/public/user-avatars/icon/computer-icons-login-logo-logout-b01ee7d09e99cf6f55595525eaebda9d.png" alt="Logout" style="width:30px;height:30px;" />
-</button></div>
+                        <img src="https://dttupsimbwsffyylfpax.supabase.co/storage/v1/object/public/user-avatars/icon/computer-icons-login-logo-logout-b01ee7d09e99cf6f55595525eaebda9d.png" alt="Logout" style="width:30px;height:30px;" />
+                    </button></div>
                 </div>
                 ${renderRunningText()}
                 <div class="balance-card">
@@ -6254,7 +6229,6 @@ async function uploadAvatar(file) {
                     <div class="balance-stats"><div class="stat-item"><div class="stat-label">Pemasukan</div><div class="stat-value income">${isBalanceHidden ? '••••' : '+Rp ' + formatRupiah(totals.pemasukan)}</div></div><div class="stat-item"><div class="stat-label">Pengeluaran</div><div class="stat-value expense">${isBalanceHidden ? '••••' : '-Rp ' + formatRupiah(totals.pengeluaran)}</div></div></div>
                 </div>
                 
-                <!-- TABUNGAN - di atas -->
                 <div class="card" id="savingsCard">
                     <div class="card-title">
                         <span>🏦 Tabungan</span>
@@ -6272,7 +6246,6 @@ async function uploadAvatar(file) {
                     ${savings.length > 2 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);padding-top:4px;">+${savings.length - 2} lainnya</div>` : ''}
                 </div>
                 
-                <!-- Grid Tugas & Pengingat -->
                 <div class="home-grid-2">
                     <div class="home-grid-card" onclick="navigateTo('tasks')">
                         <div class="hgc-header">
@@ -6361,7 +6334,7 @@ async function uploadAvatar(file) {
                 `<img src="${avatarUrl}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid #3b82f6;" />` :
                 `<div style="width:60px;height:60px;border-radius:50%;background:var(--gradient-premium);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:white;">${(user?.username||'U')[0].toUpperCase()}</div>`;
             const html = `
-                <div class="header"><div class="header-user"><div class="header-avatar">⚙️</div><div class="header-info"><div class="header-name">Pengaturan</div></div></div><div class="header-actions"><button class="header-btn" onclick="navigateTo('home')">←</button></div></div>
+                <div class="header"><div class="header-user"><div class="header-avatar">⚙️</div><div class="header-info"><div class="header-name">Pengaturan</div></div></div><div class="header-actions"><button class="header-btn" onclick="goBack()">←</button></div></div>
                 <div class="card"><div class="card-title">👤 Profil</div>
                     <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
                         ${avatarHtml}
@@ -6938,3 +6911,4 @@ async function uploadAvatar(file) {
         else startApp();
     </script>
 </body>
+</html>
